@@ -1,110 +1,70 @@
 package com.dentalvision.ai.presentation.screen.login
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.dentalvision.ai.presentation.component.WelcomeDialog
 import com.dentalvision.ai.presentation.theme.DentalColors
 
 /**
  * Login Screen
- * Professional medical-themed authentication screen
+ * Simplified white minimal design for doctor name entry
  */
 @Composable
 fun LoginScreen(
     onLoginSuccess: (email: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
+    var doctorName by remember { mutableStateOf("") }
+    var showWelcomeDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFF5F7FA),
-                        Color(0xFFE8EBF0)
-                    )
-                )
-            ),
+            .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
         Card(
             modifier = Modifier
-                .widthIn(max = 450.dp)
+                .widthIn(max = 500.dp)
                 .padding(24.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = Color.White
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(32.dp),
+                    .padding(40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Logo/Icon
+                // Logo Placeholder (replace with actual dental0.png resource)
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(100.dp)
                         .clip(CircleShape)
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    DentalColors.Primary,
-                                    DentalColors.Secondary
-                                )
-                            )
-                        ),
+                        .background(DentalColors.Primary),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "DV",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineLarge,
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -114,15 +74,18 @@ fun LoginScreen(
 
                 // Title
                 Text(
-                    text = "Dental Vision AI",
+                    text = "Dental Vision AI Pro",
                     style = MaterialTheme.typography.headlineMedium,
                     color = DentalColors.Primary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
-                    text = "Professional Dental Analysis System",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "Sistema Integral de Análisis Dental con IA",
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
@@ -131,150 +94,110 @@ fun LoginScreen(
 
                 // Medical Warning
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 2.dp,
+                            color = Color(0xFFFF9800),
+                            shape = RoundedCornerShape(8.dp)
+                        ),
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFFFFF8E1)
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp)
+                        modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Medical Warning",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color(0xFFF57F17),
-                            fontWeight = FontWeight.SemiBold
+                            text = "Advertencia Médica",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color(0xFFE65100),
+                            fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "This is a diagnostic support tool. Results must be validated by a qualified dental professional.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF827717)
+                            text = "Esta es una herramienta de soporte diagnóstico. Los resultados deben ser validados por un profesional dental calificado.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF827717),
+                            textAlign = TextAlign.Justify
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                // Email Field
+                // Doctor Name Field
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = {
-                        email = it
-                        errorMessage = ""
-                    },
+                    value = doctorName,
+                    onValueChange = { doctorName = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Email") },
+                    label = { Text("Nombre del Doctor") },
+                    placeholder = { Text("Ingrese su primer nombre para ingresar al sistema") },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = "Email Icon"
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Doctor Icon",
+                            tint = DentalColors.Primary
                         )
                     },
                     singleLine = true,
-                    enabled = !isLoading,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = DentalColors.Primary,
-                        focusedLabelColor = DentalColors.Primary
-                    )
+                        focusedLabelColor = DentalColors.Primary,
+                        cursorColor = DentalColors.Primary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Password Field
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = {
-                        password = it
-                        errorMessage = ""
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Password") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Password Icon"
-                        )
-                    },
-                    visualTransformation = PasswordVisualTransformation(),
-                    singleLine = true,
-                    enabled = !isLoading,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DentalColors.Primary,
-                        focusedLabelColor = DentalColors.Primary
-                    )
-                )
-
-                // Error Message
-                if (errorMessage.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp)
-                        ) {
-                            Text(
-                                text = errorMessage,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 // Login Button
                 Button(
                     onClick = {
-                        if (email.isBlank() || password.isBlank()) {
-                            errorMessage = "Please enter both email and password"
-                        } else {
-                            isLoading = true
-                            // Simulate login
-                            onLoginSuccess(email)
+                        if (doctorName.isNotBlank()) {
+                            showWelcomeDialog = true
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    enabled = !isLoading,
+                        .height(56.dp),
+                    enabled = doctorName.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DentalColors.Primary
+                        containerColor = DentalColors.Primary,
+                        disabledContainerColor = DentalColors.Primary.copy(alpha = 0.4f)
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(
-                            text = "Login",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                    Text(
+                        text = "Entrar",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Footer
                 Text(
-                    text = "Secure access for medical professionals",
+                    text = "Acceso seguro para profesionales médicos",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
             }
         }
+    }
+
+    // Welcome Dialog
+    if (showWelcomeDialog) {
+        WelcomeDialog(
+            doctorName = doctorName,
+            onDismiss = {
+                showWelcomeDialog = false
+                onLoginSuccess(doctorName)
+            }
+        )
     }
 }
