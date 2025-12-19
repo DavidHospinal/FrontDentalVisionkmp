@@ -1,5 +1,6 @@
 package com.dentalvision.ai.presentation.screen.login
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -13,11 +14,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.presentation.component.WelcomeDialog
 import com.dentalvision.ai.presentation.theme.DentalColors
+import dentalkpmfront.composeapp.generated.resources.Res
+import dentalkpmfront.composeapp.generated.resources.dental0
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Login Screen
@@ -54,21 +59,15 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Logo Placeholder (replace with actual dental0.png resource)
-                Box(
+                // Logo
+                Image(
+                    painter = painterResource(Res.drawable.dental0),
+                    contentDescription = "Dental Vision AI Logo",
                     modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .background(DentalColors.Primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "DV",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                        .size(120.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
