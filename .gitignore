@@ -1,0 +1,26 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+iosApp/Podfile.lock
+iosApp/Pods/*
+iosApp/iosApp.xcworkspace/*
+iosApp/iosApp.xcodeproj/*
+!iosApp/iosApp.xcodeproj/project.pbxproj
+shared/shared.podspec
+
+# Kotlin build artifacts
+.kotlin/
+kotlin-js-store/
+node_modules/
+yarn.lock
+package-lock.json
+
+# Ignorar logs locales
+*.md
+!README.md
