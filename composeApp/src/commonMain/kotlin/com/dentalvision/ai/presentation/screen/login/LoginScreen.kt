@@ -83,7 +83,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Comprehensive AI-Powered Dental Analysis System",
+                    text = "YOLOv12 System - Comprehensive AI-Powered Dental Analysis",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -107,13 +107,16 @@ fun LoginScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
                             text = "Medical Disclaimer",
                             style = MaterialTheme.typography.labelLarge,
                             color = Color(0xFFE65100),
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(

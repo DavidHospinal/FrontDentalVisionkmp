@@ -48,7 +48,7 @@ fun WelcomeDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Bienvenido al Sistema",
+                    text = "Welcome to the System",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = DentalColors.Primary
@@ -72,7 +72,7 @@ fun WelcomeDialog(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Estado de Servicios",
+                    text = "Services Status",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -80,10 +80,10 @@ fun WelcomeDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                ServiceStatusItem("Sistema de Análisis", true)
-                ServiceStatusItem("Gestión de Pacientes", true)
-                ServiceStatusItem("Generación de Reportes", true)
-                ServiceStatusItem("Motor de IA", true)
+                ServiceStatusItem("Analysis System", true)
+                ServiceStatusItem("Patient Management", true)
+                ServiceStatusItem("Report Generation", true)
+                ServiceStatusItem("AI Engine", true)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -95,7 +95,7 @@ fun WelcomeDialog(
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Continuar")
+                    Text("Continue")
                 }
             }
         }
@@ -131,7 +131,7 @@ private fun ServiceStatusItem(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = if (isActive) "Activo" else "Inactivo",
+                text = if (isActive) "Active" else "Inactive",
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isActive) DentalColors.Success else Color.Gray
             )
