@@ -83,7 +83,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Sistema Integral de Análisis Dental con IA",
+                    text = "Comprehensive AI-Powered Dental Analysis System",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -110,14 +110,14 @@ fun LoginScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Advertencia Médica",
+                            text = "Medical Disclaimer",
                             style = MaterialTheme.typography.labelLarge,
                             color = Color(0xFFE65100),
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Esta es una herramienta de soporte diagnóstico. Los resultados deben ser validados por un profesional dental calificado.",
+                            text = "This is a diagnostic support tool. Results must be validated by a qualified dental professional.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFF827717),
                             textAlign = TextAlign.Justify
@@ -132,8 +132,8 @@ fun LoginScreen(
                     value = doctorName,
                     onValueChange = { doctorName = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nombre del Doctor") },
-                    placeholder = { Text("Ingrese su primer nombre para ingresar al sistema") },
+                    label = { Text("Doctor Name") },
+                    placeholder = { Text("Enter your first name to access the system") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Person,
@@ -170,7 +170,7 @@ fun LoginScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Entrar",
+                        text = "Enter",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -180,7 +180,7 @@ fun LoginScreen(
 
                 // Footer
                 Text(
-                    text = "Acceso seguro para profesionales médicos",
+                    text = "Secure access for medical professionals",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
