@@ -14,7 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dentalvision.ai.domain.model.SystemStatistics
 import com.dentalvision.ai.presentation.component.ExtendedIcons
 import com.dentalvision.ai.presentation.component.MainScaffold
 import com.dentalvision.ai.presentation.theme.DentalColors
@@ -27,21 +30,138 @@ import com.dentalvision.ai.presentation.theme.DentalColors
 fun DashboardScreen(
     currentRoute: String,
     onNavigate: (String) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    viewModel: DashboardViewModel = viewModel { DashboardViewModel() }
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
     MainScaffold(
         currentRoute = currentRoute,
         onNavigate = onNavigate,
         onLogout = onLogout
     ) { paddingValues ->
-        DashboardContent(
-            modifier = Modifier.padding(paddingValues)
-        )
+        when (val state = uiState) {
+            is DashboardUiState.Loading -> {
+                LoadingContent(modifier = Modifier.padding(paddingValues))
+            }
+            is DashboardUiState.Success -> {
+                DashboardContent(
+                    statistics = state.statistics,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            is DashboardUiState.Error -> {
+                ErrorContent(
+                    message = state.message,
+                    onRetry = { viewModel.retry() },
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoadingContent(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(DentalColors.Background),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                color = DentalColors.Primary
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Loading Dashboard...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorContent(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(DentalColors.Background),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .widthIn(max = 500.dp)
+                .padding(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = DentalColors.Error,
+                    modifier = Modifier.size(64.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Error Loading Dashboard",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = DentalColors.OnBackground
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = onRetry,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DentalColors.Primary
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Retry")
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun DashboardContent(
+    statistics: SystemStatistics,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -74,9 +194,9 @@ private fun DashboardContent(
         ) {
             MetricCard(
                 title = "Total Patients",
-                value = "156",
-                subtitle = "+12 this month",
-                change = "+8% vs previous month",
+                value = statistics.patients.total.toString(),
+                subtitle = "+${statistics.patients.new_this_month} this month",
+                change = if (statistics.patients.new_this_month > 0) "+${calculatePercentageChange(statistics.patients.new_this_month, statistics.patients.total)}% vs previous month" else "",
                 icon = ExtendedIcons.People,
                 iconColor = DentalColors.Primary,
                 modifier = Modifier.weight(1f)
@@ -84,9 +204,9 @@ private fun DashboardContent(
 
             MetricCard(
                 title = "Analysis This Month",
-                value = "23",
-                subtitle = "Total: 156",
-                change = "+15% vs previous month",
+                value = statistics.analyses.this_month.toString(),
+                subtitle = "Total: ${statistics.analyses.total}",
+                change = if (statistics.analyses.this_month > 0) "+${calculatePercentageChange(statistics.analyses.this_month, statistics.analyses.total)}% vs previous month" else "",
                 icon = ExtendedIcons.Analytics,
                 iconColor = DentalColors.Success,
                 modifier = Modifier.weight(1f)
@@ -94,8 +214,8 @@ private fun DashboardContent(
 
             MetricCard(
                 title = "Scheduled Appointments",
-                value = "23",
-                subtitle = "Completed: 89",
+                value = statistics.appointments.scheduled.toString(),
+                subtitle = "Completed: ${statistics.appointments.completed}",
                 change = "",
                 icon = ExtendedIcons.CalendarToday,
                 iconColor = DentalColors.Warning,
@@ -104,8 +224,8 @@ private fun DashboardContent(
 
             MetricCard(
                 title = "Generated Reports",
-                value = "45",
-                subtitle = "12 this month",
+                value = statistics.reports.generated.toString(),
+                subtitle = "${statistics.reports.this_month} this month",
                 change = "",
                 icon = ExtendedIcons.Description,
                 iconColor = DentalColors.Secondary,
@@ -344,4 +464,14 @@ private fun MetricCard(
             }
         }
     }
+}
+
+/**
+ * Calculate percentage change for metrics
+ */
+private fun calculatePercentageChange(newValue: Int, total: Int): Int {
+    if (total <= newValue) return 0
+    val previousTotal = total - newValue
+    if (previousTotal == 0) return 0
+    return ((newValue.toFloat() / previousTotal.toFloat()) * 100).toInt()
 }
