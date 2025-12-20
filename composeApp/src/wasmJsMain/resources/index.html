@@ -41,6 +41,31 @@
             font-size: 16px;
             font-weight: 500;
         }
+        .error-box {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #ffebee;
+            border: 1px solid #ef5350;
+            border-radius: 8px;
+            max-width: 600px;
+            display: none;
+        }
+        .error-title {
+            color: #c62828;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .error-message {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+        .error-hint {
+            color: #666;
+            font-size: 12px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -48,8 +73,84 @@
         <div id="loading">
             <div class="spinner"></div>
             <div class="loading-text">Loading Dental Vision AI...</div>
+            <div class="error-box" id="error-box">
+                <div class="error-title">Error Loading Application</div>
+                <div class="error-message" id="error-message"></div>
+                <div class="error-hint">Press F12 and check Console tab for detailed error logs</div>
+            </div>
         </div>
     </div>
-    <script type="module" src="DentalVisionAI-composeApp-wasm-js.mjs"></script>
+    <script type="module">
+        console.log('[WASM] Starting application load...');
+        console.log('[WASM] Current URL:', window.location.href);
+        console.log('[WASM] Module path: DentalVisionAI-composeApp-wasm-js.mjs');
+
+        const loadingText = document.querySelector('.loading-text');
+        const spinner = document.querySelector('.spinner');
+        const errorBox = document.getElementById('error-box');
+        const errorMessage = document.getElementById('error-message');
+
+        let loadTimeout;
+
+        function showError(error) {
+            console.error('[WASM] Fatal error:', error);
+            spinner.style.display = 'none';
+            loadingText.textContent = 'Application Failed to Load';
+            loadingText.style.color = '#c62828';
+            errorBox.style.display = 'block';
+            errorMessage.textContent = `${error.name}: ${error.message}\n\nStack trace available in Console (F12)`;
+
+            if (error.stack) {
+                console.error('[WASM] Stack trace:', error.stack);
+            }
+
+            clearTimeout(loadTimeout);
+        }
+
+        loadTimeout = setTimeout(() => {
+            console.warn('[WASM] Loading is taking longer than expected (30s). This might indicate an issue.');
+            loadingText.textContent = 'Loading is taking longer than expected...';
+            loadingText.style.color = '#f57c00';
+        }, 30000);
+
+        console.log('[WASM] Attempting to import main module...');
+
+        import('./DentalVisionAI-composeApp-wasm-js.mjs')
+            .then(module => {
+                console.log('[WASM] Module loaded successfully:', module);
+                clearTimeout(loadTimeout);
+                loadingText.textContent = 'Application Loaded Successfully';
+                spinner.style.display = 'none';
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                }, 500);
+            })
+            .catch(error => {
+                showError(error);
+
+                if (error.message.includes('@js-joda')) {
+                    console.error('[WASM] js-joda module error detected');
+                    console.error('[WASM] This is a known issue with kotlinx-datetime in WASM');
+                    console.error('[WASM] Possible solutions:');
+                    console.error('[WASM]   1. Use Desktop target instead');
+                    console.error('[WASM]   2. Replace kotlinx-datetime with platform-specific date handling');
+                    errorMessage.textContent =
+                        'WASM Module Error: kotlinx-datetime compatibility issue\n\n' +
+                        'This is a known limitation with WASM target.\n' +
+                        'Please use Desktop version for full functionality.\n\n' +
+                        'Technical: ' + error.message;
+                }
+            });
+
+        window.addEventListener('error', (event) => {
+            console.error('[WASM] Global error caught:', event.error);
+            showError(event.error || new Error(event.message));
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('[WASM] Unhandled promise rejection:', event.reason);
+            showError(event.reason || new Error('Unhandled promise rejection'));
+        });
+    </script>
 </body>
 </html>

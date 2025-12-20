@@ -1,0 +1,12 @@
+# Exclude HTML files from GitHub language statistics
+*.html linguist-detectable=false
+*.htm linguist-detectable=false
+
+# Mark Kotlin as main language
+*.kt linguist-detectable=true
+*.kts linguist-detectable=true
+
+# Exclude generated files
+build/** linguist-generated=true
+.gradle/** linguist-generated=true
+node_modules/** linguist-vendored=true

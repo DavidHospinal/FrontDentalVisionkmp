@@ -50,7 +50,17 @@ class DashboardViewModel(
                             this_month = response.data.reports.this_month
                         )
                     )
-                    _uiState.value = DashboardUiState.Success(statistics)
+
+                    val allZeros = statistics.patients.total == 0 &&
+                                   statistics.analyses.total == 0 &&
+                                   statistics.appointments.scheduled == 0
+
+                    if (allZeros) {
+                        println("Backend returned all zeros, using demo data")
+                        _uiState.value = DashboardUiState.Success(getDemoStatistics())
+                    } else {
+                        _uiState.value = DashboardUiState.Success(statistics)
+                    }
                 } else {
                     println("Backend failed, using demo data: ${response.message}")
                     _uiState.value = DashboardUiState.Success(getDemoStatistics())
