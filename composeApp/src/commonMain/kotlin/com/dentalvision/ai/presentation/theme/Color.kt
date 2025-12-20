@@ -14,15 +14,15 @@ object DentalColors {
     val SecondaryVariant = Color(0xFF008C7A)  // Darker Teal
 
     // Background & Surface
-    val Background = Color(0xFFF5F7FA)        // Light Gray Blue
-    val Surface = Color(0xFFFFFFFF)           // White
-    val SurfaceVariant = Color(0xFFE8EBF0)    // Light Gray
+    val Background = Color(0xFFFFFFFF)        // Pure White
+    val Surface = Color(0xFFFFFFFF)           // Pure White
+    val SurfaceVariant = Color(0xFFF8F9FA)    // Very Light Gray
 
     // Text Colors
     val OnPrimary = Color(0xFFFFFFFF)         // White text on primary
     val OnSecondary = Color(0xFFFFFFFF)       // White text on secondary
-    val OnBackground = Color(0xFF1A1A1A)      // Dark gray on background
-    val OnSurface = Color(0xFF2C2C2C)         // Dark gray on surface
+    val OnBackground = Color(0xFF000000)      // Pure Black on background
+    val OnSurface = Color(0xFF212121)         // Dark gray on surface
 
     // Semantic Colors
     val Error = Color(0xFFD32F2F)             // Red for errors
@@ -84,7 +84,7 @@ val LightColorScheme = androidx.compose.material3.lightColorScheme(
     surface = DentalColors.Surface,
     onSurface = DentalColors.OnSurface,
     surfaceVariant = DentalColors.SurfaceVariant,
-    onSurfaceVariant = Color(0xFF43474E),
+    onSurfaceVariant = Color(0xFF212121),
 
     outline = Color(0xFF73777F),
     outlineVariant = Color(0xFFC3C6CF),
