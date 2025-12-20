@@ -41,15 +41,43 @@
             font-size: 16px;
             font-weight: 500;
         }
+        .error-text {
+            margin-top: 20px;
+            color: #CC0000;
+            font-size: 14px;
+            max-width: 600px;
+            text-align: center;
+            padding: 0 20px;
+        }
     </style>
+    <script type="importmap">
+    {
+        "imports": {
+            "@js-joda/core": "./node_modules/@js-joda/core/dist/js-joda.esm.js",
+            "@js-joda/timezone": "./node_modules/@js-joda/timezone/dist/js-joda-timezone.esm.js"
+        }
+    }
+    </script>
 </head>
 <body>
     <div id="root">
         <div id="loading">
             <div class="spinner"></div>
             <div class="loading-text">Loading Dental Vision AI...</div>
+            <div class="error-text" id="error-message" style="display: none;"></div>
         </div>
     </div>
-    <script type="module" src="DentalVisionAI-composeApp-wasm-js.mjs"></script>
+    <script type="module">
+        try {
+            const module = await import('./DentalVisionAI-composeApp-wasm-js.mjs');
+        } catch (error) {
+            console.error('Failed to load application:', error);
+            document.querySelector('.spinner').style.display = 'none';
+            document.querySelector('.loading-text').textContent = 'Error Loading Application';
+            const errorEl = document.getElementById('error-message');
+            errorEl.style.display = 'block';
+            errorEl.textContent = 'Error: ' + error.message + '. Please check console for details.';
+        }
+    </script>
 </body>
 </html>
