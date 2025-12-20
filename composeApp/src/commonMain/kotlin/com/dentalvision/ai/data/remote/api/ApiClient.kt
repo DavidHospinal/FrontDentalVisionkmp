@@ -21,6 +21,9 @@ class ApiClient(
                 prettyPrint = true
                 isLenient = true
                 ignoreUnknownKeys = true
+                coerceInputValues = true
+                encodeDefaults = true
+                explicitNulls = false
             })
         }
 
