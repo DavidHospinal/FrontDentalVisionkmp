@@ -1,0 +1,11 @@
+{
+  "name": "dental-vision-ai-kmp",
+  "version": "1.0.0",
+  "description": "Dental Vision AI - Kotlin Multiplatform Project",
+  "private": true,
+  "dependencies": {
+    "@js-joda/core": "^5.6.1",
+    "@js-joda/timezone": "^2.18.2"
+  },
+  "devDependencies": {}
+}

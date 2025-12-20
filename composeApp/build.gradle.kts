@@ -47,7 +47,14 @@ kotlin {
     // WebAssembly Target (Modern Web)
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        browser()
+        browser {
+            commonWebpackConfig {
+                // Configure js-joda for WASM
+                cssSupport {
+                    enabled.set(true)
+                }
+            }
+        }
         binaries.executable()
     }
 
