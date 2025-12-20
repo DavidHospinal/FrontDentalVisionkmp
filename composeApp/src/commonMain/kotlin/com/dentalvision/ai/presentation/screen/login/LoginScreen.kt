@@ -20,8 +20,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.presentation.component.WelcomeDialog
 import com.dentalvision.ai.presentation.theme.DentalColors
-import dentalkpmfront.composeapp.generated.resources.Res
-import dentalkpmfront.composeapp.generated.resources.dental0
+import dentalvisionai.composeapp.generated.resources.Res
+import dentalvisionai.composeapp.generated.resources.dental0
 import org.jetbrains.compose.resources.painterResource
 
 /**
