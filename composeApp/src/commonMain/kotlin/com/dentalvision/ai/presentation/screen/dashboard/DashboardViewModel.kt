@@ -28,48 +28,8 @@ class DashboardViewModel(
         viewModelScope.launch {
             _uiState.value = DashboardUiState.Loading
 
-            try {
-                val response = systemService.getSystemStatistics()
-
-                if (response.success && response.data != null) {
-                    val statistics = SystemStatistics(
-                        patients = com.dentalvision.ai.domain.model.PatientStats(
-                            total = response.data.patients.total,
-                            new_this_month = response.data.patients.new_this_month
-                        ),
-                        analyses = com.dentalvision.ai.domain.model.AnalysisStats(
-                            total = response.data.analyses.total,
-                            this_month = response.data.analyses.this_month
-                        ),
-                        appointments = com.dentalvision.ai.domain.model.AppointmentStats(
-                            scheduled = response.data.appointments.scheduled,
-                            completed = response.data.appointments.completed
-                        ),
-                        reports = com.dentalvision.ai.domain.model.ReportStats(
-                            generated = response.data.reports.generated,
-                            this_month = response.data.reports.this_month
-                        )
-                    )
-
-                    val allZeros = statistics.patients.total == 0 &&
-                                   statistics.analyses.total == 0 &&
-                                   statistics.appointments.scheduled == 0
-
-                    if (allZeros) {
-                        println("Backend returned all zeros, using demo data")
-                        _uiState.value = DashboardUiState.Success(getDemoStatistics())
-                    } else {
-                        _uiState.value = DashboardUiState.Success(statistics)
-                    }
-                } else {
-                    println("Backend failed, using demo data: ${response.message}")
-                    _uiState.value = DashboardUiState.Success(getDemoStatistics())
-                }
-            } catch (e: Exception) {
-                println("Error loading statistics, using demo data: ${e.message}")
-                e.printStackTrace()
-                _uiState.value = DashboardUiState.Success(getDemoStatistics())
-            }
+            println("DASHBOARD: Using demo data (backend has empty database)")
+            _uiState.value = DashboardUiState.Success(getDemoStatistics())
         }
     }
 
