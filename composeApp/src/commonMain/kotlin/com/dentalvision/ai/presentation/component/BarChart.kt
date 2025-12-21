@@ -50,6 +50,10 @@ fun BarChart(
     val textStyle = MaterialTheme.typography.labelSmall
     val valueTextStyle = MaterialTheme.typography.labelMedium
 
+    // Capture colors outside Canvas (before DrawScope)
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
+
     val computedMaxValue = maxValue ?: (data.maxOfOrNull { it.value } ?: 1f)
 
     Canvas(
@@ -95,7 +99,7 @@ fun BarChart(
                         x = x + (barWidth / 2) - (textLayoutResult.size.width / 2),
                         y = y - textLayoutResult.size.height - 4.dp.toPx()
                     ),
-                    style = valueTextStyle.copy(color = MaterialTheme.colorScheme.onSurface)
+                    style = valueTextStyle.copy(color = onSurfaceColor)
                 )
             }
 
@@ -112,13 +116,13 @@ fun BarChart(
                     x = x + (barWidth / 2) - (labelLayoutResult.size.width / 2),
                     y = canvasHeight - bottomPadding + 8.dp.toPx()
                 ),
-                style = textStyle.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                style = textStyle.copy(color = onSurfaceVariantColor)
             )
         }
 
         // Draw baseline
         drawLine(
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+            color = onSurfaceVariantColor.copy(alpha = 0.3f),
             start = Offset(0f, topPadding + chartHeight),
             end = Offset(canvasWidth, topPadding + chartHeight),
             strokeWidth = 1.dp.toPx()
