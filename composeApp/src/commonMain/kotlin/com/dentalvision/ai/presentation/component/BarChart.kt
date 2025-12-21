@@ -1,7 +1,9 @@
 package com.dentalvision.ai.presentation.component
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -141,20 +143,91 @@ fun DoubleBarChart(
     maxValue: Float? = null,
     showValues: Boolean = true
 ) {
-    if (data.isEmpty()) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        // Legend - ALWAYS shown regardless of data
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "No data available",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            // First legend item - Analyses (Blue)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(end = 16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .background(
+                            color = DentalColors.Primary,
+                            shape = CircleShape
+                        )
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Análisis",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp
+                )
+            }
+
+            // Second legend item - Appointments (Green)
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .background(
+                            color = DentalColors.Success,
+                            shape = CircleShape
+                        )
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Citas",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp
+                )
+            }
+        }
+
+        // Chart content
+        if (data.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No data available",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            ChartContent(
+                data = data,
+                maxValue = maxValue,
+                showValues = showValues
             )
         }
-        return
     }
+}
 
+@Composable
+private fun ChartContent(
+    data: List<DoubleBarChartData>,
+    maxValue: Float?,
+    showValues: Boolean
+) {
     val textMeasurer = rememberTextMeasurer()
     val textStyle = MaterialTheme.typography.labelSmall
     val valueTextStyle = MaterialTheme.typography.labelMedium.copy(fontSize = 10.sp)
@@ -165,7 +238,7 @@ fun DoubleBarChart(
     val computedMaxValue = maxValue ?: (data.maxOfOrNull { maxOf(it.value1, it.value2) } ?: 1f)
 
     Canvas(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .height(200.dp)
     ) {

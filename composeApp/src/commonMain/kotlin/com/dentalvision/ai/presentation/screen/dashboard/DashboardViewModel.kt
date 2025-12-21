@@ -25,25 +25,38 @@ class DashboardViewModel(
     }
 
     fun loadSystemStatistics() {
-        viewModelScope.launch {
-            _uiState.value = DashboardUiState.Loading
+        // Show demo data immediately for instant load
+        val demoStats = getDemoStatistics()
+        _uiState.value = DashboardUiState.Success(demoStats)
+        println("DASHBOARD: Showing demo data immediately")
 
+        // Try to fetch real data in background
+        viewModelScope.launch {
             try {
-                println("DASHBOARD: Fetching real data from backend...")
+                println("DASHBOARD: Attempting to fetch real data from backend...")
                 val response = systemService.getSystemStatistics()
 
                 if (response.success && response.data != null) {
                     val stats = mapDTOToModel(response.data)
-                    println("DASHBOARD: Successfully loaded ${stats.monthlyTrend.size} months of data")
-                    _uiState.value = DashboardUiState.Success(stats)
+
+                    // Check if backend data is meaningful (not all zeros)
+                    val hasData = stats.patients.total > 0 ||
+                                  stats.analyses.total > 0 ||
+                                  stats.monthlyTrend.any { it.analyses > 0 || it.appointments > 0 }
+
+                    if (hasData) {
+                        println("DASHBOARD: Successfully loaded real data from backend")
+                        _uiState.value = DashboardUiState.Success(stats)
+                    } else {
+                        println("DASHBOARD: Backend data is empty (all zeros), keeping demo data for presentation")
+                        // Keep demo data - don't show empty charts during presentation
+                    }
                 } else {
-                    println("DASHBOARD: Backend returned no data, using demo fallback")
-                    _uiState.value = DashboardUiState.Success(getDemoStatistics())
+                    println("DASHBOARD: Backend returned no data, keeping demo data")
                 }
             } catch (e: Exception) {
-                println("DASHBOARD: Error loading from backend: ${e.message}")
-                println("DASHBOARD: Falling back to demo data")
-                _uiState.value = DashboardUiState.Success(getDemoStatistics())
+                println("DASHBOARD: Backend unavailable (${e.message}), keeping demo data")
+                // Keep demo data already shown
             }
         }
     }
@@ -95,12 +108,12 @@ class DashboardViewModel(
                 this_month = 12
             ),
             monthlyTrend = listOf(
-                com.dentalvision.ai.domain.model.MonthlyData("Jul", 18),
-                com.dentalvision.ai.domain.model.MonthlyData("Aug", 22),
-                com.dentalvision.ai.domain.model.MonthlyData("Sep", 15),
-                com.dentalvision.ai.domain.model.MonthlyData("Oct", 28),
-                com.dentalvision.ai.domain.model.MonthlyData("Nov", 20),
-                com.dentalvision.ai.domain.model.MonthlyData("Dec", 23)
+                com.dentalvision.ai.domain.model.MonthlyData("Jul", analyses = 18, appointments = 15),
+                com.dentalvision.ai.domain.model.MonthlyData("Aug", analyses = 22, appointments = 19),
+                com.dentalvision.ai.domain.model.MonthlyData("Sep", analyses = 15, appointments = 12),
+                com.dentalvision.ai.domain.model.MonthlyData("Oct", analyses = 28, appointments = 24),
+                com.dentalvision.ai.domain.model.MonthlyData("Nov", analyses = 20, appointments = 17),
+                com.dentalvision.ai.domain.model.MonthlyData("Dec", analyses = 23, appointments = 20)
             )
         )
     }
