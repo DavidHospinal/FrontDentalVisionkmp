@@ -38,5 +38,6 @@ data class ReportStats(
 @Serializable
 data class MonthlyData(
     val month: String,
-    val analyses: Int
+    val analyses: Int,
+    val appointments: Int = 0
 )

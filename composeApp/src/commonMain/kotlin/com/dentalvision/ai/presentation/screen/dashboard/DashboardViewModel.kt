@@ -28,9 +28,52 @@ class DashboardViewModel(
         viewModelScope.launch {
             _uiState.value = DashboardUiState.Loading
 
-            println("DASHBOARD: Using demo data (backend has empty database)")
-            _uiState.value = DashboardUiState.Success(getDemoStatistics())
+            try {
+                println("DASHBOARD: Fetching real data from backend...")
+                val response = systemService.getSystemStatistics()
+
+                if (response.success && response.data != null) {
+                    val stats = mapDTOToModel(response.data)
+                    println("DASHBOARD: Successfully loaded ${stats.monthlyTrend.size} months of data")
+                    _uiState.value = DashboardUiState.Success(stats)
+                } else {
+                    println("DASHBOARD: Backend returned no data, using demo fallback")
+                    _uiState.value = DashboardUiState.Success(getDemoStatistics())
+                }
+            } catch (e: Exception) {
+                println("DASHBOARD: Error loading from backend: ${e.message}")
+                println("DASHBOARD: Falling back to demo data")
+                _uiState.value = DashboardUiState.Success(getDemoStatistics())
+            }
         }
+    }
+
+    private fun mapDTOToModel(dto: com.dentalvision.ai.data.remote.api.dto.SystemStatisticsDTO): SystemStatistics {
+        return SystemStatistics(
+            patients = com.dentalvision.ai.domain.model.PatientStats(
+                total = dto.patients.total,
+                new_this_month = dto.patients.new_this_month
+            ),
+            analyses = com.dentalvision.ai.domain.model.AnalysisStats(
+                total = dto.analyses.total,
+                this_month = dto.analyses.this_month
+            ),
+            appointments = com.dentalvision.ai.domain.model.AppointmentStats(
+                scheduled = dto.appointments.scheduled,
+                completed = dto.appointments.completed
+            ),
+            reports = com.dentalvision.ai.domain.model.ReportStats(
+                generated = dto.reports.generated,
+                this_month = dto.reports.this_month
+            ),
+            monthlyTrend = dto.monthlyTrend.map { monthDTO ->
+                com.dentalvision.ai.domain.model.MonthlyData(
+                    month = monthDTO.month,
+                    analyses = monthDTO.analyses,
+                    appointments = monthDTO.appointments
+                )
+            }
+        )
     }
 
     private fun getDemoStatistics(): SystemStatistics {

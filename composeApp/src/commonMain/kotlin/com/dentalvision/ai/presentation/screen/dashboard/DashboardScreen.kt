@@ -18,10 +18,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dentalvision.ai.domain.model.SystemStatistics
-import com.dentalvision.ai.presentation.component.BarChart
-import com.dentalvision.ai.presentation.component.BarChartData
+import com.dentalvision.ai.presentation.component.DonutChart
+import com.dentalvision.ai.presentation.component.DoubleBarChart
+import com.dentalvision.ai.presentation.component.DoubleBarChartData
 import com.dentalvision.ai.presentation.component.ExtendedIcons
 import com.dentalvision.ai.presentation.component.MainScaffold
+import com.dentalvision.ai.presentation.component.PieChartData
 import com.dentalvision.ai.presentation.theme.DentalColors
 
 /**
@@ -266,13 +268,17 @@ private fun DashboardContent(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Bar chart with monthly trend data
-                    BarChart(
+                    // Double bar chart with monthly analyses and appointments
+                    DoubleBarChart(
                         data = statistics.monthlyTrend.map { monthData ->
-                            BarChartData(
+                            DoubleBarChartData(
                                 label = monthData.month,
-                                value = monthData.analyses.toFloat(),
-                                color = DentalColors.Primary
+                                value1 = monthData.analyses.toFloat(),
+                                value2 = monthData.appointments.toFloat(),
+                                color1 = DentalColors.Primary,
+                                color2 = DentalColors.Success,
+                                label1 = "Analyses",
+                                label2 = "Appointments"
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -305,84 +311,24 @@ private fun DashboardContent(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Placeholder for donut chart
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            // Simple stats representation
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(60.dp)
-                                            .background(
-                                                color = DentalColors.ToothHealthy,
-                                                shape = RoundedCornerShape(30.dp)
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "85%",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "Healthy Teeth",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(60.dp)
-                                            .background(
-                                                color = DentalColors.ToothCaries,
-                                                shape = RoundedCornerShape(30.dp)
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "15%",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "Caries",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = "Dental Health Trend (6 months)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                    // Donut chart with dental health distribution
+                    DonutChart(
+                        data = listOf(
+                            PieChartData(
+                                label = "Healthy Teeth",
+                                value = 85f,
+                                color = DentalColors.ToothHealthy
+                            ),
+                            PieChartData(
+                                label = "Caries",
+                                value = 15f,
+                                color = DentalColors.ToothCaries
                             )
-                        }
-                    }
+                        ),
+                        centerText = "85%",
+                        strokeWidth = 40f,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }

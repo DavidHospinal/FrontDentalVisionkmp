@@ -8,7 +8,9 @@ data class SystemStatisticsDTO(
     val patients: PatientStatsDTO = PatientStatsDTO(),
     val analyses: AnalysisStatsDTO = AnalysisStatsDTO(),
     val appointments: AppointmentStatsDTO = AppointmentStatsDTO(),
-    val reports: ReportStatsDTO = ReportStatsDTO()
+    val reports: ReportStatsDTO = ReportStatsDTO(),
+    @SerialName("monthly_trend")
+    val monthlyTrend: List<MonthlyDataDTO> = emptyList()
 )
 
 @Serializable
@@ -40,4 +42,11 @@ data class ReportStatsDTO(
     val generated: Int = 0,
     @SerialName("total_downloads")
     val this_month: Int = 0
+)
+
+@Serializable
+data class MonthlyDataDTO(
+    val month: String,
+    val analyses: Int = 0,
+    val appointments: Int = 0
 )
