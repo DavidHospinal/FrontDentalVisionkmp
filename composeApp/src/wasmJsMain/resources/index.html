@@ -5,23 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dental Vision AI - Professional Dental Analysis System</title>
     <style>
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             background-color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
         #root {
             width: 100%;
-            height: 100vh;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        #ComposeTarget {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
         #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
             flex-direction: column;
             background: #ffffff;
+            z-index: 9999;
         }
         .spinner {
             border: 4px solid #f3f3f3;
@@ -69,15 +85,14 @@
     </style>
 </head>
 <body>
-    <div id="root">
-        <div id="loading">
-            <div class="spinner"></div>
-            <div class="loading-text">Loading Dental Vision AI...</div>
-            <div class="error-box" id="error-box">
-                <div class="error-title">Error Loading Application</div>
-                <div class="error-message" id="error-message"></div>
-                <div class="error-hint">Press F12 and check Console tab for detailed error logs</div>
-            </div>
+    <div id="root"></div>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading Dental Vision AI...</div>
+        <div class="error-box" id="error-box">
+            <div class="error-title">Error Loading Application</div>
+            <div class="error-message" id="error-message"></div>
+            <div class="error-hint">Press F12 and check Console tab for detailed error logs</div>
         </div>
     </div>
     <script type="importmap">
@@ -123,14 +138,22 @@
         console.log('[WASM] Attempting to import main module...');
 
         import('./DentalVisionAI-composeApp-wasm-js.mjs')
-            .then(module => {
+            .then(async (module) => {
                 console.log('[WASM] Module loaded successfully:', module);
+                console.log('[WASM] Initializing application...');
                 clearTimeout(loadTimeout);
-                loadingText.textContent = 'Application Loaded Successfully';
-                spinner.style.display = 'none';
-                setTimeout(() => {
-                    document.getElementById('loading').style.display = 'none';
-                }, 500);
+
+                try {
+                    await module.startApplication();
+                    console.log('[WASM] Application started successfully');
+
+                    setTimeout(() => {
+                        document.getElementById('loading').style.display = 'none';
+                    }, 300);
+                } catch (error) {
+                    console.error('[WASM] Error starting application:', error);
+                    showError(error);
+                }
             })
             .catch(error => {
                 showError(error);
