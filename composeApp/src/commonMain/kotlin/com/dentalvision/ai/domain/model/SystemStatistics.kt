@@ -7,7 +7,8 @@ data class SystemStatistics(
     val patients: PatientStats,
     val analyses: AnalysisStats,
     val appointments: AppointmentStats,
-    val reports: ReportStats
+    val reports: ReportStats,
+    val monthlyTrend: List<MonthlyData> = emptyList()
 )
 
 @Serializable
@@ -32,4 +33,10 @@ data class AppointmentStats(
 data class ReportStats(
     val generated: Int,
     val this_month: Int
+)
+
+@Serializable
+data class MonthlyData(
+    val month: String,
+    val analyses: Int
 )

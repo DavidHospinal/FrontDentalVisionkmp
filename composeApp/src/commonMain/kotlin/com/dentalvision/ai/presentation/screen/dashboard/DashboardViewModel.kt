@@ -50,6 +50,14 @@ class DashboardViewModel(
             reports = com.dentalvision.ai.domain.model.ReportStats(
                 generated = 45,
                 this_month = 12
+            ),
+            monthlyTrend = listOf(
+                com.dentalvision.ai.domain.model.MonthlyData("Jul", 18),
+                com.dentalvision.ai.domain.model.MonthlyData("Aug", 22),
+                com.dentalvision.ai.domain.model.MonthlyData("Sep", 15),
+                com.dentalvision.ai.domain.model.MonthlyData("Oct", 28),
+                com.dentalvision.ai.domain.model.MonthlyData("Nov", 20),
+                com.dentalvision.ai.domain.model.MonthlyData("Dec", 23)
             )
         )
     }

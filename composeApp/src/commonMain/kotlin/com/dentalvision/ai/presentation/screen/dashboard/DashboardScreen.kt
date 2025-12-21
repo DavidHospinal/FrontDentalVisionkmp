@@ -18,6 +18,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dentalvision.ai.domain.model.SystemStatistics
+import com.dentalvision.ai.presentation.component.BarChart
+import com.dentalvision.ai.presentation.component.BarChartData
 import com.dentalvision.ai.presentation.component.ExtendedIcons
 import com.dentalvision.ai.presentation.component.MainScaffold
 import com.dentalvision.ai.presentation.theme.DentalColors
@@ -264,23 +266,18 @@ private fun DashboardContent(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Placeholder for bar chart
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .background(
-                                color = DentalColors.SurfaceVariant.copy(alpha = 0.3f),
-                                shape = RoundedCornerShape(8.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Bar Chart: Monthly Analysis Trend\n(Chart library integration pending)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    // Bar chart with monthly trend data
+                    BarChart(
+                        data = statistics.monthlyTrend.map { monthData ->
+                            BarChartData(
+                                label = monthData.month,
+                                value = monthData.analyses.toFloat(),
+                                color = DentalColors.Primary
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        showValues = true
+                    )
                 }
             }
 
