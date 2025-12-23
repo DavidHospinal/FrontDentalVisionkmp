@@ -1,6 +1,6 @@
 rootProject.name = "DentalVisionAI"
 
-// include(":androidApp") // Disabled due to AAPT incompatibility
+include(":androidApp")
 include(":composeApp")
 include(":desktopApp")
 
