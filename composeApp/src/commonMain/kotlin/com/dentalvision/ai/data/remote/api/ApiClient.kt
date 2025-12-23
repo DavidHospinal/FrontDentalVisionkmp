@@ -33,9 +33,9 @@ class ApiClient(
         }
 
         install(HttpTimeout) {
-            requestTimeoutMillis = 120_000  // 2 minutes for Render cold start
-            connectTimeoutMillis = 60_000   // 1 minute connect timeout
-            socketTimeoutMillis = 120_000   // 2 minutes socket timeout
+            requestTimeoutMillis = 5_000   // 5 seconds - show demo data quickly
+            connectTimeoutMillis = 3_000   // 3 seconds connect timeout
+            socketTimeoutMillis = 5_000    // 5 seconds socket timeout
         }
 
         defaultRequest {

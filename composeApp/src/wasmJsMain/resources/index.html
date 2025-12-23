@@ -138,22 +138,19 @@
         console.log('[WASM] Attempting to import main module...');
 
         import('./DentalVisionAI-composeApp-wasm-js.mjs')
-            .then(async (module) => {
-                console.log('[WASM] Module loaded successfully:', module);
-                console.log('[WASM] Initializing application...');
+            .then((module) => {
+                console.log('[WASM] Module imported successfully');
+                console.log('[WASM] Module exports:', Object.keys(module));
                 clearTimeout(loadTimeout);
 
-                try {
-                    await module.startApplication();
-                    console.log('[WASM] Application started successfully');
+                // Kotlin WASM auto-initializes main() on import
+                // Just wait a bit for rendering to complete
+                console.log('[WASM] Application initialized automatically');
 
-                    setTimeout(() => {
-                        document.getElementById('loading').style.display = 'none';
-                    }, 300);
-                } catch (error) {
-                    console.error('[WASM] Error starting application:', error);
-                    showError(error);
-                }
+                setTimeout(() => {
+                    console.log('[WASM] Hiding loading screen');
+                    document.getElementById('loading').style.display = 'none';
+                }, 1000);
             })
             .catch(error => {
                 showError(error);
