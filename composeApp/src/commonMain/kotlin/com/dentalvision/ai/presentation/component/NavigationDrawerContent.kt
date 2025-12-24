@@ -122,6 +122,44 @@ fun NavigationDrawerContent(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // Logout Button
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = Color.White.copy(alpha = 0.1f)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            NavigationDrawerItem(
+                label = {
+                    Text(
+                        text = "Logout",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.ExitToApp,
+                        contentDescription = "Logout"
+                    )
+                },
+                selected = false,
+                onClick = onLogout,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                colors = NavigationDrawerItemDefaults.colors(
+                    selectedContainerColor = Color(0xFFE74C3C).copy(alpha = 0.9f),
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color.White,
+                    unselectedContainerColor = Color(0xFFE74C3C).copy(alpha = 0.1f),
+                    unselectedIconColor = Color(0xFFE74C3C),
+                    unselectedTextColor = Color(0xFFE74C3C)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Current Patient Info (if any)
             Card(
                 modifier = Modifier
