@@ -1,6 +1,8 @@
 rootProject.name = "DentalVisionAI"
 
-include(":androidApp")
+// Android module disabled due to persistent AAPT errors
+// Enable when Android build issues are resolved
+// include(":androidApp")
 include(":composeApp")
 include(":desktopApp")
 
