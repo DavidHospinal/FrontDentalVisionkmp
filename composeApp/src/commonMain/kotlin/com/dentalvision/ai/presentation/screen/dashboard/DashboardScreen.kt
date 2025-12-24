@@ -191,144 +191,304 @@ private fun DashboardContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Metrics Cards Row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            MetricCard(
-                title = "Total Patients",
-                value = statistics.patients.total.toString(),
-                subtitle = "+${statistics.patients.new_this_month} this month",
-                change = if (statistics.patients.new_this_month > 0) "+${calculatePercentageChange(statistics.patients.new_this_month, statistics.patients.total)}% vs previous month" else "",
-                icon = ExtendedIcons.People,
-                iconColor = DentalColors.Primary,
-                modifier = Modifier.weight(1f)
-            )
+        // Metrics Cards - Responsive Grid
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val isSmallScreen = maxWidth < 600.dp
 
-            MetricCard(
-                title = "Analysis This Month",
-                value = statistics.analyses.this_month.toString(),
-                subtitle = "Total: ${statistics.analyses.total}",
-                change = if (statistics.analyses.this_month > 0) "+${calculatePercentageChange(statistics.analyses.this_month, statistics.analyses.total)}% vs previous month" else "",
-                icon = ExtendedIcons.Analytics,
-                iconColor = DentalColors.Success,
-                modifier = Modifier.weight(1f)
-            )
+            if (isSmallScreen) {
+                // Mobile layout: 2 columns grid
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        MetricCard(
+                            title = "Total Patients",
+                            value = statistics.patients.total.toString(),
+                            subtitle = "+${statistics.patients.new_this_month} this month",
+                            change = "",
+                            icon = ExtendedIcons.People,
+                            iconColor = DentalColors.Primary,
+                            modifier = Modifier.weight(1f)
+                        )
 
-            MetricCard(
-                title = "Scheduled Appointments",
-                value = statistics.appointments.scheduled.toString(),
-                subtitle = "Completed: ${statistics.appointments.completed}",
-                change = "",
-                icon = ExtendedIcons.CalendarToday,
-                iconColor = DentalColors.Warning,
-                modifier = Modifier.weight(1f)
-            )
+                        MetricCard(
+                            title = "Analysis This Month",
+                            value = statistics.analyses.this_month.toString(),
+                            subtitle = "Total: ${statistics.analyses.total}",
+                            change = "",
+                            icon = ExtendedIcons.Analytics,
+                            iconColor = DentalColors.Success,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
 
-            MetricCard(
-                title = "Generated Reports",
-                value = statistics.reports.generated.toString(),
-                subtitle = "${statistics.reports.this_month} this month",
-                change = "",
-                icon = ExtendedIcons.Description,
-                iconColor = DentalColors.Secondary,
-                modifier = Modifier.weight(1f)
-            )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        MetricCard(
+                            title = "Scheduled Appointments",
+                            value = statistics.appointments.scheduled.toString(),
+                            subtitle = "Completed: ${statistics.appointments.completed}",
+                            change = "",
+                            icon = ExtendedIcons.CalendarToday,
+                            iconColor = DentalColors.Warning,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        MetricCard(
+                            title = "Generated Reports",
+                            value = statistics.reports.generated.toString(),
+                            subtitle = "${statistics.reports.this_month} this month",
+                            change = "",
+                            icon = ExtendedIcons.Description,
+                            iconColor = DentalColors.Secondary,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            } else {
+                // Desktop layout: single row with 4 cards
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    MetricCard(
+                        title = "Total Patients",
+                        value = statistics.patients.total.toString(),
+                        subtitle = "+${statistics.patients.new_this_month} this month",
+                        change = if (statistics.patients.new_this_month > 0) "+${calculatePercentageChange(statistics.patients.new_this_month, statistics.patients.total)}% vs previous month" else "",
+                        icon = ExtendedIcons.People,
+                        iconColor = DentalColors.Primary,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    MetricCard(
+                        title = "Analysis This Month",
+                        value = statistics.analyses.this_month.toString(),
+                        subtitle = "Total: ${statistics.analyses.total}",
+                        change = if (statistics.analyses.this_month > 0) "+${calculatePercentageChange(statistics.analyses.this_month, statistics.analyses.total)}% vs previous month" else "",
+                        icon = ExtendedIcons.Analytics,
+                        iconColor = DentalColors.Success,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    MetricCard(
+                        title = "Scheduled Appointments",
+                        value = statistics.appointments.scheduled.toString(),
+                        subtitle = "Completed: ${statistics.appointments.completed}",
+                        change = "",
+                        icon = ExtendedIcons.CalendarToday,
+                        iconColor = DentalColors.Warning,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    MetricCard(
+                        title = "Generated Reports",
+                        value = statistics.reports.generated.toString(),
+                        subtitle = "${statistics.reports.this_month} this month",
+                        change = "",
+                        icon = ExtendedIcons.Description,
+                        iconColor = DentalColors.Secondary,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Charts Section
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Monthly Statistics Chart
-            Card(
-                modifier = Modifier.weight(1f),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
+        // Charts Section - Responsive Layout
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val isSmallScreen = maxWidth < 600.dp
+
+            if (isSmallScreen) {
+                // Mobile layout: stacked vertically
                 Column(
-                    modifier = Modifier.padding(20.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text = "Monthly Statistics",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Analysis and appointments per month",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Double bar chart with monthly analyses and appointments
-                    DoubleBarChart(
-                        data = statistics.monthlyTrend.map { monthData ->
-                            DoubleBarChartData(
-                                label = monthData.month,
-                                value1 = monthData.analyses.toFloat(),
-                                value2 = monthData.appointments.toFloat(),
-                                color1 = DentalColors.Primary,
-                                color2 = DentalColors.Success,
-                                label1 = "Analyses",
-                                label2 = "Appointments"
-                            )
-                        },
+                    // Monthly Statistics Chart
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        showValues = true
-                    )
-                }
-            }
-
-            // Dental Health Distribution
-            Card(
-                modifier = Modifier.weight(1f),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    Text(
-                        text = "Analysis and Trends",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Dental health distribution",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Donut chart with dental health distribution
-                    DonutChart(
-                        data = listOf(
-                            PieChartData(
-                                label = "Healthy Teeth",
-                                value = 85f,
-                                color = DentalColors.ToothHealthy
-                            ),
-                            PieChartData(
-                                label = "Caries",
-                                value = 15f,
-                                color = DentalColors.ToothCaries
-                            )
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
-                        centerText = "85%",
-                        strokeWidth = 40f,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            Text(
+                                text = "Monthly Statistics",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Analysis and appointments per month",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            DoubleBarChart(
+                                data = statistics.monthlyTrend.map { monthData ->
+                                    DoubleBarChartData(
+                                        label = monthData.month,
+                                        value1 = monthData.analyses.toFloat(),
+                                        value2 = monthData.appointments.toFloat(),
+                                        color1 = DentalColors.Primary,
+                                        color2 = DentalColors.Success,
+                                        label1 = "Analyses",
+                                        label2 = "Appointments"
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                showValues = true
+                            )
+                        }
+                    }
+
+                    // Dental Health Distribution
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            Text(
+                                text = "Analysis and Trends",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Dental health distribution",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            DonutChart(
+                                data = listOf(
+                                    PieChartData(
+                                        label = "Healthy Teeth",
+                                        value = 85f,
+                                        color = DentalColors.ToothHealthy
+                                    ),
+                                    PieChartData(
+                                        label = "Caries",
+                                        value = 15f,
+                                        color = DentalColors.ToothCaries
+                                    )
+                                ),
+                                centerText = "85%",
+                                strokeWidth = 40f,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Desktop layout: side by side
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Monthly Statistics Chart
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            Text(
+                                text = "Monthly Statistics",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Analysis and appointments per month",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            DoubleBarChart(
+                                data = statistics.monthlyTrend.map { monthData ->
+                                    DoubleBarChartData(
+                                        label = monthData.month,
+                                        value1 = monthData.analyses.toFloat(),
+                                        value2 = monthData.appointments.toFloat(),
+                                        color1 = DentalColors.Primary,
+                                        color2 = DentalColors.Success,
+                                        label1 = "Analyses",
+                                        label2 = "Appointments"
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                showValues = true
+                            )
+                        }
+                    }
+
+                    // Dental Health Distribution
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            Text(
+                                text = "Analysis and Trends",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Dental health distribution",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            DonutChart(
+                                data = listOf(
+                                    PieChartData(
+                                        label = "Healthy Teeth",
+                                        value = 85f,
+                                        color = DentalColors.ToothHealthy
+                                    ),
+                                    PieChartData(
+                                        label = "Caries",
+                                        value = 15f,
+                                        color = DentalColors.ToothCaries
+                                    )
+                                ),
+                                centerText = "85%",
+                                strokeWidth = 40f,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
                 }
             }
         }
