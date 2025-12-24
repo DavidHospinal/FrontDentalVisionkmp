@@ -18,7 +18,7 @@ kotlin {
 
 android {
     compileSdk = (findProperty("android.compileSdk") as String).toInt()
-    namespace = "com.dentalvision.ai"
+    namespace = "com.dentalvision.ai.android"
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
 
