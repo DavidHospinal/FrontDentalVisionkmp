@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeMultiplatform)
     // alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinx.serialization)
@@ -194,21 +194,13 @@ sqldelight {
 }
 */
 
-// Android Configuration
+// Android Library Configuration
 android {
     namespace = "com.dentalvision.ai"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.dentalvision.ai"
         minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0.0"
-
-        // BuildConfig fields for API endpoints
-        buildConfigField("String", "BACKEND_API_URL", "\"https://backenddental-vision-ai.onrender.com\"")
-        buildConfigField("String", "HF_SPACES_URL", "\"https://huggingface.co/spaces/your-space/dental-yolov12\"")
     }
 
     packaging {
@@ -218,28 +210,12 @@ android {
         }
     }
 
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-        getByName("debug") {
-            isMinifyEnabled = false
-            applicationIdSuffix = ".debug"
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
 
     buildFeatures {
-        buildConfig = true
         compose = true
     }
 }
