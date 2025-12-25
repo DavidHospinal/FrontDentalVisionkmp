@@ -2,7 +2,6 @@ package com.dentalvision.ai.data.remote.gradio
 
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
@@ -19,7 +18,7 @@ import kotlin.text.Regex
 
 class GradioApiClient(
     val baseUrl: String,
-    val timeout: Long = 120_000L // Aumentado a 2 minutos para SSE
+    val timeout: Long = 120_000L
 ) {
     private val json = Json {
         prettyPrint = true
@@ -51,7 +50,7 @@ class GradioApiClient(
         }
 
         defaultRequest {
-            header(HttpHeaders.Accept, "text/event-stream") // Header clave para SSE
+            header(HttpHeaders.Accept, "text/event-stream")
             header(HttpHeaders.CacheControl, "no-cache")
         }
     }
@@ -78,11 +77,11 @@ class GradioApiClient(
     @OptIn(ExperimentalEncodingApi::class)
     suspend fun analyzeDentalImage(
         imageData: ByteArray,
-        imageName: String,
+        imageName: String, // Kept for logging context
         confidenceThreshold: Double = 0.5
     ): GradioResponse {
         return try {
-            Napier.d("Starting analysis via Gradio SSE Protocol")
+            Napier.d("Starting analysis via Gradio SSE Protocol for: $imageName")
 
             val base64Image = "data:image/jpeg;base64," + Base64.encode(imageData)
 
@@ -107,8 +106,13 @@ class GradioApiClient(
                 return GradioResponse(error = "Server error: ${callResponse.status}")
             }
 
-            val eventResponse = callResponse.body<GradioEventResponse>()
-            val eventId = eventResponse.event_id ?: return GradioResponse(error = "No event_id returned")
+            val responseBodyText = callResponse.bodyAsText()
+            val eventResponse = json.decodeFromString<GradioEventResponse>(responseBodyText)
+            val eventId = eventResponse.event_id
+
+            if (eventId == null) {
+                return GradioResponse(error = "No event_id returned")
+            }
 
             Napier.d("Job submitted. Event ID: $eventId. Listening for SSE stream...")
 
@@ -124,30 +128,28 @@ class GradioApiClient(
     private suspend fun listenToSSE(eventId: String): GradioResponse {
         val streamUrl = "$baseUrl/gradio_api/call/predict_dental_image/$eventId"
 
+        // CORRECCIÓN: Tipado explícito del retorno del bloque execute
         return try {
-            httpClient.prepareGet(streamUrl).execute { response ->
-                val channel: ByteReadChannel = response.body()
+            val result: GradioResponse = httpClient.prepareGet(streamUrl).execute { response ->
+                val channel: ByteReadChannel = response.bodyAsChannel()
                 var finalResponse: GradioResponse? = null
 
                 while (!channel.isClosedForRead) {
                     val line = channel.readUTF8Line() ?: break
 
                     if (line.startsWith("event: complete")) {
-                        // El siguiente 'data:' contiene el resultado final
                         continue
                     }
 
                     if (line.startsWith("data: ")) {
                         val jsonContent = line.removePrefix("data: ").trim()
 
-                        // Gradio envía actualizaciones de estado o el resultado final
-                        // El resultado final es un array JSON
                         if (jsonContent.startsWith("[")) {
                             Napier.d("Received data array from SSE")
                             try {
                                 finalResponse = parseFinalResult(jsonContent)
-                                if (finalResponse.data != null) {
-                                    return@execute // Salir del bloque execute y retornar
+                                if (finalResponse?.data != null) {
+                                    return@execute finalResponse!!
                                 }
                             } catch (e: Exception) {
                                 Napier.w("Failed to parse intermediate data: ${e.message}")
@@ -157,6 +159,7 @@ class GradioApiClient(
                 }
                 finalResponse ?: GradioResponse(error = "Stream closed without valid data")
             }
+            result // Retorno explícito del try
         } catch (e: Exception) {
             Napier.e("SSE Stream Error", e)
             GradioResponse(error = "Streaming failed: ${e.message}")
@@ -165,7 +168,6 @@ class GradioApiClient(
 
     private fun parseFinalResult(jsonString: String): GradioResponse {
         try {
-            // El formato es un array directo: [image_info, json_string, html]
             val jsonElement = json.parseToJsonElement(jsonString)
             val dataArray = jsonElement.jsonArray
 
@@ -173,7 +175,6 @@ class GradioApiClient(
                 return GradioResponse(error = "Empty result data")
             }
 
-            // Extract Processed Image (Index 0)
             val processedImageElement = dataArray[0]
             val processedImageUrl = when {
                 processedImageElement is JsonPrimitive && processedImageElement.isString -> {
@@ -188,15 +189,12 @@ class GradioApiClient(
                 else -> null
             }
 
-            // Extract Technical Data (Index 1)
             val technicalDataString = dataArray[1].jsonPrimitive.content
 
-            // Extract HTML Report (Index 2)
             val htmlReport = if (dataArray.size > 2) {
                 dataArray[2].jsonPrimitive.contentOrNull
             } else null
 
-            // Parse Inner JSON
             val technicalData = json.decodeFromString<GradioTechnicalData>(technicalDataString)
 
             val finalResponse = GradioResponse(
@@ -255,9 +253,8 @@ class GradioApiClient(
         return recommendations
     }
 
-    suspend fun pollResults(eventId: String): GradioResponse {
-        return GradioResponse(error = "Deprecated manual polling")
-    }
+    // Método de compatibilidad eliminado por no ser necesario
+    // fun pollResults(...) eliminado para limpiar código
 
     fun close() {
         httpClient.close()
