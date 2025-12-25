@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.dentalvision.ai.di.appModules
 import com.dentalvision.ai.presentation.navigation.DentalVisionNavGraph
 import com.dentalvision.ai.presentation.theme.DentalVisionAITheme
 import org.koin.compose.KoinApplication
@@ -20,8 +21,7 @@ import org.koin.compose.KoinApplication
 @Composable
 fun App() {
     KoinApplication(application = {
-        // TODO: Add Koin modules when implementing DI
-        // modules(appModule, dataModule, domainModule, presentationModule)
+        modules(appModules)
     }) {
         DentalVisionAITheme {
             Surface(
