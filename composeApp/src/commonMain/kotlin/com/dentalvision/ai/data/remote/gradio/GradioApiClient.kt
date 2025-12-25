@@ -10,6 +10,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import kotlin.io.encoding.Base64
@@ -55,10 +56,22 @@ class GradioApiClient(
     }
 
     @Serializable
-    private data class GradioRawResponse(
-        val data: JsonArray? = null,
-        val error: String? = null,
+    private data class GradioEventResponse(
         val event_id: String? = null
+    )
+
+    @Serializable
+    private data class GradioPollResponse(
+        val msg: String? = null,
+        val event_id: String? = null,
+        val output: GradioRawData? = null,
+        val success: Boolean? = true
+    )
+
+    @Serializable
+    private data class GradioRawData(
+        val data: JsonArray? = null,
+        val error: String? = null
     )
 
     @Serializable
@@ -82,8 +95,9 @@ class GradioApiClient(
         confidenceThreshold: Double = 0.5
     ): GradioResponse {
         return try {
-            Napier.d("Submitting dental image to Gradio API: $imageName (${imageData.size} bytes)")
+            Napier.d("Starting analysis via Gradio 4.x Protocol")
 
+            // 1. Convert Image
             val base64Image = "data:image/jpeg;base64," + Base64.encode(imageData)
 
             val requestBody = buildString {
@@ -93,39 +107,117 @@ class GradioApiClient(
                 append("]}")
             }
 
-            // URL corregida según documentación
-            val targetUrl = "$baseUrl/api/predict_dental_image"
-            Napier.d("REQUEST: POST $targetUrl")
+            // 2. Submit Job (Async)
+            // Usamos el endpoint /call/ que es el estándar en Gradio 4+ cuando /api/ falla
+            val callUrl = "$baseUrl/gradio_api/call/predict_dental_image"
+            Napier.d("POST $callUrl")
 
-            val httpResponse: HttpResponse = httpClient.post(targetUrl) {
+            val callResponse: HttpResponse = httpClient.post(callUrl) {
                 contentType(ContentType.Application.Json)
                 setBody(requestBody)
             }
 
-            Napier.d("RESPONSE: ${httpResponse.status}")
-
-            if (httpResponse.status.value !in 200..299) {
-                val errorText = httpResponse.bodyAsText()
-                Napier.e("Gradio server error (${httpResponse.status.value}): $errorText")
-                return GradioResponse(
-                    error = "Server error ${httpResponse.status.value}: ${errorText.take(200)}"
-                )
+            if (callResponse.status.value !in 200..299) {
+                val errorText = callResponse.bodyAsText()
+                Napier.e("Gradio Call Failed: $errorText")
+                return GradioResponse(error = "Server error: ${callResponse.status}")
             }
 
-            val responseText = httpResponse.bodyAsText()
-            val rawResponse = json.decodeFromString<GradioRawResponse>(responseText)
+            val eventResponse = callResponse.body<GradioEventResponse>()
+            val eventId = eventResponse.event_id
 
-            if (rawResponse.error != null) {
-                Napier.e("Gradio returned error: ${rawResponse.error}")
-                return GradioResponse(error = rawResponse.error)
+            if (eventId == null) {
+                return GradioResponse(error = "No event_id returned from server")
             }
 
-            if (rawResponse.data == null || rawResponse.data.size < 2) {
-                Napier.e("Invalid Gradio response - missing data")
-                return GradioResponse(error = "Invalid response format from Gradio API")
+            Napier.d("Job submitted. Event ID: $eventId. Polling for results...")
+
+            // 3. Poll for Results
+            return pollForResults(eventId)
+
+        } catch (e: Exception) {
+            Napier.e("Gradio Error", e)
+            GradioResponse(error = e.message ?: "Unknown error")
+        }
+    }
+
+    private suspend fun pollForResults(eventId: String): GradioResponse {
+        val pollUrl = "$baseUrl/gradio_api/call/predict_dental_image/$eventId"
+        var attempts = 0
+        val maxAttempts = 40 // 40 * 1s = 40s max wait
+
+        while (attempts < maxAttempts) {
+            attempts++
+            delay(1000) // Wait 1s between checks
+
+            try {
+                // Gradio 4 streaming response is line-delimited JSON.
+                // We simplify by getting the raw text and parsing the last relevant line manually if needed,
+                // or just reading the body as normal JSON if the server returns standard polling responses.
+                // Ktor Client might throw error on streaming response if not handled as Stream.
+                // For simplicity in KMP, we assume standard GET request behavior.
+
+                val response: HttpResponse = httpClient.get(pollUrl)
+                val responseText = response.bodyAsText()
+
+                // Check for "process_completed" message in the response text
+                if (responseText.contains("process_completed")) {
+                    Napier.d("Process completed signal found")
+
+                    // The response might be SSE format "event: ... data: ...".
+                    // We need to extract the JSON data line.
+                    // Simple hack: Look for the JSON object containing "output"
+
+                    // Parse text line by line to find the JSON with data
+                    val lines = responseText.lines()
+                    for (line in lines) {
+                        if (line.startsWith("data: ")) {
+                            val jsonContent = line.removePrefix("data: ")
+                            try {
+                                // Try to parse as array (Gradio 4 output format often: [event_id, data_object])
+                                // Or check if it matches our structure
+                                if (jsonContent.contains("\"data\":")) {
+                                    // Found our data!
+                                    return parseFinalResult(jsonContent)
+                                }
+                            } catch (e: Exception) {
+                                // Continue searching
+                            }
+                        }
+                    }
+                }
+
+            } catch (e: Exception) {
+                Napier.w("Polling attempt $attempts failed: ${e.message}")
+            }
+        }
+
+        return GradioResponse(error = "Analysis timed out after ${maxAttempts}s")
+    }
+
+    private fun parseFinalResult(jsonString: String): GradioResponse {
+        try {
+            // Gradio 4 SSE data line is typically just the array of outputs or an object wrapper.
+            // Let's try to parse as our PollResponse structure first logic manually
+            // We look for the "data" array in the string
+
+            // Extract the 'data' array manually if needed, or decode
+            val jsonElement = json.parseToJsonElement(jsonString)
+
+            // Navigate to output -> data
+            val dataArray = if (jsonElement is JsonArray) {
+                // Sometimes it returns [event_id, {output...}]
+                jsonElement.lastOrNull()?.jsonObject?.get("output")?.jsonObject?.get("data")?.jsonArray
+            } else {
+                jsonElement.jsonObject["output"]?.jsonObject?.get("data")?.jsonArray
             }
 
-            val processedImageElement = rawResponse.data[0]
+            if (dataArray == null || dataArray.size < 2) {
+                return GradioResponse(error = "Result data missing in server response")
+            }
+
+            // Extract Processed Image (Index 0)
+            val processedImageElement = dataArray[0]
             val processedImageUrl = when {
                 processedImageElement is JsonPrimitive && processedImageElement.isString -> {
                     val url = processedImageElement.content
@@ -139,14 +231,16 @@ class GradioApiClient(
                 else -> null
             }
 
-            val technicalDataString = rawResponse.data[1].jsonPrimitive.content
+            // Extract Technical Data (Index 1)
+            val technicalDataString = dataArray[1].jsonPrimitive.content
 
-            val htmlReport = if (rawResponse.data.size > 2) {
-                rawResponse.data[2].jsonPrimitive.contentOrNull
+            // Extract HTML Report (Index 2)
+            val htmlReport = if (dataArray.size > 2) {
+                dataArray[2].jsonPrimitive.contentOrNull
             } else null
 
+            // Parse Inner JSON
             val technicalData = json.decodeFromString<GradioTechnicalData>(technicalDataString)
-            Napier.i("Successfully parsed data: ${technicalData.detections.size} detections")
 
             val finalResponse = GradioResponse(
                 eventId = null,
@@ -167,12 +261,12 @@ class GradioApiClient(
                 error = null
             )
 
-            Napier.i("Analysis completed. Found ${finalResponse.data?.first()?.summary?.cariesDetected} caries.")
-            finalResponse
+            Napier.i("Analysis successfully parsed via polling!")
+            return finalResponse
 
         } catch (e: Exception) {
-            Napier.e("Gradio API error", e)
-            GradioResponse(error = e.message ?: "Unknown error")
+            Napier.e("Parsing final result failed", e)
+            return GradioResponse(error = "Failed to parse analysis results: ${e.message}")
         }
     }
 
@@ -183,34 +277,29 @@ class GradioApiClient(
         val recommendations = mutableListOf<String>()
 
         if (htmlReport != null) {
-            // Regex compatible con KMP para extraer contenido de listas
             val liRegex = Regex("<li[^>]*>([\\s\\S]*?)</li>")
-
             liRegex.findAll(htmlReport).forEach { matchResult ->
                 val text = matchResult.groupValues[1]
                     .replace(Regex("<[^>]*>"), "")
                     .trim()
-
-                if (text.length > 10) {
-                    recommendations.add(text)
-                }
+                if (text.length > 10) recommendations.add(text)
             }
         }
 
         if (recommendations.isEmpty()) {
             recommendations.add("Análisis completado con éxito")
             if ((technicalData.summary?.cavity_count ?: 0) > 0) {
-                recommendations.add("Se detectaron caries que requieren atención")
-                recommendations.add("Consultar con odontólogo")
+                recommendations.add("Se detectaron caries.")
+                recommendations.add("Consultar con odontólogo.")
             } else {
-                recommendations.add("No se detectaron caries")
+                recommendations.add("No se detectaron caries.")
             }
         }
         return recommendations
     }
 
     suspend fun pollResults(eventId: String): GradioResponse {
-        return GradioResponse(error = "Polling not supported in sync mode")
+        return GradioResponse(error = "Deprecated manual polling")
     }
 
     fun close() {
