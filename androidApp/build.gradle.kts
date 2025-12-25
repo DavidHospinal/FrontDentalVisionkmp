@@ -17,6 +17,13 @@ kotlin {
                 implementation("androidx.activity:activity-compose:1.9.0")
                 implementation("androidx.appcompat:appcompat:1.6.1")
                 implementation("androidx.core:core-ktx:1.13.0")
+
+                // Logging - Napier (required for MainActivity)
+                implementation(libs.napier)
+
+                // Dependency Injection - Koin (required for MainActivity)
+                implementation(libs.koin.android)
+                implementation(libs.koin.core)
             }
         }
     }
