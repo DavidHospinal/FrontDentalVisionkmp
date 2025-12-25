@@ -18,7 +18,7 @@ import kotlin.text.Regex
 
 class GradioApiClient(
     val baseUrl: String,
-    val timeout: Long = 120_000L
+    val timeout: Long = 180_000L // 3 minutos para mayor seguridad
 ) {
     private val json = Json {
         prettyPrint = true
@@ -77,7 +77,7 @@ class GradioApiClient(
     @OptIn(ExperimentalEncodingApi::class)
     suspend fun analyzeDentalImage(
         imageData: ByteArray,
-        imageName: String, // Kept for logging context
+        imageName: String,
         confidenceThreshold: Double = 0.5
     ): GradioResponse {
         return try {
@@ -128,38 +128,51 @@ class GradioApiClient(
     private suspend fun listenToSSE(eventId: String): GradioResponse {
         val streamUrl = "$baseUrl/gradio_api/call/predict_dental_image/$eventId"
 
-        // CORRECCIÓN: Tipado explícito del retorno del bloque execute
         return try {
             val result: GradioResponse = httpClient.prepareGet(streamUrl).execute { response ->
                 val channel: ByteReadChannel = response.bodyAsChannel()
                 var finalResponse: GradioResponse? = null
 
+                // Bucle de lectura del stream
                 while (!channel.isClosedForRead) {
                     val line = channel.readUTF8Line() ?: break
 
+                    if (line.isBlank()) continue // Ignorar líneas vacías (heartbeats)
+
                     if (line.startsWith("event: complete")) {
+                        // El proceso terminó, esperamos que ya hayamos recibido los datos o vengan en la siguiente línea
+                        Napier.d("SSE Event: Complete signal received")
                         continue
                     }
 
                     if (line.startsWith("data: ")) {
                         val jsonContent = line.removePrefix("data: ").trim()
 
+                        // Gradio 4 envía un array [...] con los resultados finales.
+                        // A veces envía actualizaciones de estado que son objetos {...}.
+                        // Solo nos interesa el array final.
                         if (jsonContent.startsWith("[")) {
                             Napier.d("Received data array from SSE")
                             try {
                                 finalResponse = parseFinalResult(jsonContent)
                                 if (finalResponse?.data != null) {
+                                    // ÉXITO: Tenemos los datos, cerramos y retornamos
                                     return@execute finalResponse!!
                                 }
                             } catch (e: Exception) {
-                                Napier.w("Failed to parse intermediate data: ${e.message}")
+                                Napier.w("Failed to parse intermediate data array: ${e.message}")
                             }
+                        } else {
+                            // Es un mensaje de estado o heartbeat, lo logueamos pero seguimos esperando
+                            // Napier.v("SSE Status update: $jsonContent")
                         }
                     }
                 }
+
+                // Si salimos del bucle sin respuesta válida
                 finalResponse ?: GradioResponse(error = "Stream closed without valid data")
             }
-            result // Retorno explícito del try
+            result
         } catch (e: Exception) {
             Napier.e("SSE Stream Error", e)
             GradioResponse(error = "Streaming failed: ${e.message}")
@@ -175,6 +188,13 @@ class GradioApiClient(
                 return GradioResponse(error = "Empty result data")
             }
 
+            // Validar que el array tenga la estructura esperada [image, json_str, html]
+            if (dataArray.size < 2) {
+                // Puede ser un mensaje parcial, retornamos null para seguir esperando
+                throw Exception("Incomplete data array")
+            }
+
+            // Extract Processed Image (Index 0)
             val processedImageElement = dataArray[0]
             val processedImageUrl = when {
                 processedImageElement is JsonPrimitive && processedImageElement.isString -> {
@@ -189,12 +209,21 @@ class GradioApiClient(
                 else -> null
             }
 
-            val technicalDataString = dataArray[1].jsonPrimitive.content
+            // Extract Technical Data (Index 1) - ESTO ES CRÍTICO
+            // A veces Gradio envía null si falló, validar.
+            val technicalDataElement = dataArray[1]
+            if (technicalDataElement is JsonNull) {
+                throw Exception("Technical data is null")
+            }
 
+            val technicalDataString = technicalDataElement.jsonPrimitive.content
+
+            // Extract HTML Report (Index 2)
             val htmlReport = if (dataArray.size > 2) {
                 dataArray[2].jsonPrimitive.contentOrNull
             } else null
 
+            // Parse Inner JSON
             val technicalData = json.decodeFromString<GradioTechnicalData>(technicalDataString)
 
             val finalResponse = GradioResponse(
@@ -220,7 +249,7 @@ class GradioApiClient(
             return finalResponse
 
         } catch (e: Exception) {
-            Napier.e("Parsing logic failed", e)
+            // Re-lanzar para que el bucle siga intentando si es un error de formato temporal
             throw e
         }
     }
@@ -252,9 +281,6 @@ class GradioApiClient(
         }
         return recommendations
     }
-
-    // Método de compatibilidad eliminado por no ser necesario
-    // fun pollResults(...) eliminado para limpiar código
 
     fun close() {
         httpClient.close()
