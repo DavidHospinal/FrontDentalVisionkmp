@@ -57,6 +57,15 @@ fun DashboardScreen(
         }
     }
 
+    // AUTO-REFRESH: Refresh when returning to Dashboard
+    // This ensures data is updated after creating patients or analyses
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == "dashboard") {
+            Napier.d("DASHBOARD: Returned to dashboard screen, triggering refresh")
+            viewModel.refresh()
+        }
+    }
+
     MainScaffold(
         currentRoute = currentRoute,
         onNavigate = onNavigate,

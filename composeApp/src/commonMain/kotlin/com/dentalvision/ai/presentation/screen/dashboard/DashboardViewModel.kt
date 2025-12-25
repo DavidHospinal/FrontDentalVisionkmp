@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dentalvision.ai.data.remote.service.SystemService
 import com.dentalvision.ai.domain.model.SystemStatistics
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +12,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Dashboard ViewModel
- * Manages dashboard state and backend communication
+ * FIXED: Proper data synchronization without demo data fallback issues
  */
 class DashboardViewModel(
     private val systemService: SystemService = SystemService()
@@ -20,45 +21,74 @@ class DashboardViewModel(
     private val _uiState = MutableStateFlow<DashboardUiState>(DashboardUiState.Loading)
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
+    // Cache for successful data to avoid flickering during refreshes
+    private var lastSuccessfulStats: SystemStatistics? = null
+
     init {
         loadSystemStatistics()
     }
 
+    /**
+     * Load system statistics from backend
+     * Called on init and when user returns from other screens
+     */
     fun loadSystemStatistics() {
-        // Show demo data immediately for instant load
-        val demoStats = getDemoStatistics()
-        _uiState.value = DashboardUiState.Success(demoStats)
-        println("DASHBOARD: Showing demo data immediately")
-
-        // Try to fetch real data in background
         viewModelScope.launch {
             try {
-                println("DASHBOARD: Attempting to fetch real data from backend...")
+                Napier.d("DASHBOARD: Loading system statistics from backend...")
+                _uiState.value = DashboardUiState.Loading
+
                 val response = systemService.getSystemStatistics()
 
                 if (response.success && response.data != null) {
                     val stats = mapDTOToModel(response.data)
+                    lastSuccessfulStats = stats
 
-                    // Check if backend data is meaningful (not all zeros)
-                    val hasData = stats.patients.total > 0 ||
-                                  stats.analyses.total > 0 ||
-                                  stats.monthlyTrend.any { it.analyses > 0 || it.appointments > 0 }
+                    Napier.i("DASHBOARD: Successfully loaded backend data - Patients: ${stats.patients.total}, Analyses: ${stats.analyses.total}")
+                    _uiState.value = DashboardUiState.Success(stats)
 
-                    if (hasData) {
-                        println("DASHBOARD: Successfully loaded real data from backend")
-                        _uiState.value = DashboardUiState.Success(stats)
-                    } else {
-                        println("DASHBOARD: Backend data is empty (all zeros), keeping demo data for presentation")
-                        // Keep demo data - don't show empty charts during presentation
-                    }
                 } else {
-                    println("DASHBOARD: Backend returned no data, keeping demo data")
+                    val errorMsg = response.message ?: response.error ?: "Unknown error"
+                    Napier.e("DASHBOARD: Backend returned error: $errorMsg")
+
+                    // If we have cached data, show it
+                    if (lastSuccessfulStats != null) {
+                        Napier.w("DASHBOARD: Using cached data due to backend error")
+                        _uiState.value = DashboardUiState.Success(lastSuccessfulStats!!)
+                    } else {
+                        // No cache, show demo data as fallback ONLY
+                        Napier.w("DASHBOARD: No cached data, showing demo data as fallback")
+                        _uiState.value = DashboardUiState.Success(getDemoStatistics())
+                    }
                 }
+
             } catch (e: Exception) {
-                println("DASHBOARD: Backend unavailable (${e.message}), keeping demo data")
-                // Keep demo data already shown
+                Napier.e("DASHBOARD: Exception during data load", e)
+
+                // Network error - use cache or demo data
+                if (lastSuccessfulStats != null) {
+                    Napier.w("DASHBOARD: Using cached data due to network error")
+                    _uiState.value = DashboardUiState.Success(lastSuccessfulStats!!)
+                } else {
+                    Napier.w("DASHBOARD: No cached data, showing demo data due to network error")
+                    _uiState.value = DashboardUiState.Success(getDemoStatistics())
+                }
             }
         }
+    }
+
+    /**
+     * Refresh data - call this when user returns from other screens
+     * Prevents duplicate calls with debounce check
+     */
+    fun refresh() {
+        if (_uiState.value is DashboardUiState.Loading) {
+            Napier.d("DASHBOARD: Refresh ignored - already loading")
+            return
+        }
+
+        Napier.d("DASHBOARD: Explicit refresh requested")
+        loadSystemStatistics()
     }
 
     private fun mapDTOToModel(dto: com.dentalvision.ai.data.remote.api.dto.SystemStatisticsDTO): SystemStatistics {

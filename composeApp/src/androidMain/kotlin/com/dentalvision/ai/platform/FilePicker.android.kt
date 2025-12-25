@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CompletableDeferred
@@ -12,38 +13,72 @@ import java.io.InputStream
 
 /**
  * Android implementation of FilePicker
- * Uses Android Activity Result API for image selection
- * Gets Activity context from ActivityContextHolder
+ * FIXED: Early launcher initialization to avoid Lifecycle errors
+ * The launcher MUST be registered before Activity reaches STARTED state
  */
 class AndroidFilePicker : FilePicker {
 
-    private var filePickerDeferred: CompletableDeferred<FilePickerResult>? = null
+    private var currentDeferred: CompletableDeferred<FilePickerResult>? = null
 
-    private fun getActivity(): ComponentActivity {
-        return ActivityContextHolder.getActivity()
+    // Launcher is initialized EAGERLY when initializeEarly() is called from MainActivity.onCreate()
+    // This ensures registration happens BEFORE Activity reaches STARTED/RESUMED
+    @Volatile
+    private var _launcher: ActivityResultLauncher<Intent>? = null
+
+    /**
+     * Initialize launcher early in Activity lifecycle
+     * MUST be called from MainActivity.onCreate() BEFORE setContent()
+     */
+    fun initializeEarly() {
+        if (_launcher != null) {
+            Napier.w("AndroidFilePicker: Launcher already initialized, skipping")
+            return
+        }
+
+        synchronized(this) {
+            if (_launcher != null) return
+
+            val activity = ActivityContextHolder.getActivity()
+            Napier.d("AndroidFilePicker: Initializing launcher in ${activity.javaClass.simpleName}")
+
+            _launcher = activity.registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) { result ->
+                Napier.d("AndroidFilePicker: Result received - code=${result.resultCode}")
+                when {
+                    result.resultCode == Activity.RESULT_OK && result.data?.data != null -> {
+                        handleSelectedImage(result.data!!.data!!)
+                    }
+                    result.resultCode == Activity.RESULT_CANCELED -> {
+                        currentDeferred?.complete(FilePickerResult.Cancelled)
+                    }
+                    else -> {
+                        currentDeferred?.complete(
+                            FilePickerResult.Error("Unexpected result code: ${result.resultCode}")
+                        )
+                    }
+                }
+            }
+
+            Napier.i("AndroidFilePicker: Launcher initialized successfully")
+        }
     }
 
-    private val launcher by lazy {
-        val activity = getActivity()
-        activity.registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.data?.let { uri ->
-                    handleSelectedImage(uri)
-                } ?: run {
-                    filePickerDeferred?.complete(FilePickerResult.Cancelled)
-                }
-            } else {
-                filePickerDeferred?.complete(FilePickerResult.Cancelled)
-            }
-        }
+    private fun ensureLauncherInitialized(): ActivityResultLauncher<Intent> {
+        return _launcher ?: throw IllegalStateException(
+            "AndroidFilePicker not initialized. Call initializeEarly() from MainActivity.onCreate()"
+        )
     }
 
     override suspend fun pickImage(): FilePickerResult {
         try {
-            // Initialize new deferred for this pick operation
-            filePickerDeferred = CompletableDeferred()
+            Napier.d("AndroidFilePicker: Starting image selection")
+
+            // Ensure launcher is initialized
+            val launcher = ensureLauncherInitialized()
+
+            // Create new deferred for this operation
+            currentDeferred = CompletableDeferred()
 
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
                 type = "image/*"
@@ -51,22 +86,25 @@ class AndroidFilePicker : FilePicker {
             }
 
             launcher.launch(intent)
-            return filePickerDeferred!!.await()
+
+            val result = currentDeferred!!.await()
+            Napier.d("AndroidFilePicker: Selection completed - ${result::class.simpleName}")
+            return result
 
         } catch (e: Exception) {
-            Napier.e("Error picking image on Android", e)
+            Napier.e("AndroidFilePicker: Error during image selection", e)
             return FilePickerResult.Error(e.message ?: "Unknown error")
         }
     }
 
     private fun handleSelectedImage(uri: Uri) {
         try {
-            val activity = getActivity()
+            val activity = ActivityContextHolder.getActivity()
             val contentResolver = activity.contentResolver
             val inputStream: InputStream? = contentResolver.openInputStream(uri)
 
             if (inputStream == null) {
-                filePickerDeferred?.complete(
+                currentDeferred?.complete(
                     FilePickerResult.Error("Could not open file")
                 )
                 return
@@ -76,14 +114,14 @@ class AndroidFilePicker : FilePicker {
             inputStream.close()
 
             // Get file name
-            val fileName = getFileName(uri) ?: "image.jpg"
+            val fileName = getFileName(uri) ?: "dental_image_${System.currentTimeMillis()}.jpg"
 
             // Get MIME type
             val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
 
-            Napier.d("Image selected: $fileName (${fileBytes.size} bytes, $mimeType)")
+            Napier.i("AndroidFilePicker: Image selected successfully - $fileName (${fileBytes.size} bytes, $mimeType)")
 
-            filePickerDeferred?.complete(
+            currentDeferred?.complete(
                 FilePickerResult.Success(
                     data = fileBytes,
                     name = fileName,
@@ -92,20 +130,19 @@ class AndroidFilePicker : FilePicker {
             )
 
         } catch (e: Exception) {
-            Napier.e("Error reading selected image", e)
-            filePickerDeferred?.complete(
+            Napier.e("AndroidFilePicker: Error reading selected image", e)
+            currentDeferred?.complete(
                 FilePickerResult.Error(e.message ?: "Error reading file")
             )
         }
     }
 
     private fun getFileName(uri: Uri): String? {
-        val activity = getActivity()
-        val cursor = activity.contentResolver.query(uri, null, null, null, null)
-        return cursor?.use {
-            val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-            if (nameIndex >= 0 && it.moveToFirst()) {
-                it.getString(nameIndex)
+        val activity = ActivityContextHolder.getActivity()
+        return activity.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (nameIndex >= 0 && cursor.moveToFirst()) {
+                cursor.getString(nameIndex)
             } else null
         }
     }
