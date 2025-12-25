@@ -35,16 +35,13 @@ class ReportRepositoryImpl(
 
             val response = reportService.generateReport(request)
 
-            when (response) {
-                is com.dentalvision.ai.domain.model.ApiResponse.Success -> {
-                    val report = response.data.toDomainModel()
-                    Napier.i("Successfully generated report: ${report.id}")
-                    Result.success(report)
-                }
-                is com.dentalvision.ai.domain.model.ApiResponse.Error -> {
-                    Napier.e("Failed to generate report: ${response.message}")
-                    Result.failure(Exception(response.message))
-                }
+            if (response.success && response.data != null) {
+                val report = response.data.toDomainModel()
+                Napier.i("Successfully generated report: ${report.id}")
+                Result.success(report)
+            } else {
+                Napier.e("Failed to generate report: ${response.message ?: response.error}")
+                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error generating report for analysis: $analysisId", e)
@@ -79,16 +76,13 @@ class ReportRepositoryImpl(
 
             val response = reportService.getPatientReports(patientId)
 
-            when (response) {
-                is com.dentalvision.ai.domain.model.ApiResponse.Success -> {
-                    val reports = response.data.map { it.toDomainModel() }
-                    Napier.i("Successfully fetched ${reports.size} reports for patient: $patientId")
-                    Result.success(Pair(reports, reports.size))
-                }
-                is com.dentalvision.ai.domain.model.ApiResponse.Error -> {
-                    Napier.e("Failed to fetch patient reports: ${response.message}")
-                    Result.failure(Exception(response.message))
-                }
+            if (response.success && response.data != null) {
+                val reports = response.data.map { it.toDomainModel() }
+                Napier.i("Successfully fetched ${reports.size} reports for patient: $patientId")
+                Result.success(Pair(reports, reports.size))
+            } else {
+                Napier.e("Failed to fetch patient reports: ${response.message ?: response.error}")
+                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error fetching patient reports: $patientId", e)

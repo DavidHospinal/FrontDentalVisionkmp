@@ -28,7 +28,7 @@ val networkModule = module {
     // Gradio API Client for YOLOv12 analysis
     single {
         GradioApiClient(
-            baseUrl = ApiConfig.HUGGING_FACE_BASE_URL,
+            baseUrl = ApiConfig.HUGGINGFACE_URL,
             timeout = 60_000L
         )
     }

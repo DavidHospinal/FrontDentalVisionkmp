@@ -73,21 +73,33 @@ class AnalysisRepositoryImpl(
             }
 
             // Convert to domain model detections
-            val toothDetections = detections.map { detection ->
+            val analysisId = generateAnalysisId()
+            val toothDetections = detections.mapIndexed { index, detection ->
+                val fdiNumber = detection.fdiNumber?.toIntOrNull() ?: 0
+                val bbox = if (detection.bbox.size >= 4) {
+                    ToothDetection.BoundingBox(
+                        x = detection.bbox[0],
+                        y = detection.bbox[1],
+                        width = detection.bbox[2],
+                        height = detection.bbox[3]
+                    )
+                } else {
+                    ToothDetection.BoundingBox(0.0, 0.0, 0.0, 0.0)
+                }
+
                 ToothDetection(
-                    fdiNumber = detection.fdiNumber ?: "Unknown",
-                    className = detection.className,
-                    confidence = detection.confidence,
-                    boundingBox = detection.bbox,
+                    id = "$analysisId-DET-$index",
+                    analysisId = analysisId,
+                    toothNumberFDI = fdiNumber,
                     hasCaries = detection.hasCaries || detection.className.contains("caries", ignoreCase = true),
-                    severity = if (detection.hasCaries) "Moderate" else "None",
-                    quadrant = extractQuadrant(detection.fdiNumber ?: "0")
+                    confidence = detection.confidence,
+                    boundingBox = bbox
                 )
             }
 
             // Step 3: Create Analysis domain model
             val analysis = Analysis(
-                id = generateAnalysisId(),
+                id = analysisId,
                 patientId = patientId,
                 imageUrl = analysisData.image ?: imageName,
                 analysisDate = Clock.System.now(),
@@ -164,15 +176,26 @@ class AnalysisRepositoryImpl(
      * Convert DTO to domain model
      */
     private fun DentalAnalysisDTO.toDomainModel(): Analysis {
-        val detections = this.detections.map { detection ->
+        val detections = this.detections.mapIndexed { index, detection ->
+            val fdiNumber = detection.fdi_number?.toIntOrNull() ?: 0
+            val bbox = if (detection.bbox.size >= 4) {
+                ToothDetection.BoundingBox(
+                    x = detection.bbox[0],
+                    y = detection.bbox[1],
+                    width = detection.bbox[2],
+                    height = detection.bbox[3]
+                )
+            } else {
+                ToothDetection.BoundingBox(0.0, 0.0, 0.0, 0.0)
+            }
+
             ToothDetection(
-                fdiNumber = detection.fdi_number ?: "Unknown",
-                className = detection.`class`,
-                confidence = detection.confidence,
-                boundingBox = detection.bbox,
+                id = "${this.id}-DET-$index",
+                analysisId = this.id,
+                toothNumberFDI = fdiNumber,
                 hasCaries = detection.`class`.contains("caries", ignoreCase = true),
-                severity = "Moderate",
-                quadrant = extractQuadrant(detection.fdi_number ?: "0")
+                confidence = detection.confidence,
+                boundingBox = bbox
             )
         }
 

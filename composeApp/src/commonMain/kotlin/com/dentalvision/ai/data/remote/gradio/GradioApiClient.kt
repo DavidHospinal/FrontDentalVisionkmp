@@ -95,7 +95,7 @@ class GradioApiClient(
                 ))
             }.body()
 
-            Napier.i("Gradio API response received: ${response.event_id ?: "direct result"}")
+            Napier.i("Gradio API response received: ${response.eventId ?: "direct result"}")
             response
         } catch (e: Exception) {
             Napier.e("Gradio API error", e)

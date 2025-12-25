@@ -42,16 +42,13 @@ class AppointmentRepositoryImpl(
 
             val response = patientService.getPatientAppointments(patientId)
 
-            when (response) {
-                is com.dentalvision.ai.domain.model.ApiResponse.Success -> {
-                    val appointments = response.data.map { it.toDomainModel() }
-                    Napier.i("Successfully fetched ${appointments.size} appointments for patient: $patientId")
-                    Result.success(appointments)
-                }
-                is com.dentalvision.ai.domain.model.ApiResponse.Error -> {
-                    Napier.e("Failed to fetch patient appointments: ${response.message}")
-                    Result.failure(Exception(response.message))
-                }
+            if (response.success && response.data != null) {
+                val appointments = response.data.map { it.toDomainModel() }
+                Napier.i("Successfully fetched ${appointments.size} appointments for patient: $patientId")
+                Result.success(appointments)
+            } else {
+                Napier.e("Failed to fetch patient appointments: ${response.message ?: response.error}")
+                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error fetching patient appointments: $patientId", e)
@@ -93,16 +90,13 @@ class AppointmentRepositoryImpl(
 
             val response = patientService.createAppointment(patientId, createDTO)
 
-            when (response) {
-                is com.dentalvision.ai.domain.model.ApiResponse.Success -> {
-                    val createdAppointment = response.data.toDomainModel()
-                    Napier.i("Successfully created appointment: ${createdAppointment.id}")
-                    Result.success(createdAppointment)
-                }
-                is com.dentalvision.ai.domain.model.ApiResponse.Error -> {
-                    Napier.e("Failed to create appointment: ${response.message}")
-                    Result.failure(Exception(response.message))
-                }
+            if (response.success && response.data != null) {
+                val createdAppointment = response.data.toDomainModel()
+                Napier.i("Successfully created appointment: ${createdAppointment.id}")
+                Result.success(createdAppointment)
+            } else {
+                Napier.e("Failed to create appointment: ${response.message ?: response.error}")
+                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error creating appointment", e)

@@ -9,34 +9,24 @@ import io.github.aakira.napier.Napier
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
-/**
- * Implementation of PatientRepository
- * Handles patient CRUD operations using Backend API
- */
 class PatientRepositoryImpl(
     private val patientService: PatientService
 ) : PatientRepository {
 
-    /**
-     * Get all patients with pagination
-     */
     override suspend fun getPatients(page: Int, limit: Int): Result<Pair<List<Patient>, Int>> {
         return try {
             Napier.d("Fetching patients: page=$page, limit=$limit")
 
             val response = patientService.getPatients(page, limit)
 
-            when (response) {
-                is com.dentalvision.ai.domain.model.ApiResponse.Success -> {
-                    val patients = response.data.patients.map { it.toDomainModel() }
-                    val total = response.data.total
-                    Napier.i("Successfully fetched ${patients.size} patients (total: $total)")
-                    Result.success(Pair(patients, total))
-                }
-                is com.dentalvision.ai.domain.model.ApiResponse.Error -> {
-                    Napier.e("Failed to fetch patients: ${response.message}")
-                    Result.failure(Exception(response.message))
-                }
+            if (response.success && response.data != null) {
+                val patients = response.data.patients.map { it.toDomainModel() }
+                val total = response.data.total
+                Napier.i("Successfully fetched ${patients.size} patients (total: $total)")
+                Result.success(Pair(patients, total))
+            } else {
+                Napier.e("Failed to fetch patients: ${response.message ?: response.error}")
+                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error fetching patients", e)
@@ -44,25 +34,19 @@ class PatientRepositoryImpl(
         }
     }
 
-    /**
-     * Get patient by ID
-     */
     override suspend fun getPatientById(id: String): Result<Patient> {
         return try {
             Napier.d("Fetching patient by ID: $id")
 
             val response = patientService.getPatient(id)
 
-            when (response) {
-                is com.dentalvision.ai.domain.model.ApiResponse.Success -> {
-                    val patient = response.data.toDomainModel()
-                    Napier.i("Successfully fetched patient: ${patient.name}")
-                    Result.success(patient)
-                }
-                is com.dentalvision.ai.domain.model.ApiResponse.Error -> {
-                    Napier.e("Failed to fetch patient: ${response.message}")
-                    Result.failure(Exception(response.message))
-                }
+            if (response.success && response.data != null) {
+                val patient = response.data.toDomainModel()
+                Napier.i("Successfully fetched patient: ${patient.name}")
+                Result.success(patient)
+            } else {
+                Napier.e("Failed to fetch patient: ${response.message ?: response.error}")
+                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error fetching patient by ID: $id", e)
@@ -70,9 +54,6 @@ class PatientRepositoryImpl(
         }
     }
 
-    /**
-     * Create new patient
-     */
     override suspend fun createPatient(patient: Patient): Result<Patient> {
         return try {
             Napier.d("Creating patient: ${patient.name}")
@@ -87,16 +68,13 @@ class PatientRepositoryImpl(
 
             val response = patientService.createPatient(createDTO)
 
-            when (response) {
-                is com.dentalvision.ai.domain.model.ApiResponse.Success -> {
-                    val createdPatient = response.data.toDomainModel()
-                    Napier.i("Successfully created patient: ${createdPatient.id}")
-                    Result.success(createdPatient)
-                }
-                is com.dentalvision.ai.domain.model.ApiResponse.Error -> {
-                    Napier.e("Failed to create patient: ${response.message}")
-                    Result.failure(Exception(response.message))
-                }
+            if (response.success && response.data != null) {
+                val createdPatient = response.data.toDomainModel()
+                Napier.i("Successfully created patient: ${createdPatient.id}")
+                Result.success(createdPatient)
+            } else {
+                Napier.e("Failed to create patient: ${response.message ?: response.error}")
+                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error creating patient", e)
@@ -104,9 +82,6 @@ class PatientRepositoryImpl(
         }
     }
 
-    /**
-     * Update existing patient
-     */
     override suspend fun updatePatient(id: String, patient: Patient): Result<Patient> {
         return try {
             Napier.d("Updating patient: $id")
@@ -121,16 +96,13 @@ class PatientRepositoryImpl(
 
             val response = patientService.updatePatient(id, updateDTO)
 
-            when (response) {
-                is com.dentalvision.ai.domain.model.ApiResponse.Success -> {
-                    val updatedPatient = response.data.toDomainModel()
-                    Napier.i("Successfully updated patient: ${updatedPatient.id}")
-                    Result.success(updatedPatient)
-                }
-                is com.dentalvision.ai.domain.model.ApiResponse.Error -> {
-                    Napier.e("Failed to update patient: ${response.message}")
-                    Result.failure(Exception(response.message))
-                }
+            if (response.success && response.data != null) {
+                val updatedPatient = response.data.toDomainModel()
+                Napier.i("Successfully updated patient: ${updatedPatient.id}")
+                Result.success(updatedPatient)
+            } else {
+                Napier.e("Failed to update patient: ${response.message ?: response.error}")
+                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error updating patient: $id", e)
@@ -138,24 +110,18 @@ class PatientRepositoryImpl(
         }
     }
 
-    /**
-     * Delete patient
-     */
     override suspend fun deletePatient(id: String): Result<Unit> {
         return try {
             Napier.d("Deleting patient: $id")
 
             val response = patientService.deletePatient(id)
 
-            when (response) {
-                is com.dentalvision.ai.domain.model.ApiResponse.Success -> {
-                    Napier.i("Successfully deleted patient: $id")
-                    Result.success(Unit)
-                }
-                is com.dentalvision.ai.domain.model.ApiResponse.Error -> {
-                    Napier.e("Failed to delete patient: ${response.message}")
-                    Result.failure(Exception(response.message))
-                }
+            if (response.success) {
+                Napier.i("Successfully deleted patient: $id")
+                Result.success(Unit)
+            } else {
+                Napier.e("Failed to delete patient: ${response.message ?: response.error}")
+                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error deleting patient: $id", e)
@@ -163,9 +129,6 @@ class PatientRepositoryImpl(
         }
     }
 
-    /**
-     * Convert PatientDTO to domain Patient model
-     */
     private fun PatientDTO.toDomainModel(): Patient {
         return Patient(
             id = this.id,
@@ -183,9 +146,6 @@ class PatientRepositoryImpl(
         )
     }
 
-    /**
-     * Parse gender string to Patient.Gender enum
-     */
     private fun parseGender(gender: String): Patient.Gender {
         return when (gender.uppercase()) {
             "M", "MALE" -> Patient.Gender.MALE
@@ -194,9 +154,6 @@ class PatientRepositoryImpl(
         }
     }
 
-    /**
-     * Parse ISO 8601 timestamp to Instant
-     */
     private fun parseInstant(timestamp: String): Instant {
         return try {
             Instant.parse(timestamp)
