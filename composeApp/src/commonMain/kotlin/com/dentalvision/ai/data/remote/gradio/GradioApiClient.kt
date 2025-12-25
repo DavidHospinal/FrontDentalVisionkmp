@@ -10,7 +10,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import kotlinx.coroutines.delay
+import io.ktor.utils.io.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import kotlin.io.encoding.Base64
@@ -19,7 +19,7 @@ import kotlin.text.Regex
 
 class GradioApiClient(
     val baseUrl: String,
-    val timeout: Long = 60_000L
+    val timeout: Long = 120_000L // Aumentado a 2 minutos para SSE
 ) {
     private val json = Json {
         prettyPrint = true
@@ -46,32 +46,19 @@ class GradioApiClient(
 
         install(HttpTimeout) {
             requestTimeoutMillis = timeout
-            connectTimeoutMillis = 15_000
+            connectTimeoutMillis = 30_000
             socketTimeoutMillis = timeout
         }
 
         defaultRequest {
-            header(HttpHeaders.Accept, ContentType.Application.Json)
+            header(HttpHeaders.Accept, "text/event-stream") // Header clave para SSE
+            header(HttpHeaders.CacheControl, "no-cache")
         }
     }
 
     @Serializable
     private data class GradioEventResponse(
         val event_id: String? = null
-    )
-
-    @Serializable
-    private data class GradioPollResponse(
-        val msg: String? = null,
-        val event_id: String? = null,
-        val output: GradioRawData? = null,
-        val success: Boolean? = true
-    )
-
-    @Serializable
-    private data class GradioRawData(
-        val data: JsonArray? = null,
-        val error: String? = null
     )
 
     @Serializable
@@ -95,9 +82,8 @@ class GradioApiClient(
         confidenceThreshold: Double = 0.5
     ): GradioResponse {
         return try {
-            Napier.d("Starting analysis via Gradio 4.x Protocol")
+            Napier.d("Starting analysis via Gradio SSE Protocol")
 
-            // 1. Convert Image
             val base64Image = "data:image/jpeg;base64," + Base64.encode(imageData)
 
             val requestBody = buildString {
@@ -107,10 +93,8 @@ class GradioApiClient(
                 append("]}")
             }
 
-            // 2. Submit Job (Async)
-            // Usamos el endpoint /call/ que es el estándar en Gradio 4+ cuando /api/ falla
+            // 1. POST para obtener event_id
             val callUrl = "$baseUrl/gradio_api/call/predict_dental_image"
-            Napier.d("POST $callUrl")
 
             val callResponse: HttpResponse = httpClient.post(callUrl) {
                 contentType(ContentType.Application.Json)
@@ -124,16 +108,12 @@ class GradioApiClient(
             }
 
             val eventResponse = callResponse.body<GradioEventResponse>()
-            val eventId = eventResponse.event_id
+            val eventId = eventResponse.event_id ?: return GradioResponse(error = "No event_id returned")
 
-            if (eventId == null) {
-                return GradioResponse(error = "No event_id returned from server")
-            }
+            Napier.d("Job submitted. Event ID: $eventId. Listening for SSE stream...")
 
-            Napier.d("Job submitted. Event ID: $eventId. Polling for results...")
-
-            // 3. Poll for Results
-            return pollForResults(eventId)
+            // 2. GET Streaming para escuchar eventos
+            return listenToSSE(eventId)
 
         } catch (e: Exception) {
             Napier.e("Gradio Error", e)
@@ -141,79 +121,56 @@ class GradioApiClient(
         }
     }
 
-    private suspend fun pollForResults(eventId: String): GradioResponse {
-        val pollUrl = "$baseUrl/gradio_api/call/predict_dental_image/$eventId"
-        var attempts = 0
-        val maxAttempts = 40 // 40 * 1s = 40s max wait
+    private suspend fun listenToSSE(eventId: String): GradioResponse {
+        val streamUrl = "$baseUrl/gradio_api/call/predict_dental_image/$eventId"
 
-        while (attempts < maxAttempts) {
-            attempts++
-            delay(1000) // Wait 1s between checks
+        return try {
+            httpClient.prepareGet(streamUrl).execute { response ->
+                val channel: ByteReadChannel = response.body()
+                var finalResponse: GradioResponse? = null
 
-            try {
-                // Gradio 4 streaming response is line-delimited JSON.
-                // We simplify by getting the raw text and parsing the last relevant line manually if needed,
-                // or just reading the body as normal JSON if the server returns standard polling responses.
-                // Ktor Client might throw error on streaming response if not handled as Stream.
-                // For simplicity in KMP, we assume standard GET request behavior.
+                while (!channel.isClosedForRead) {
+                    val line = channel.readUTF8Line() ?: break
 
-                val response: HttpResponse = httpClient.get(pollUrl)
-                val responseText = response.bodyAsText()
+                    if (line.startsWith("event: complete")) {
+                        // El siguiente 'data:' contiene el resultado final
+                        continue
+                    }
 
-                // Check for "process_completed" message in the response text
-                if (responseText.contains("process_completed")) {
-                    Napier.d("Process completed signal found")
+                    if (line.startsWith("data: ")) {
+                        val jsonContent = line.removePrefix("data: ").trim()
 
-                    // The response might be SSE format "event: ... data: ...".
-                    // We need to extract the JSON data line.
-                    // Simple hack: Look for the JSON object containing "output"
-
-                    // Parse text line by line to find the JSON with data
-                    val lines = responseText.lines()
-                    for (line in lines) {
-                        if (line.startsWith("data: ")) {
-                            val jsonContent = line.removePrefix("data: ")
+                        // Gradio envía actualizaciones de estado o el resultado final
+                        // El resultado final es un array JSON
+                        if (jsonContent.startsWith("[")) {
+                            Napier.d("Received data array from SSE")
                             try {
-                                // Try to parse as array (Gradio 4 output format often: [event_id, data_object])
-                                // Or check if it matches our structure
-                                if (jsonContent.contains("\"data\":")) {
-                                    // Found our data!
-                                    return parseFinalResult(jsonContent)
+                                finalResponse = parseFinalResult(jsonContent)
+                                if (finalResponse.data != null) {
+                                    return@execute // Salir del bloque execute y retornar
                                 }
                             } catch (e: Exception) {
-                                // Continue searching
+                                Napier.w("Failed to parse intermediate data: ${e.message}")
                             }
                         }
                     }
                 }
-
-            } catch (e: Exception) {
-                Napier.w("Polling attempt $attempts failed: ${e.message}")
+                finalResponse ?: GradioResponse(error = "Stream closed without valid data")
             }
+        } catch (e: Exception) {
+            Napier.e("SSE Stream Error", e)
+            GradioResponse(error = "Streaming failed: ${e.message}")
         }
-
-        return GradioResponse(error = "Analysis timed out after ${maxAttempts}s")
     }
 
     private fun parseFinalResult(jsonString: String): GradioResponse {
         try {
-            // Gradio 4 SSE data line is typically just the array of outputs or an object wrapper.
-            // Let's try to parse as our PollResponse structure first logic manually
-            // We look for the "data" array in the string
-
-            // Extract the 'data' array manually if needed, or decode
+            // El formato es un array directo: [image_info, json_string, html]
             val jsonElement = json.parseToJsonElement(jsonString)
+            val dataArray = jsonElement.jsonArray
 
-            // Navigate to output -> data
-            val dataArray = if (jsonElement is JsonArray) {
-                // Sometimes it returns [event_id, {output...}]
-                jsonElement.lastOrNull()?.jsonObject?.get("output")?.jsonObject?.get("data")?.jsonArray
-            } else {
-                jsonElement.jsonObject["output"]?.jsonObject?.get("data")?.jsonArray
-            }
-
-            if (dataArray == null || dataArray.size < 2) {
-                return GradioResponse(error = "Result data missing in server response")
+            if (dataArray.isEmpty()) {
+                return GradioResponse(error = "Empty result data")
             }
 
             // Extract Processed Image (Index 0)
@@ -261,12 +218,12 @@ class GradioApiClient(
                 error = null
             )
 
-            Napier.i("Analysis successfully parsed via polling!")
+            Napier.i("Analysis successfully parsed from SSE stream!")
             return finalResponse
 
         } catch (e: Exception) {
-            Napier.e("Parsing final result failed", e)
-            return GradioResponse(error = "Failed to parse analysis results: ${e.message}")
+            Napier.e("Parsing logic failed", e)
+            throw e
         }
     }
 
