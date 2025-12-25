@@ -47,7 +47,12 @@ sealed class Screen(val route: String) {
     }
 
     /**
-     * New analysis screen - Create analysis for a patient
+     * New analysis screen - Create analysis (standalone, patient selected inside)
+     */
+    data object NewAnalysisStandalone : Screen("analysis/new")
+
+    /**
+     * New analysis screen - Create analysis for a specific patient
      * @param patientId The unique identifier for the patient
      */
     data object NewAnalysis : Screen("analysis/new/{patientId}") {

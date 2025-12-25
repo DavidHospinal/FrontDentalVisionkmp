@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -23,8 +24,12 @@ import com.dentalvision.ai.presentation.viewmodel.PatientsViewModel
 import com.dentalvision.ai.presentation.theme.DentalColors
 import com.dentalvision.ai.presentation.component.NavigationDrawerContent
 import org.koin.compose.viewmodel.koinViewModel
-import kotlinx.datetime.Clock
+import io.github.aakira.napier.Napier
 
+/**
+ * Patients Screen - REAL BACKEND INTEGRATION
+ * Shows ONLY real data from backend, NO demo data fallback
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientsScreen(
@@ -42,6 +47,25 @@ fun PatientsScreen(
 
     var showNewPatientDialog by remember { mutableStateOf(false) }
 
+    // LOGGING: Track state changes
+    LaunchedEffect(uiState) {
+        Napier.d("PATIENTS SCREEN: UI State changed to ${uiState::class.simpleName}")
+        when (val state = uiState) {
+            is PatientsUiState.Error -> {
+                Napier.e("PATIENTS SCREEN: Error state - ${state.message}")
+            }
+            is PatientsUiState.Success -> {
+                Napier.i("PATIENTS SCREEN: Success state - ${patients.size} patients loaded")
+            }
+            is PatientsUiState.Empty -> {
+                Napier.w("PATIENTS SCREEN: Empty state - no patients in backend")
+            }
+            is PatientsUiState.Loading -> {
+                Napier.d("PATIENTS SCREEN: Loading state")
+            }
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -58,14 +82,15 @@ fun PatientsScreen(
             topBar = {
                 TopAppBar(
                     title = {
-                        Column {
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Patient Management", fontWeight = FontWeight.Bold)
                             Text(
                                 text = "Manage and consult all patient information",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.9f),
                                 maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     },
@@ -79,6 +104,14 @@ fun PatientsScreen(
                         }
                     },
                     actions = {
+                        IconButton(
+                            onClick = {
+                                Napier.d("PATIENTS SCREEN: Refresh button clicked")
+                                viewModel.refresh()
+                            }
+                        ) {
+                            Icon(Icons.Default.Refresh, "Refresh", tint = Color.White)
+                        }
                         Button(
                             onClick = { showNewPatientDialog = true },
                             colors = ButtonDefaults.buttonColors(
@@ -103,7 +136,10 @@ fun PatientsScreen(
                 // Search Bar
                 OutlinedTextField(
                     value = searchQuery,
-                    onValueChange = { viewModel.searchPatients(it) },
+                    onValueChange = {
+                        Napier.d("PATIENTS SCREEN: Search query changed to: $it")
+                        viewModel.searchPatients(it)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("Search by name or phone...") },
                     leadingIcon = { Icon(Icons.Default.Search, null) },
@@ -112,15 +148,29 @@ fun PatientsScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // Content based on UI State
+                // Content based on UI State - NO DEMO DATA
                 when (val state = uiState) {
                     is PatientsUiState.Loading -> {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                CircularProgressIndicator()
+                                Spacer(Modifier.height(16.dp))
+                                Text(
+                                    "Loading patients from backend...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    "Cold start may take up to 60 seconds",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                     is PatientsUiState.Error -> {
-                        // Show demo data when error occurs
+                        // SHOW REAL ERROR - NO DEMO DATA
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.Top
@@ -131,40 +181,66 @@ fun PatientsScreen(
                                     containerColor = MaterialTheme.colorScheme.errorContainer
                                 )
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        Icons.Default.Warning,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Column {
-                                        Text(
-                                            "Backend Unavailable",
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.error
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(32.dp)
                                         )
+                                        Spacer(Modifier.width(12.dp))
+                                        Column {
+                                            Text(
+                                                "Backend Connection Failed",
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                            Text(
+                                                "Unable to load patients from server",
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(Modifier.height(12.dp))
+
+                                    HorizontalDivider()
+
+                                    Spacer(Modifier.height(12.dp))
+
+                                    // Show full error message
+                                    Text(
+                                        "Error Details:",
+                                        fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    SelectionContainer {
                                         Text(
-                                            "Showing demo data",
-                                            style = MaterialTheme.typography.bodySmall
+                                            state.message,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                                         )
                                     }
-                                }
-                            }
 
-                            Spacer(Modifier.height(16.dp))
+                                    Spacer(Modifier.height(16.dp))
 
-                            // Show demo patients
-                            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                items(getDemoPatients()) { patient ->
-                                    PatientListItem(
-                                        patient = patient,
-                                        onEdit = { showNewPatientDialog = true },
-                                        onDelete = { }
-                                    )
+                                    Button(
+                                        onClick = {
+                                            Napier.d("PATIENTS SCREEN: Retry button clicked after error")
+                                            viewModel.refresh()
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = DentalColors.Primary
+                                        )
+                                    ) {
+                                        Icon(Icons.Default.Refresh, null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Retry Connection")
+                                    }
                                 }
                             }
                         }
@@ -179,9 +255,22 @@ fun PatientsScreen(
                                     tint = MaterialTheme.colorScheme.outline
                                 )
                                 Spacer(Modifier.height(16.dp))
-                                Text("No patients registered")
+                                Text(
+                                    "No patients registered",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                                 Spacer(Modifier.height(8.dp))
-                                Button(onClick = { showNewPatientDialog = true }) {
+                                Text(
+                                    "Backend connection successful, but no patients found",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(Modifier.height(16.dp))
+                                Button(onClick = {
+                                    Napier.d("PATIENTS SCREEN: Add first patient clicked from empty state")
+                                    showNewPatientDialog = true
+                                }) {
                                     Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(4.dp))
                                     Text("Add First Patient")
@@ -191,24 +280,70 @@ fun PatientsScreen(
                     }
                     is PatientsUiState.Success -> {
                         if (patients.isEmpty()) {
-                            // Show demo data if backend returns empty
-                            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                items(getDemoPatients()) { patient ->
-                                    PatientListItem(
-                                        patient = patient,
-                                        onEdit = { showNewPatientDialog = true },
-                                        onDelete = { }
+                            // Backend returned success but list is empty
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(64.dp),
+                                        tint = MaterialTheme.colorScheme.outline
                                     )
+                                    Spacer(Modifier.height(16.dp))
+                                    Text(
+                                        "No patients found",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    if (searchQuery.isNotEmpty()) {
+                                        Text(
+                                            "No results for: \"$searchQuery\"",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    } else {
+                                        Text(
+                                            "Start by adding your first patient",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Spacer(Modifier.height(16.dp))
+                                    Button(onClick = {
+                                        Napier.d("PATIENTS SCREEN: Add patient clicked from success-empty state")
+                                        showNewPatientDialog = true
+                                    }) {
+                                        Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Add Patient")
+                                    }
                                 }
                             }
                         } else {
-                            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                items(patients) { patient ->
-                                    PatientListItem(
-                                        patient = patient,
-                                        onEdit = { showNewPatientDialog = true },
-                                        onDelete = { viewModel.deletePatient(patient.id) {} }
-                                    )
+                            // Show REAL patients from backend
+                            Column {
+                                Text(
+                                    "Loaded ${patients.size} patient${if (patients.size != 1) "s" else ""} from backend",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = DentalColors.Success,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    items(patients) { patient ->
+                                        PatientListItem(
+                                            patient = patient,
+                                            onEdit = {
+                                                Napier.d("PATIENTS SCREEN: Edit patient ${patient.id}")
+                                                showNewPatientDialog = true
+                                            },
+                                            onDelete = {
+                                                Napier.d("PATIENTS SCREEN: Delete patient ${patient.id}")
+                                                viewModel.deletePatient(patient.id) {}
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -220,8 +355,12 @@ fun PatientsScreen(
 
     if (showNewPatientDialog) {
         PatientFormDialog(
-            onDismiss = { showNewPatientDialog = false },
+            onDismiss = {
+                Napier.d("PATIENTS SCREEN: Patient form dialog dismissed")
+                showNewPatientDialog = false
+            },
             onSave = { patient ->
+                Napier.d("PATIENTS SCREEN: Creating new patient: ${patient.name}")
                 viewModel.createPatient(patient) {
                     showNewPatientDialog = false
                 }
@@ -273,46 +412,4 @@ fun PatientListItem(
             }
         }
     }
-}
-
-/**
- * Demo patients shown when backend is unavailable
- */
-private fun getDemoPatients(): List<Patient> {
-    val now = Clock.System.now()
-    return listOf(
-        Patient(
-            id = "demo-1",
-            name = "Maria Rodriguez",
-            age = 28,
-            gender = Patient.Gender.FEMALE,
-            phone = "+51 987 654 321",
-            email = "maria.rodriguez@email.com",
-            createdAt = now,
-            updatedAt = now,
-            synced = false
-        ),
-        Patient(
-            id = "demo-2",
-            name = "Juan Perez",
-            age = 45,
-            gender = Patient.Gender.MALE,
-            phone = "+51 912 345 678",
-            email = "juan.perez@email.com",
-            createdAt = now,
-            updatedAt = now,
-            synced = false
-        ),
-        Patient(
-            id = "demo-3",
-            name = "Ana Lopez",
-            age = 35,
-            gender = Patient.Gender.FEMALE,
-            phone = "+51 998 765 432",
-            email = "ana.lopez@email.com",
-            createdAt = now,
-            updatedAt = now,
-            synced = false
-        )
-    )
 }

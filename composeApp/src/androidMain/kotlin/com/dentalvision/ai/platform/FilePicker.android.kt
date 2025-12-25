@@ -13,36 +13,45 @@ import java.io.InputStream
 /**
  * Android implementation of FilePicker
  * Uses Android Activity Result API for image selection
+ * Gets Activity context from ActivityContextHolder
  */
-class AndroidFilePicker(
-    private val activity: ComponentActivity
-) : FilePicker {
+class AndroidFilePicker : FilePicker {
 
-    private val filePickerDeferred = CompletableDeferred<FilePickerResult>()
+    private var filePickerDeferred: CompletableDeferred<FilePickerResult>? = null
 
-    private val launcher = activity.registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { uri ->
-                handleSelectedImage(uri)
-            } ?: run {
-                filePickerDeferred.complete(FilePickerResult.Cancelled)
+    private fun getActivity(): ComponentActivity {
+        return ActivityContextHolder.getActivity()
+    }
+
+    private val launcher by lazy {
+        val activity = getActivity()
+        activity.registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    handleSelectedImage(uri)
+                } ?: run {
+                    filePickerDeferred?.complete(FilePickerResult.Cancelled)
+                }
+            } else {
+                filePickerDeferred?.complete(FilePickerResult.Cancelled)
             }
-        } else {
-            filePickerDeferred.complete(FilePickerResult.Cancelled)
         }
     }
 
     override suspend fun pickImage(): FilePickerResult {
         try {
+            // Initialize new deferred for this pick operation
+            filePickerDeferred = CompletableDeferred()
+
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
                 type = "image/*"
                 putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/jpeg", "image/png", "image/jpg"))
             }
 
             launcher.launch(intent)
-            return filePickerDeferred.await()
+            return filePickerDeferred!!.await()
 
         } catch (e: Exception) {
             Napier.e("Error picking image on Android", e)
@@ -52,11 +61,12 @@ class AndroidFilePicker(
 
     private fun handleSelectedImage(uri: Uri) {
         try {
+            val activity = getActivity()
             val contentResolver = activity.contentResolver
             val inputStream: InputStream? = contentResolver.openInputStream(uri)
 
             if (inputStream == null) {
-                filePickerDeferred.complete(
+                filePickerDeferred?.complete(
                     FilePickerResult.Error("Could not open file")
                 )
                 return
@@ -73,7 +83,7 @@ class AndroidFilePicker(
 
             Napier.d("Image selected: $fileName (${fileBytes.size} bytes, $mimeType)")
 
-            filePickerDeferred.complete(
+            filePickerDeferred?.complete(
                 FilePickerResult.Success(
                     data = fileBytes,
                     name = fileName,
@@ -83,13 +93,14 @@ class AndroidFilePicker(
 
         } catch (e: Exception) {
             Napier.e("Error reading selected image", e)
-            filePickerDeferred.complete(
+            filePickerDeferred?.complete(
                 FilePickerResult.Error(e.message ?: "Error reading file")
             )
         }
     }
 
     private fun getFileName(uri: Uri): String? {
+        val activity = getActivity()
         val cursor = activity.contentResolver.query(uri, null, null, null, null)
         return cursor?.use {
             val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
@@ -102,10 +113,8 @@ class AndroidFilePicker(
 
 /**
  * Create Android FilePicker
- * Note: Requires Activity context to be provided
+ * Uses ActivityContextHolder to get current Activity
  */
 actual fun createFilePicker(): FilePicker {
-    // TODO: Inject activity context properly (via DI or context holder)
-    // For now, this is a placeholder
-    throw IllegalStateException("AndroidFilePicker requires Activity context. Use AndroidFilePicker(activity) directly.")
+    return AndroidFilePicker()
 }

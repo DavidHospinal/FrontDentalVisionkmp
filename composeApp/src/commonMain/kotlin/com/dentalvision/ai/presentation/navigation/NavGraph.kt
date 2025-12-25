@@ -161,7 +161,20 @@ fun DentalVisionNavGraph(
             )
         }
 
-        // New Analysis Screen
+        // New Analysis Screen (Standalone - patient selected inside)
+        composable(route = Screen.NewAnalysisStandalone.route) {
+            NewAnalysisScreen(
+                currentRoute = Screen.NewAnalysisStandalone.route,
+                onNavigate = { route -> navController.navigate(route) },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // New Analysis Screen (With specific patient)
         composable(
             route = Screen.NewAnalysis.route,
             arguments = listOf(

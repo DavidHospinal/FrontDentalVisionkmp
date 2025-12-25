@@ -25,6 +25,7 @@ import com.dentalvision.ai.presentation.component.ExtendedIcons
 import com.dentalvision.ai.presentation.component.MainScaffold
 import com.dentalvision.ai.presentation.component.PieChartData
 import com.dentalvision.ai.presentation.theme.DentalColors
+import io.github.aakira.napier.Napier
 
 /**
  * Dashboard Screen
@@ -38,6 +39,23 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel { DashboardViewModel() }
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // LOGGING: Track state changes
+    LaunchedEffect(uiState) {
+        Napier.d("DASHBOARD: UI State changed to ${uiState::class.simpleName}")
+        when (val state = uiState) {
+            is DashboardUiState.Error -> {
+                Napier.e("DASHBOARD: Error state - ${state.message}")
+            }
+            is DashboardUiState.Success -> {
+                val stats = state.statistics
+                Napier.i("DASHBOARD: Success state - Loaded statistics (Patients: ${stats.patients.total}, Analyses: ${stats.analyses.total})")
+            }
+            is DashboardUiState.Loading -> {
+                Napier.d("DASHBOARD: Loading state - Fetching system statistics")
+            }
+        }
+    }
 
     MainScaffold(
         currentRoute = currentRoute,
@@ -57,7 +75,10 @@ fun DashboardScreen(
             is DashboardUiState.Error -> {
                 ErrorContent(
                     message = state.message,
-                    onRetry = { viewModel.retry() },
+                    onRetry = {
+                        Napier.d("DASHBOARD: Retry button clicked after error")
+                        viewModel.retry()
+                    },
                     modifier = Modifier.padding(paddingValues)
                 )
             }

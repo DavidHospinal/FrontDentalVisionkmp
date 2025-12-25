@@ -103,8 +103,7 @@ fun NavigationDrawerContent(
                 icon = ExtendedIcons.Analytics,
                 selected = currentRoute.startsWith("analysis/new"),
                 onClick = {
-                    // Note: New analysis requires patient selection first
-                    onNavigate(Screen.PatientList.route)
+                    onNavigate(Screen.NewAnalysisStandalone.route)
                 }
             )
 

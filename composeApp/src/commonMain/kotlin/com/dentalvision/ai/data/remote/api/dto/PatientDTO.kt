@@ -26,7 +26,7 @@ data class CreatePatientDTO(
 @Serializable
 data class PatientListResponse(
     val patients: List<PatientDTO>,
-    val total: Int,
-    val page: Int,
-    val limit: Int
+    val total: Int? = null,
+    val page: Int? = null,
+    val limit: Int? = null
 )
