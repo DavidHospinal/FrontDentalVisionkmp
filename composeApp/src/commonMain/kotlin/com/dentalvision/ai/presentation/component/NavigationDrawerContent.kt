@@ -1,5 +1,6 @@
 package com.dentalvision.ai.presentation.component
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -18,6 +19,9 @@ import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.presentation.navigation.Screen
 import com.dentalvision.ai.presentation.theme.DentalColors
 import com.dentalvision.ai.presentation.component.ExtendedIcons
+import dentalvisionai.composeapp.generated.resources.Res
+import dentalvisionai.composeapp.generated.resources.dental0
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Navigation Drawer Content
@@ -46,20 +50,11 @@ fun NavigationDrawerContent(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(DentalColors.Primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "DV",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Image(
+                    painter = painterResource(Res.drawable.dental0),
+                    contentDescription = "Dental Vision AI Logo",
+                    modifier = Modifier.size(64.dp)
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 

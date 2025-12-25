@@ -197,12 +197,12 @@ private fun MainContentSection(
         ) {
             // Header
             Text(
-                text = if (isMobile) "Nuevo Análisis" else "New Dental Analysis",
+                text = "New Dental Analysis",
                 style = if (isMobile) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Realiza un nuevo análisis dental con IA avanzada",
+                text = "Perform a new dental analysis with advanced AI",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -212,7 +212,7 @@ private fun MainContentSection(
             // Step 1: Select Patient
             StepCard(
                 stepNumber = 1,
-                title = "Seleccionar Paciente",
+                title = "Select Patient",
                 isActive = true,
                 isCompleted = selectedPatient != null
             ) {
@@ -221,13 +221,13 @@ private fun MainContentSection(
                     onExpandedChange = onPatientDropdownExpandedChange
                 ) {
                     OutlinedTextField(
-                        value = selectedPatient?.name ?: "Seleccionar paciente...",
+                        value = selectedPatient?.name ?: "Select patient...",
                         onValueChange = {},
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                         readOnly = true,
-                        label = { Text("Paciente") },
+                        label = { Text("Patient") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = patientDropdownExpanded) },
                         colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                     )
@@ -242,7 +242,7 @@ private fun MainContentSection(
                                     Column {
                                         Text(patient.name, fontWeight = FontWeight.SemiBold)
                                         Text(
-                                            "${patient.age} años - ${patient.phone ?: "Sin teléfono"}",
+                                            "${patient.age} years - ${patient.phone ?: "No phone"}",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -307,7 +307,7 @@ private fun MainContentSection(
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "${selectedPatient.age} años - ${selectedPatient.gender.name}",
+                                    text = "${selectedPatient.age} years - ${selectedPatient.gender.name}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -322,7 +322,7 @@ private fun MainContentSection(
                                 containerColor = DentalColors.Success,
                                 contentColor = Color.White
                             ) {
-                                Text("Activo")
+                                Text("Active")
                             }
                         }
                     }
@@ -334,7 +334,7 @@ private fun MainContentSection(
             // Step 2: Upload Image
             StepCard(
                 stepNumber = 2,
-                title = "Cargar Imagen Dental",
+                title = "Upload Dental X-Ray",
                 isActive = selectedPatient != null,
                 isCompleted = hasImageUploaded && analysisComplete
             ) {
@@ -366,12 +366,12 @@ private fun MainContentSection(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "Arrastra la imagen dental aquí",
+                                text = "Drag dental image here",
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "o",
+                                text = "or",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -388,7 +388,7 @@ private fun MainContentSection(
                                 ) {
                                     Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(4.dp))
-                                    Text("Seleccionar")
+                                    Text("Select File")
                                 }
                             }
                         }
@@ -412,7 +412,7 @@ private fun MainContentSection(
                                 CircularProgressIndicator(color = Color.White)
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    "Analizando con IA...",
+                                    "Analyzing with AI...",
                                     color = Color.White,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
@@ -441,7 +441,7 @@ private fun MainContentSection(
                                             contentDescription = null,
                                             modifier = Modifier.size(16.dp)
                                         )
-                                        Text("Analizado")
+                                        Text("Analyzed")
                                     }
                                 }
                             }
@@ -459,18 +459,18 @@ private fun MainContentSection(
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = "Resultados del Análisis",
+                                    text = "Analysis Results",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
-                                InfoRow("Dimensiones", "1024x768 px")
-                                InfoRow("Tamaño", "0.12 MB")
-                                InfoRow("Formato", "PNG")
-                                InfoRow("Estado", "Procesado", DentalColors.Success)
-                                InfoRow("Dientes detectados", "28", DentalColors.Primary)
-                                InfoRow("Caries encontradas", "3", DentalColors.Error)
-                                InfoRow("Confianza promedio", "89%", DentalColors.Success)
+                                InfoRow("Dimensions", "1024x768 px")
+                                InfoRow("Size", "0.12 MB")
+                                InfoRow("Format", "PNG")
+                                InfoRow("Status", "Processed", DentalColors.Success)
+                                InfoRow("Teeth detected", "28", DentalColors.Primary)
+                                InfoRow("Cavities found", "3", DentalColors.Error)
+                                InfoRow("Average confidence", "89%", DentalColors.Success)
                             }
                         }
 
@@ -488,7 +488,7 @@ private fun MainContentSection(
                             ) {
                                 Icon(Icons.Default.Done, null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text("Guardar")
+                                Text("Save")
                             }
                             OutlinedButton(
                                 onClick = onRemoveImage,
@@ -496,7 +496,7 @@ private fun MainContentSection(
                             ) {
                                 Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text("Nuevo")
+                                Text("New")
                             }
                         }
                     }
@@ -558,7 +558,7 @@ private fun AnalysisPreviewSection(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Imagen Dental\ncon Anotaciones IA",
+                            text = "Dental Image\nwith AI Annotations",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -573,7 +573,7 @@ private fun AnalysisPreviewSection(
                     contentColor = DentalColors.Success
                 ) {
                     Text(
-                        text = "Análisis completado exitosamente",
+                        text = "Analysis completed successfully",
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -583,16 +583,16 @@ private fun AnalysisPreviewSection(
 
                 // Quick Stats
                 Text(
-                    text = "Resultados Rápidos",
+                    text = "Quick Results",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                QuickStatCard("Dientes Detectados", "28", Icons.Default.CheckCircle, DentalColors.Primary)
-                QuickStatCard("Caries Detectadas", "3", Icons.Default.Warning, DentalColors.Error)
-                QuickStatCard("Confianza", "89%", ExtendedIcons.BarChart, DentalColors.Success)
+                QuickStatCard("Teeth Detected", "28", Icons.Default.CheckCircle, DentalColors.Primary)
+                QuickStatCard("Cavities Detected", "3", Icons.Default.Warning, DentalColors.Error)
+                QuickStatCard("Confidence", "89%", ExtendedIcons.BarChart, DentalColors.Success)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -606,7 +606,7 @@ private fun AnalysisPreviewSection(
                 ) {
                     Icon(ExtendedIcons.Description, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Generar Reporte")
+                    Text("Generate Report")
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -617,7 +617,7 @@ private fun AnalysisPreviewSection(
                 ) {
                     Icon(Icons.Default.Share, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Compartir")
+                    Text("Share")
                 }
             } else if (isAnalyzing) {
                 Box(
@@ -627,12 +627,12 @@ private fun AnalysisPreviewSection(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Procesando imagen...")
+                        Text("Processing image...")
                     }
                 }
             } else {
                 Text(
-                    text = "Carga una imagen para ver la vista previa del análisis",
+                    text = "Upload an image to view the analysis preview",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -23,7 +23,7 @@ import com.dentalvision.ai.presentation.theme.DentalColors
 
 /**
  * Reports Screen - Responsive
- * Gestiona, descarga y visualiza reportes de análisis dental
+ * Manage, download and visualize dental analysis reports
  */
 @Composable
 fun ReportsScreen(
@@ -49,10 +49,10 @@ private fun ReportsContent(
     // Demo reports data
     val reports = remember {
         listOf(
-            ReportData("REP-2025-001", "Maria Gonzalez", "25 Dic 2025", "Análisis IA", "Completado"),
-            ReportData("REP-2025-002", "Juan Perez", "24 Dic 2025", "Diagnóstico", "Completado"),
-            ReportData("REP-2025-003", "Ana Lopez", "23 Dic 2025", "Análisis IA", "Completado"),
-            ReportData("REP-2025-004", "Carlos Gomez", "22 Dic 2025", "Tratamiento", "Pendiente")
+            ReportData("REP-2025-001", "Maria Gonzalez", "Dec 25, 2025", "AI Analysis", "Completed"),
+            ReportData("REP-2025-002", "Juan Perez", "Dec 24, 2025", "Diagnosis", "Completed"),
+            ReportData("REP-2025-003", "Ana Lopez", "Dec 23, 2025", "AI Analysis", "Completed"),
+            ReportData("REP-2025-004", "Carlos Gomez", "Dec 22, 2025", "Treatment", "Pending")
         )
     }
 
@@ -74,12 +74,12 @@ private fun ReportsContent(
                 if (isMobile) {
                     Column {
                         Text(
-                            text = "Reportes",
+                            text = "Reports",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Gestiona y descarga reportes",
+                            text = "Manage and download reports",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -95,7 +95,7 @@ private fun ReportsContent(
                         ) {
                             Icon(Icons.Default.Add, null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Generar Reporte")
+                            Text("Generate Report")
                         }
                     }
                 } else {
@@ -106,12 +106,12 @@ private fun ReportsContent(
                     ) {
                         Column {
                             Text(
-                                text = "Gestión de Reportes",
+                                text = "Reports Management",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Gestiona, descarga y comparte todos los reportes generados",
+                                text = "Manage, download and share all generated reports",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -125,7 +125,7 @@ private fun ReportsContent(
                         ) {
                             Icon(Icons.Default.Add, null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Generar Reporte")
+                            Text("Generate Report")
                         }
                     }
                 }
@@ -148,7 +148,7 @@ private fun ReportsContent(
                                 modifier = Modifier.weight(1f)
                             )
                             StatCard(
-                                title = "Análisis",
+                                title = "Analysis",
                                 value = "4",
                                 icon = ExtendedIcons.BarChart,
                                 color = DentalColors.Success,
@@ -160,14 +160,14 @@ private fun ReportsContent(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             StatCard(
-                                title = "Diagnóstico",
+                                title = "Diagnosis",
                                 value = "0",
                                 icon = ExtendedIcons.LocalHospital,
                                 color = DentalColors.Warning,
                                 modifier = Modifier.weight(1f)
                             )
                             StatCard(
-                                title = "Tratamiento",
+                                title = "Treatment",
                                 value = "0",
                                 icon = ExtendedIcons.MedicalServices,
                                 color = DentalColors.Secondary,
@@ -182,28 +182,28 @@ private fun ReportsContent(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         StatCard(
-                            title = "Total Reportes",
+                            title = "Total Reports",
                             value = "4",
                             icon = ExtendedIcons.Description,
                             color = DentalColors.Primary,
                             modifier = Modifier.weight(1f)
                         )
                         StatCard(
-                            title = "Análisis",
+                            title = "Analysis",
                             value = "4",
                             icon = ExtendedIcons.BarChart,
                             color = DentalColors.Success,
                             modifier = Modifier.weight(1f)
                         )
                         StatCard(
-                            title = "Diagnósticos",
+                            title = "Diagnoses",
                             value = "0",
                             icon = ExtendedIcons.LocalHospital,
                             color = DentalColors.Warning,
                             modifier = Modifier.weight(1f)
                         )
                         StatCard(
-                            title = "Tratamientos",
+                            title = "Treatments",
                             value = "0",
                             icon = ExtendedIcons.MedicalServices,
                             color = DentalColors.Secondary,
@@ -219,9 +219,9 @@ private fun ReportsContent(
                     value = "",
                     onValueChange = {},
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Buscar reportes por paciente...") },
+                    placeholder = { Text("Search reports by patient...") },
                     leadingIcon = {
-                        Icon(Icons.Default.Search, "Buscar")
+                        Icon(Icons.Default.Search, "Search")
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
@@ -375,7 +375,7 @@ private fun ReportCardMobile(report: ReportData) {
                 ) {
                     Icon(ExtendedIcons.Visibility, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Ver")
+                    Text("View")
                 }
 
                 OutlinedButton(
@@ -384,7 +384,7 @@ private fun ReportCardMobile(report: ReportData) {
                 ) {
                     Icon(Icons.Default.Share, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Compartir")
+                    Text("Share")
                 }
             }
         }
@@ -468,15 +468,15 @@ private fun ReportCardDesktop(report: ReportData) {
                 ) {
                     Icon(ExtendedIcons.Visibility, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Ver Reporte")
+                    Text("View Report")
                 }
 
                 IconButton(onClick = {}) {
-                    Icon(Icons.Default.Share, "Compartir")
+                    Icon(Icons.Default.Share, "Share")
                 }
 
                 IconButton(onClick = {}) {
-                    Icon(Icons.Default.Download, "Descargar")
+                    Icon(Icons.Default.Add, "Download")
                 }
             }
         }

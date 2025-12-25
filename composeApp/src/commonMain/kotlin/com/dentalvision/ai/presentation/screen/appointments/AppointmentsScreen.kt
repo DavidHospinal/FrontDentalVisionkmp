@@ -76,12 +76,12 @@ private fun AppointmentsContent(
             ) {
                 item {
                     Text(
-                        text = "Citas",
+                        text = "Appointments",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Gestiona tus citas médicas",
+                        text = "Manage your medical appointments",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -97,7 +97,7 @@ private fun AppointmentsContent(
                     ) {
                         Icon(Icons.Default.Add, null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Nueva Cita")
+                        Text("New Appointment")
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -173,7 +173,7 @@ private fun CalendarSection(
                     ) {
                         Icon(Icons.Default.Add, null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Nueva Cita")
+                        Text("New Appointment")
                     }
                 }
             }

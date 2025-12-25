@@ -9,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,11 +59,13 @@ fun PatientsScreen(
                 TopAppBar(
                     title = {
                         Column {
-                            Text("Gestion de Pacientes", fontWeight = FontWeight.Bold)
+                            Text("Patient Management", fontWeight = FontWeight.Bold)
                             Text(
-                                "Administra y consulta la informacion de todos los pacientes",
+                                text = "Manage and consult all patient information",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.8f)
+                                color = Color.White.copy(alpha = 0.9f),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     },
@@ -84,7 +88,7 @@ fun PatientsScreen(
                         ) {
                             Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Nuevo Paciente")
+                            Text("New Patient")
                         }
                     }
                 )
@@ -101,7 +105,7 @@ fun PatientsScreen(
                     value = searchQuery,
                     onValueChange = { viewModel.searchPatients(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Buscar por nombre o telefono...") },
+                    placeholder = { Text("Search by name or phone...") },
                     leadingIcon = { Icon(Icons.Default.Search, null) },
                     singleLine = true
                 )
@@ -139,12 +143,12 @@ fun PatientsScreen(
                                     Spacer(Modifier.width(8.dp))
                                     Column {
                                         Text(
-                                            "Backend no disponible",
+                                            "Backend Unavailable",
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.error
                                         )
                                         Text(
-                                            "Mostrando datos de demostración",
+                                            "Showing demo data",
                                             style = MaterialTheme.typography.bodySmall
                                         )
                                     }
@@ -175,12 +179,12 @@ fun PatientsScreen(
                                     tint = MaterialTheme.colorScheme.outline
                                 )
                                 Spacer(Modifier.height(16.dp))
-                                Text("No hay pacientes registrados")
+                                Text("No patients registered")
                                 Spacer(Modifier.height(8.dp))
                                 Button(onClick = { showNewPatientDialog = true }) {
                                     Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(4.dp))
-                                    Text("Agregar Primer Paciente")
+                                    Text("Add First Patient")
                                 }
                             }
                         }
@@ -258,14 +262,14 @@ fun PatientListItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(patient.name, fontWeight = FontWeight.SemiBold)
-                Text("${patient.age} anos - ${patient.phone ?: "Sin telefono"}", style = MaterialTheme.typography.bodySmall)
+                Text("${patient.age} years - ${patient.phone ?: "No phone"}", style = MaterialTheme.typography.bodySmall)
             }
 
             IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, "Editar")
+                Icon(Icons.Default.Edit, "Edit")
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, "Eliminar", tint = Color.Red)
+                Icon(Icons.Default.Delete, "Delete", tint = Color.Red)
             }
         }
     }
