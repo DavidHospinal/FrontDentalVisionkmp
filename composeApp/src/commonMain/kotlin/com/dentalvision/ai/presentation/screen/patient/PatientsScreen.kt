@@ -47,10 +47,7 @@ fun PatientsScreen(
                 NavigationDrawerContent(
                     currentRoute = currentRoute,
                     onNavigate = onNavigate,
-                    onLogout = onLogout,
-                    onCloseDrawer = {
-                        kotlinx.coroutines.launch { drawerState.close() }
-                    }
+                    onLogout = onLogout
                 )
             }
         }
@@ -73,7 +70,7 @@ fun PatientsScreen(
                         titleContentColor = Color.White
                     ),
                     navigationIcon = {
-                        IconButton(onClick = { kotlinx.coroutines.launch { drawerState.open() } }) {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, "Menu", tint = Color.White)
                         }
                     },

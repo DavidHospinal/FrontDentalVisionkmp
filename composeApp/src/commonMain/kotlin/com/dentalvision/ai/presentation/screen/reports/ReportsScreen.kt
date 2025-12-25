@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -19,8 +22,8 @@ import com.dentalvision.ai.presentation.component.MainScaffold
 import com.dentalvision.ai.presentation.theme.DentalColors
 
 /**
- * Reports Screen
- * Manage, download and view generated dental analysis reports
+ * Reports Screen - Responsive
+ * Gestiona, descarga y visualiza reportes de análisis dental
  */
 @Composable
 fun ReportsScreen(
@@ -43,205 +46,208 @@ fun ReportsScreen(
 private fun ReportsContent(
     modifier: Modifier = Modifier
 ) {
-    Column(
+    // Demo reports data
+    val reports = remember {
+        listOf(
+            ReportData("REP-2025-001", "Maria Gonzalez", "25 Dic 2025", "Análisis IA", "Completado"),
+            ReportData("REP-2025-002", "Juan Perez", "24 Dic 2025", "Diagnóstico", "Completado"),
+            ReportData("REP-2025-003", "Ana Lopez", "23 Dic 2025", "Análisis IA", "Completado"),
+            ReportData("REP-2025-004", "Carlos Gomez", "22 Dic 2025", "Tratamiento", "Pendiente")
+        )
+    }
+
+    // Responsive Layout
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(DentalColors.Background)
             .padding(24.dp)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        val isMobile = maxWidth < 600.dp
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column {
-                Text(
-                    text = "Report Management",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Manage, download and share all generated reports",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            // Header
+            item {
+                if (isMobile) {
+                    Column {
+                        Text(
+                            text = "Reportes",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Gestiona y descarga reportes",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
 
-            Button(
-                onClick = {},
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DentalColors.Primary
-                )
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Generate Report")
-            }
-        }
+                        Spacer(Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
+                        Button(
+                            onClick = {},
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = DentalColors.Primary
+                            )
+                        ) {
+                            Icon(Icons.Default.Add, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Generar Reporte")
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Gestión de Reportes",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Gestiona, descarga y comparte todos los reportes generados",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
-        // Stats Cards
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            StatCard(
-                title = "Total Reports",
-                value = "4",
-                icon = ExtendedIcons.Description,
-                color = DentalColors.Primary,
-                modifier = Modifier.weight(1f)
-            )
-
-            StatCard(
-                title = "Analysis",
-                value = "4",
-                icon = ExtendedIcons.BarChart,
-                color = DentalColors.Success,
-                modifier = Modifier.weight(1f)
-            )
-
-            StatCard(
-                title = "Diagnostics",
-                value = "0",
-                icon = ExtendedIcons.LocalHospital,
-                color = DentalColors.Warning,
-                modifier = Modifier.weight(1f)
-            )
-
-            StatCard(
-                title = "Treatments",
-                value = "0",
-                icon = ExtendedIcons.MedicalServices,
-                color = DentalColors.Secondary,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Search and Filters
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Search reports by patient or archive...") },
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = "Search")
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(8.dp)
-            )
-
-            OutlinedButton(
-                onClick = {},
-                modifier = Modifier.height(56.dp)
-            ) {
-                Text("All Dates")
-                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-            }
-
-            OutlinedButton(
-                onClick = {},
-                modifier = Modifier.height(56.dp)
-            ) {
-                Text("All Types")
-                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-            }
-
-            IconButton(
-                onClick = {},
-                modifier = Modifier.size(56.dp)
-            ) {
-                Icon(ExtendedIcons.GridView, contentDescription = "Grid View")
-            }
-
-            IconButton(
-                onClick = {},
-                modifier = Modifier.size(56.dp)
-            ) {
-                Icon(Icons.Default.List, contentDescription = "List View")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Showing 4 of 4 reports",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Reports List
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "Generated Reports",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "Complete list of reports available for download",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Sample reports
-                val reports = listOf(
-                    ReportItem("Elena Raspov Unh", "3/12/2025 - 21:58", "undefined"),
-                    ReportItem("Robertto Nazario Vega", "3/12/2025 - 12:12", "undefined"),
-                    ReportItem("Laura Spencer Miller", "3/12/2025 - 12:28", "undefined"),
-                    ReportItem("Mario Shura Testuw", "3/12/2025 - 12:35", "undefined")
-                )
-
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(reports) { report ->
-                        ReportCard(report)
+                        Button(
+                            onClick = {},
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = DentalColors.Primary
+                            )
+                        ) {
+                            Icon(Icons.Default.Add, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Generar Reporte")
+                        }
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            // Stats Cards
+            item {
+                if (isMobile) {
+                    // Mobile: 2x2 Grid
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            StatCard(
+                                title = "Total",
+                                value = "4",
+                                icon = ExtendedIcons.Description,
+                                color = DentalColors.Primary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCard(
+                                title = "Análisis",
+                                value = "4",
+                                icon = ExtendedIcons.BarChart,
+                                color = DentalColors.Success,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            StatCard(
+                                title = "Diagnóstico",
+                                value = "0",
+                                icon = ExtendedIcons.LocalHospital,
+                                color = DentalColors.Warning,
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCard(
+                                title = "Tratamiento",
+                                value = "0",
+                                icon = ExtendedIcons.MedicalServices,
+                                color = DentalColors.Secondary,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                } else {
+                    // Desktop: 1x4 Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        StatCard(
+                            title = "Total Reportes",
+                            value = "4",
+                            icon = ExtendedIcons.Description,
+                            color = DentalColors.Primary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            title = "Análisis",
+                            value = "4",
+                            icon = ExtendedIcons.BarChart,
+                            color = DentalColors.Success,
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            title = "Diagnósticos",
+                            value = "0",
+                            icon = ExtendedIcons.LocalHospital,
+                            color = DentalColors.Warning,
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            title = "Tratamientos",
+                            value = "0",
+                            icon = ExtendedIcons.MedicalServices,
+                            color = DentalColors.Secondary,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
 
-        // Quick Actions
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                QuickAction("New Report", Icons.Default.Add)
-                QuickAction("Statistics", ExtendedIcons.BarChart)
-                QuickAction("Export All", ExtendedIcons.Download)
-                QuickAction("Batch Management", ExtendedIcons.Inventory)
+            // Search Bar
+            item {
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Buscar reportes por paciente...") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, "Buscar")
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(8.dp)
+                )
+            }
+
+            // Reports List/Grid
+            if (isMobile) {
+                // Mobile: Vertical List
+                items(reports) { report ->
+                    ReportCardMobile(report)
+                }
+            } else {
+                // Desktop: Grid layout
+                item {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.heightIn(max = 2000.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(reports) { report ->
+                            ReportCardDesktop(report)
+                        }
+                    }
+                }
             }
         }
     }
@@ -263,107 +269,122 @@ private fun StatCard(
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.padding(16.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = color,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = color
             )
+
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
 
-data class ReportItem(
-    val patientName: String,
-    val date: String,
-    val patientId: String
-)
-
 @Composable
-private fun ReportCard(report: ReportItem) {
+private fun ReportCardMobile(report: ReportData) {
     Card(
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF5F7FA)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp)
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Icon(
-                    imageVector = ExtendedIcons.BarChart,
-                    contentDescription = null,
-                    tint = DentalColors.Primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = report.id,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = DentalColors.Primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = report.patientName,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row {
-                        Text(
-                            text = "Date: ${report.date}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = "Patient ID: ${report.patientId}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                     Text(
-                        text = "Status: Active",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = DentalColors.Success
+                        text = report.date,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+
+                Badge(
+                    containerColor = when (report.status) {
+                        "Completado" -> DentalColors.Success
+                        "Pendiente" -> DentalColors.Warning
+                        else -> Color.Gray
+                    },
+                    contentColor = Color.White
+                ) {
+                    Text(report.status)
                 }
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Spacer(Modifier.height(12.dp))
+
+            Badge(
+                containerColor = Color(0xFFF0F4FF),
+                contentColor = DentalColors.Primary
             ) {
+                Text(
+                    report.type,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = {},
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DentalColors.Primary
+                    )
+                ) {
+                    Icon(ExtendedIcons.Visibility, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Ver")
+                }
+
                 OutlinedButton(
                     onClick = {},
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(ExtendedIcons.RemoveRedEye, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Preview", style = MaterialTheme.typography.labelSmall)
-                }
-
-                IconButton(onClick = {}) {
-                    Icon(ExtendedIcons.Download, contentDescription = "Download")
-                }
-
-                IconButton(onClick = {}) {
-                    Icon(Icons.Default.Share, contentDescription = "Share")
+                    Icon(Icons.Default.Share, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Compartir")
                 }
             }
         }
@@ -371,28 +392,104 @@ private fun ReportCard(report: ReportItem) {
 }
 
 @Composable
-private fun QuickAction(
-    text: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+private fun ReportCardDesktop(report: ReportData) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        IconButton(
-            onClick = {},
-            modifier = Modifier.size(48.dp)
+        Column(
+            modifier = Modifier.padding(20.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = text,
-                tint = DentalColors.Primary,
-                modifier = Modifier.size(24.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = report.id,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = DentalColors.Primary
+                )
+
+                Badge(
+                    containerColor = when (report.status) {
+                        "Completado" -> DentalColors.Success
+                        "Pendiente" -> DentalColors.Warning
+                        else -> Color.Gray
+                    },
+                    contentColor = Color.White
+                ) {
+                    Text(report.status)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = report.patientName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold
             )
+
+            Text(
+                text = report.date,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Badge(
+                containerColor = Color(0xFFF0F4FF),
+                contentColor = DentalColors.Primary
+            ) {
+                Text(
+                    report.type,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = {},
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DentalColors.Primary
+                    )
+                ) {
+                    Icon(ExtendedIcons.Visibility, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Ver Reporte")
+                }
+
+                IconButton(onClick = {}) {
+                    Icon(Icons.Default.Share, "Compartir")
+                }
+
+                IconButton(onClick = {}) {
+                    Icon(Icons.Default.Download, "Descargar")
+                }
+            }
         }
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
+
+/**
+ * Data class for demo reports
+ */
+private data class ReportData(
+    val id: String,
+    val patientName: String,
+    val date: String,
+    val type: String,
+    val status: String
+)
