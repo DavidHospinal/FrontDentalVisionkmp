@@ -1,5 +1,7 @@
 package com.dentalvision.ai.presentation.screen.analysis
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -14,35 +16,50 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.domain.model.Patient
 import com.dentalvision.ai.presentation.component.ExtendedIcons
 import com.dentalvision.ai.presentation.component.MainScaffold
 import com.dentalvision.ai.presentation.theme.DentalColors
-import kotlinx.coroutines.delay
+import com.dentalvision.ai.presentation.viewmodel.AnalysisUiState
+import com.dentalvision.ai.presentation.viewmodel.NewAnalysisViewModel
+import com.dentalvision.ai.presentation.viewmodel.PatientsViewModel
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * New Analysis Screen - Responsive
- * Permite seleccionar paciente y realizar análisis dental con IA
+ * New Analysis Screen - REAL INTEGRATION
+ * Connects to YOLOv12 API via HuggingFace for actual dental analysis
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewAnalysisScreen(
     currentRoute: String,
     onNavigate: (String) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    analysisViewModel: NewAnalysisViewModel = koinViewModel(),
+    patientsViewModel: PatientsViewModel = koinViewModel()
 ) {
+    // Load patients on first composition
+    LaunchedEffect(Unit) {
+        patientsViewModel.loadPatients()
+    }
+
     MainScaffold(
         currentRoute = currentRoute,
         onNavigate = onNavigate,
         onLogout = onLogout
     ) { paddingValues ->
         NewAnalysisContent(
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.padding(paddingValues),
+            analysisViewModel = analysisViewModel,
+            patientsViewModel = patientsViewModel
         )
     }
 }
@@ -50,21 +67,19 @@ fun NewAnalysisScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NewAnalysisContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    analysisViewModel: NewAnalysisViewModel,
+    patientsViewModel: PatientsViewModel
 ) {
-    // Coroutine scope for async operations
     val scope = rememberCoroutineScope()
+    val uiState by analysisViewModel.uiState.collectAsState()
+    val selectedImage by analysisViewModel.selectedImage.collectAsState()
+    val analysisResult by analysisViewModel.analysisResult.collectAsState()
 
-    // State management
+    val patients by patientsViewModel.patients.collectAsState()
     var selectedPatient by remember { mutableStateOf<Patient?>(null) }
     var patientDropdownExpanded by remember { mutableStateOf(false) }
-    var hasImageUploaded by remember { mutableStateOf(false) }
-    var isAnalyzing by remember { mutableStateOf(false) }
-    var analysisComplete by remember { mutableStateOf(false) }
 
-    val demoPatients = remember { getDemoPatients() }
-
-    // Responsive layout
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
@@ -74,7 +89,7 @@ private fun NewAnalysisContent(
         val isMobile = maxWidth < 600.dp
 
         if (isMobile) {
-            // Mobile Layout - Vertical Column
+            // Mobile Layout
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -83,85 +98,87 @@ private fun NewAnalysisContent(
             ) {
                 MainContentSection(
                     selectedPatient = selectedPatient,
+                    patients = patients,
                     patientDropdownExpanded = patientDropdownExpanded,
                     onPatientDropdownExpandedChange = { patientDropdownExpanded = it },
-                    demoPatients = demoPatients,
                     onPatientSelected = {
                         selectedPatient = it
                         patientDropdownExpanded = false
                     },
-                    hasImageUploaded = hasImageUploaded,
-                    onUploadImage = {
-                        hasImageUploaded = true
-                        isAnalyzing = true
-                        // Simulate AI processing
-                        scope.launch {
-                            delay(2000)
-                            isAnalyzing = false
-                            analysisComplete = true
+                    selectedImage = selectedImage,
+                    onSelectImage = { analysisViewModel.selectImage() },
+                    onAnalyze = {
+                        selectedPatient?.let { patient ->
+                            analysisViewModel.analyzeImage(patient.id)
                         }
                     },
-                    onRemoveImage = {
-                        hasImageUploaded = false
-                        analysisComplete = false
-                    },
-                    isAnalyzing = isAnalyzing,
-                    analysisComplete = analysisComplete,
+                    onClearImage = { analysisViewModel.clearImage() },
+                    uiState = uiState,
+                    analysisResult = analysisResult,
                     isMobile = true
                 )
 
-                if (selectedPatient != null && hasImageUploaded) {
+                if (selectedImage != null) {
                     AnalysisPreviewSection(
-                        analysisComplete = analysisComplete,
-                        isAnalyzing = isAnalyzing,
+                        selectedImage = selectedImage,
+                        analysisResult = analysisResult,
+                        uiState = uiState,
                         isMobile = true
                     )
                 }
             }
         } else {
-            // Desktop Layout - Horizontal Row
+            // Desktop Layout
             Row(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 MainContentSection(
                     selectedPatient = selectedPatient,
+                    patients = patients,
                     patientDropdownExpanded = patientDropdownExpanded,
                     onPatientDropdownExpandedChange = { patientDropdownExpanded = it },
-                    demoPatients = demoPatients,
                     onPatientSelected = {
                         selectedPatient = it
                         patientDropdownExpanded = false
                     },
-                    hasImageUploaded = hasImageUploaded,
-                    onUploadImage = {
-                        hasImageUploaded = true
-                        isAnalyzing = true
-                        // Simulate AI processing
-                        scope.launch {
-                            delay(2000)
-                            isAnalyzing = false
-                            analysisComplete = true
+                    selectedImage = selectedImage,
+                    onSelectImage = { analysisViewModel.selectImage() },
+                    onAnalyze = {
+                        selectedPatient?.let { patient ->
+                            analysisViewModel.analyzeImage(patient.id)
                         }
                     },
-                    onRemoveImage = {
-                        hasImageUploaded = false
-                        analysisComplete = false
-                    },
-                    isAnalyzing = isAnalyzing,
-                    analysisComplete = analysisComplete,
+                    onClearImage = { analysisViewModel.clearImage() },
+                    uiState = uiState,
+                    analysisResult = analysisResult,
                     modifier = Modifier.weight(2f),
                     isMobile = false
                 )
 
                 AnalysisPreviewSection(
-                    analysisComplete = analysisComplete,
-                    isAnalyzing = isAnalyzing,
+                    selectedImage = selectedImage,
+                    analysisResult = analysisResult,
+                    uiState = uiState,
                     modifier = Modifier.weight(1f),
                     isMobile = false
                 )
             }
         }
+    }
+
+    // Error Dialog
+    if (uiState is AnalysisUiState.Error) {
+        AlertDialog(
+            onDismissRequest = { analysisViewModel.reset() },
+            title = { Text("Analysis Error") },
+            text = { Text((uiState as AnalysisUiState.Error).message) },
+            confirmButton = {
+                TextButton(onClick = { analysisViewModel.reset() }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }
 
@@ -169,23 +186,22 @@ private fun NewAnalysisContent(
 @Composable
 private fun MainContentSection(
     selectedPatient: Patient?,
+    patients: List<Patient>,
     patientDropdownExpanded: Boolean,
     onPatientDropdownExpandedChange: (Boolean) -> Unit,
-    demoPatients: List<Patient>,
     onPatientSelected: (Patient) -> Unit,
-    hasImageUploaded: Boolean,
-    onUploadImage: () -> Unit,
-    onRemoveImage: () -> Unit,
-    isAnalyzing: Boolean,
-    analysisComplete: Boolean,
+    selectedImage: com.dentalvision.ai.presentation.viewmodel.ImageData?,
+    onSelectImage: () -> Unit,
+    onAnalyze: () -> Unit,
+    onClearImage: () -> Unit,
+    uiState: AnalysisUiState,
+    analysisResult: com.dentalvision.ai.domain.model.Analysis?,
     modifier: Modifier = Modifier,
     isMobile: Boolean
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
@@ -195,14 +211,13 @@ private fun MainContentSection(
                 .padding(if (isMobile) 16.dp else 24.dp)
                 .then(if (!isMobile) Modifier.verticalScroll(rememberScrollState()) else Modifier)
         ) {
-            // Header
             Text(
                 text = "New Dental Analysis",
                 style = if (isMobile) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Perform a new dental analysis with advanced AI",
+                text = "AI-powered dental cavity detection using YOLOv12",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -236,96 +251,50 @@ private fun MainContentSection(
                         expanded = patientDropdownExpanded,
                         onDismissRequest = { onPatientDropdownExpandedChange(false) }
                     ) {
-                        demoPatients.forEach { patient ->
+                        if (patients.isEmpty()) {
                             DropdownMenuItem(
-                                text = {
-                                    Column {
-                                        Text(patient.name, fontWeight = FontWeight.SemiBold)
-                                        Text(
-                                            "${patient.age} years - ${patient.phone ?: "No phone"}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                },
-                                onClick = { onPatientSelected(patient) },
-                                leadingIcon = {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .clip(CircleShape)
-                                            .background(DentalColors.Primary.copy(alpha = 0.1f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            patient.name.take(2).uppercase(),
-                                            color = DentalColors.Primary,
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                    }
-                                }
+                                text = { Text("No patients found. Please add patients first.") },
+                                onClick = {}
                             )
+                        } else {
+                            patients.forEach { patient ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(patient.name, fontWeight = FontWeight.SemiBold)
+                                            Text(
+                                                "${patient.age} years - ${patient.phone ?: "No phone"}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    onClick = { onPatientSelected(patient) },
+                                    leadingIcon = {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(CircleShape)
+                                                .background(DentalColors.Primary.copy(alpha = 0.1f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                patient.name.take(2).uppercase(),
+                                                color = DentalColors.Primary,
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.labelMedium
+                                            )
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
 
                 if (selectedPatient != null) {
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    // Patient Info Card
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF0F4FF)
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(DentalColors.Primary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = null,
-                                    tint = Color.White
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = selectedPatient.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = "${selectedPatient.age} years - ${selectedPatient.gender.name}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "Tel: ${selectedPatient.phone ?: "N/A"}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            Badge(
-                                containerColor = DentalColors.Success,
-                                contentColor = Color.White
-                            ) {
-                                Text("Active")
-                            }
-                        }
-                    }
+                    PatientInfoCard(selectedPatient)
                 }
             }
 
@@ -336,171 +305,55 @@ private fun MainContentSection(
                 stepNumber = 2,
                 title = "Upload Dental X-Ray",
                 isActive = selectedPatient != null,
-                isCompleted = hasImageUploaded && analysisComplete
+                isCompleted = selectedImage != null
             ) {
-                if (!hasImageUploaded) {
-                    // Upload Area
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(if (isMobile) 200.dp else 250.dp)
-                            .border(
-                                width = 2.dp,
-                                color = DentalColors.Primary.copy(alpha = 0.3f),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .background(
-                                color = Color(0xFFF0F4FF),
-                                shape = RoundedCornerShape(8.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = ExtendedIcons.CloudUpload,
-                                contentDescription = null,
-                                modifier = Modifier.size(if (isMobile) 48.dp else 64.dp),
-                                tint = DentalColors.Primary
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Drag dental image here",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = "or",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Button(
-                                    onClick = onUploadImage,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = DentalColors.Primary
-                                    ),
-                                    enabled = selectedPatient != null
-                                ) {
-                                    Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
-                                    Spacer(Modifier.width(4.dp))
-                                    Text("Select File")
-                                }
-                            }
-                        }
-                    }
+                if (selectedImage == null) {
+                    UploadArea(
+                        enabled = selectedPatient != null,
+                        onSelectImage = onSelectImage,
+                        isMobile = isMobile
+                    )
                 } else {
-                    // Uploaded Image Preview
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(if (isMobile) 200.dp else 250.dp)
-                            .background(
-                                color = Color(0xFF333333),
-                                shape = RoundedCornerShape(8.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isAnalyzing) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                CircularProgressIndicator(color = Color.White)
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    "Analyzing with AI...",
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        } else {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(
-                                    imageVector = ExtendedIcons.Image,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(100.dp),
-                                    tint = Color.White
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Badge(
-                                    containerColor = DentalColors.Success,
-                                    contentColor = Color.White
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.CheckCircle,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Text("Analyzed")
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    ImageSelectedCard(
+                        imageName = selectedImage.name,
+                        imageSize = selectedImage.bytes.size,
+                        onClear = onClearImage,
+                        uiState = uiState
+                    )
+                }
+            }
 
-                    if (analysisComplete) {
-                        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                        // Analysis Results
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFF5F7FA)
-                            )
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = "Analysis Results",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                InfoRow("Dimensions", "1024x768 px")
-                                InfoRow("Size", "0.12 MB")
-                                InfoRow("Format", "PNG")
-                                InfoRow("Status", "Processed", DentalColors.Success)
-                                InfoRow("Teeth detected", "28", DentalColors.Primary)
-                                InfoRow("Cavities found", "3", DentalColors.Error)
-                                InfoRow("Average confidence", "89%", DentalColors.Success)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = {},
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = DentalColors.Primary
-                                )
-                            ) {
-                                Icon(Icons.Default.Done, null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text("Save")
-                            }
-                            OutlinedButton(
-                                onClick = onRemoveImage,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text("New")
-                            }
-                        }
+            // Step 3: Analyze
+            if (selectedImage != null && selectedPatient != null) {
+                Button(
+                    onClick = onAnalyze,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = uiState !is AnalysisUiState.Analyzing,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DentalColors.Primary
+                    )
+                ) {
+                    if (uiState is AnalysisUiState.Analyzing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Analyzing... ${(uiState as AnalysisUiState.Analyzing).progress}%")
+                    } else {
+                        Icon(Icons.Default.Search, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Analyze with AI")
                     }
                 }
+            }
+
+            // Results Summary
+            if (analysisResult != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                ResultsSummaryCard(analysisResult)
             }
         }
     }
@@ -508,16 +361,15 @@ private fun MainContentSection(
 
 @Composable
 private fun AnalysisPreviewSection(
-    analysisComplete: Boolean,
-    isAnalyzing: Boolean,
+    selectedImage: com.dentalvision.ai.presentation.viewmodel.ImageData?,
+    analysisResult: com.dentalvision.ai.domain.model.Analysis?,
+    uiState: AnalysisUiState,
     modifier: Modifier = Modifier,
     isMobile: Boolean
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
@@ -525,121 +377,166 @@ private fun AnalysisPreviewSection(
                 .fillMaxWidth()
                 .then(if (!isMobile) Modifier.fillMaxHeight() else Modifier)
                 .padding(if (isMobile) 16.dp else 20.dp)
-                .then(if (!isMobile) Modifier.verticalScroll(rememberScrollState()) else Modifier)
         ) {
             Text(
-                text = "Vista Previa",
+                text = "Analysis Preview",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (analysisComplete) {
-                // Preview of processed image
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .background(
-                            color = Color(0xFF333333),
-                            shape = RoundedCornerShape(8.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            ExtendedIcons.Image,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Dental Image\nwith AI Annotations",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
+            when {
+                selectedImage == null -> {
+                    EmptyPreview()
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Badge(
-                    containerColor = Color(0xFFE8F5E9),
-                    contentColor = DentalColors.Success
-                ) {
-                    Text(
-                        text = "Analysis completed successfully",
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
+                uiState is AnalysisUiState.Analyzing -> {
+                    AnalyzingPreview((uiState as AnalysisUiState.Analyzing).progress)
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Quick Stats
-                Text(
-                    text = "Quick Results",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                QuickStatCard("Teeth Detected", "28", Icons.Default.CheckCircle, DentalColors.Primary)
-                QuickStatCard("Cavities Detected", "3", Icons.Default.Warning, DentalColors.Error)
-                QuickStatCard("Confidence", "89%", ExtendedIcons.BarChart, DentalColors.Success)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Actions
-                Button(
-                    onClick = {},
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = DentalColors.Primary
-                    )
-                ) {
-                    Icon(ExtendedIcons.Description, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Generate Report")
+                analysisResult != null -> {
+                    CompletedAnalysisPreview(selectedImage, analysisResult)
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedButton(
-                    onClick = {},
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Share, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Share")
+                else -> {
+                    ImageReadyPreview(selectedImage)
                 }
-            } else if (isAnalyzing) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Processing image...")
-                    }
-                }
-            } else {
-                Text(
-                    text = "Upload an image to view the analysis preview",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }
 }
+
+@Composable
+private fun CompletedAnalysisPreview(
+    imageData: com.dentalvision.ai.presentation.viewmodel.ImageData,
+    analysis: com.dentalvision.ai.domain.model.Analysis
+) {
+    // Analysis Results Display
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = DentalColors.Success.copy(alpha = 0.1f)
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = DentalColors.Success
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = "Analysis Complete!",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = DentalColors.Success
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "Image analyzed successfully with YOLOv12",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+
+    Spacer(Modifier.height(16.dp))
+
+    // Quick stats
+    QuickStatsCard(analysis)
+
+    Spacer(Modifier.height(12.dp))
+
+    // Detections List
+    if (analysis.detections.isNotEmpty()) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F7FA)),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = "Detected Teeth (${analysis.detections.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(8.dp))
+                analysis.detections.take(5).forEach { detection ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Tooth #${detection.toothNumberFDI}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Badge(
+                            containerColor = if (detection.hasCaries) DentalColors.Error else DentalColors.Success,
+                            contentColor = Color.White
+                        ) {
+                            Text(
+                                if (detection.hasCaries) "Cavity" else "Healthy",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+                if (analysis.detections.size > 5) {
+                    Text(
+                        text = "... and ${analysis.detections.size - 5} more",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickStatsCard(analysis: com.dentalvision.ai.domain.model.Analysis) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F7FA)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            StatRow("Teeth Detected", analysis.totalTeethDetected.toString(), DentalColors.Primary)
+            StatRow("Cavities Found", analysis.totalCariesDetected.toString(), DentalColors.Error)
+            StatRow("Confidence", "${(analysis.confidenceScore * 100).toInt()}%", DentalColors.Success)
+            StatRow("Status", analysis.severityLevel.displayName, Color.Gray)
+        }
+    }
+}
+
+@Composable
+private fun StatRow(label: String, value: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = "$label:", style = MaterialTheme.typography.bodySmall)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+    }
+}
+
+// ============= HELPER COMPOSABLES =============
 
 @Composable
 private fun StepCard(
@@ -647,29 +544,30 @@ private fun StepCard(
     title: String,
     isActive: Boolean,
     isCompleted: Boolean,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable () -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = if (isActive) Color.White else Color(0xFFF5F7FA)
+            containerColor = if (isActive) MaterialTheme.colorScheme.surface else Color(0xFFF5F7FA)
         ),
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(8.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Step number badge
                 Box(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isCompleted) DentalColors.Success
-                            else if (isActive) DentalColors.Primary
-                            else Color.Gray
+                            when {
+                                isCompleted -> DentalColors.Success
+                                isActive -> DentalColors.Primary
+                                else -> Color.Gray
+                            }
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -683,25 +581,23 @@ private fun StepCard(
                     } else {
                         Text(
                             text = stepNumber.toString(),
-                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            style = MaterialTheme.typography.labelMedium
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isActive) MaterialTheme.colorScheme.onSurface else Color.Gray
+                    color = if (isActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             if (isActive) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 content()
             }
         }
@@ -709,122 +605,393 @@ private fun StepCard(
 }
 
 @Composable
-private fun InfoRow(
-    label: String,
-    value: String,
-    valueColor: Color = MaterialTheme.colorScheme.onSurface
+private fun PatientInfoCard(patient: Patient) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4FF)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(DentalColors.Primary.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    patient.name.take(2).uppercase(),
+                    color = DentalColors.Primary,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            Column {
+                Text(
+                    text = patient.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "${patient.age} years old",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                patient.phone?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UploadArea(
+    enabled: Boolean,
+    onSelectImage: () -> Unit,
+    isMobile: Boolean
 ) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .height(if (isMobile) 180.dp else 200.dp)
+            .border(
+                width = 2.dp,
+                color = if (enabled) DentalColors.Primary.copy(alpha = 0.5f) else Color.Gray.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .background(
+                color = if (enabled) DentalColors.Primary.copy(alpha = 0.05f) else Color.Gray.copy(alpha = 0.05f),
+                shape = RoundedCornerShape(8.dp)
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "$label:",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = if (enabled) DentalColors.Primary else Color.Gray
+            )
+
+            Text(
+                text = if (enabled) "Click to upload X-Ray image" else "Select a patient first",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+
+            Text(
+                text = "PNG, JPG, JPEG (Max 10MB)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            if (enabled) {
+                Button(
+                    onClick = onSelectImage,
+                    colors = ButtonDefaults.buttonColors(containerColor = DentalColors.Primary)
+                ) {
+                    Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Select Image")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ImageSelectedCard(
+    imageName: String,
+    imageSize: Int,
+    onClear: () -> Unit,
+    uiState: AnalysisUiState
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4FF)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    tint = DentalColors.Success,
+                    modifier = Modifier.size(32.dp)
+                )
+
+                Column {
+                    Text(
+                        text = imageName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "${imageSize / 1024} KB",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (uiState !is AnalysisUiState.Analyzing) {
+                IconButton(onClick = onClear) {
+                    Icon(Icons.Default.Close, "Clear image", tint = DentalColors.Error)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResultsSummaryCard(analysis: com.dentalvision.ai.domain.model.Analysis) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = when {
+                analysis.totalCariesDetected > 5 -> DentalColors.Error.copy(alpha = 0.1f)
+                analysis.totalCariesDetected > 0 -> DentalColors.Warning.copy(alpha = 0.1f)
+                else -> DentalColors.Success.copy(alpha = 0.1f)
+            }
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Analysis Complete",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Badge(
+                    containerColor = when {
+                        analysis.totalCariesDetected > 5 -> DentalColors.Error
+                        analysis.totalCariesDetected > 0 -> DentalColors.Warning
+                        else -> DentalColors.Success
+                    },
+                    contentColor = Color.White
+                ) {
+                    Text(analysis.severityLevel.displayName)
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                SummaryItem(
+                    label = "Teeth",
+                    value = analysis.totalTeethDetected.toString(),
+                    icon = ExtendedIcons.LocalHospital,
+                    color = DentalColors.Primary
+                )
+
+                SummaryItem(
+                    label = "Cavities",
+                    value = analysis.totalCariesDetected.toString(),
+                    icon = Icons.Default.Warning,
+                    color = DentalColors.Error
+                )
+
+                SummaryItem(
+                    label = "Confidence",
+                    value = "${(analysis.confidenceScore * 100).toInt()}%",
+                    icon = Icons.Default.Check,
+                    color = DentalColors.Success
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryItem(
+    label: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    color: Color
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(24.dp)
         )
+        Spacer(Modifier.height(4.dp))
         Text(
             text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Text(
+            text = label,
             style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium,
-            color = valueColor
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
 @Composable
-private fun QuickStatCard(
-    title: String,
-    value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    color: Color
-) {
+private fun EmptyPreview() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .border(2.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+            .background(Color.Gray.copy(alpha = 0.05f), RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = Color.Gray
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "No image selected",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnalyzingPreview(progress: Int) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .background(DentalColors.Primary.copy(alpha = 0.05f), RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(64.dp),
+                color = DentalColors.Primary
+            )
+
+            Text(
+                text = "Analyzing with AI...",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Text(
+                text = "$progress%",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = DentalColors.Primary
+            )
+
+            Text(
+                text = "Processing dental image with YOLOv12",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ImageReadyPreview(imageData: com.dentalvision.ai.presentation.viewmodel.ImageData) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF5F7FA)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4FF)),
         shape = RoundedCornerShape(8.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = icon,
+                Icons.Default.Check,
                 contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(64.dp),
+                tint = DentalColors.Primary
             )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = "Image Ready",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = DentalColors.Primary
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = imageData.name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Text(
+                text = "${imageData.bytes.size / 1024} KB",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            HorizontalDivider()
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = null,
+                    tint = DentalColors.Warning,
+                    modifier = Modifier.size(20.dp)
                 )
                 Text(
-                    text = value,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    text = "Click 'Analyze with AI' to start detection",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
-    Spacer(modifier = Modifier.height(8.dp))
-}
-
-/**
- * Demo patients for when backend is unavailable
- */
-private fun getDemoPatients(): List<Patient> {
-    val now = Clock.System.now()
-    return listOf(
-        Patient(
-            id = "demo-1",
-            name = "Maria Rodriguez",
-            age = 28,
-            gender = Patient.Gender.FEMALE,
-            phone = "+51 987 654 321",
-            email = "maria.rodriguez@email.com",
-            createdAt = now,
-            updatedAt = now,
-            synced = false
-        ),
-        Patient(
-            id = "demo-2",
-            name = "Juan Perez",
-            age = 45,
-            gender = Patient.Gender.MALE,
-            phone = "+51 912 345 678",
-            email = "juan.perez@email.com",
-            createdAt = now,
-            updatedAt = now,
-            synced = false
-        ),
-        Patient(
-            id = "demo-3",
-            name = "Ana Lopez",
-            age = 35,
-            gender = Patient.Gender.FEMALE,
-            phone = "+51 998 765 432",
-            email = "ana.lopez@email.com",
-            createdAt = now,
-            updatedAt = now,
-            synced = false
-        ),
-        Patient(
-            id = "demo-4",
-            name = "Carlos Gomez",
-            age = 52,
-            gender = Patient.Gender.MALE,
-            phone = "+51 923 456 789",
-            email = "carlos.gomez@email.com",
-            createdAt = now,
-            updatedAt = now,
-            synced = false
-        )
-    )
 }

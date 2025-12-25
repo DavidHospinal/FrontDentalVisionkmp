@@ -1,5 +1,6 @@
 package com.dentalvision.ai.presentation.screen.appointments
 
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -446,22 +447,19 @@ private fun AppointmentCard(appointment: AppointmentData) {
 private fun AppointmentCardMobile(appointment: AppointmentData) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+            // Fila superior: Hora y Estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         ExtendedIcons.AccessTime,
                         null,
@@ -478,8 +476,8 @@ private fun AppointmentCardMobile(appointment: AppointmentData) {
 
                 Badge(
                     containerColor = when (appointment.status) {
-                        "Programada" -> DentalColors.Primary
-                        "Confirmada" -> DentalColors.Success
+                        "Programada", "Scheduled" -> DentalColors.Primary
+                        "Confirmada", "Confirmed" -> DentalColors.Success
                         else -> Color.Gray
                     },
                     contentColor = Color.White
@@ -490,12 +488,16 @@ private fun AppointmentCardMobile(appointment: AppointmentData) {
 
             Spacer(Modifier.height(12.dp))
 
+            // Nombre del paciente (con espacio suficiente)
             Text(
                 appointment.patientName,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
+            // Tipo de cita
             Text(
                 appointment.type,
                 style = MaterialTheme.typography.bodyMedium,
@@ -504,26 +506,20 @@ private fun AppointmentCardMobile(appointment: AppointmentData) {
 
             Spacer(Modifier.height(16.dp))
 
+            // Botones de acción
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = {},
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = DentalColors.Success
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = DentalColors.Primary)
                 ) {
-                    Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Confirmar")
+                    Text("Details")
                 }
-
                 OutlinedButton(
                     onClick = {},
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Close, null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Cancelar")
+                    Text("Reschedule")
                 }
             }
         }
