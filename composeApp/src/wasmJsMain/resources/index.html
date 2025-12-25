@@ -120,9 +120,13 @@
             loadingText.textContent = 'Application Failed to Load';
             loadingText.style.color = '#c62828';
             errorBox.style.display = 'block';
-            errorMessage.textContent = `${error.name}: ${error.message}\n\nStack trace available in Console (F12)`;
 
-            if (error.stack) {
+            // Safely extract error information
+            const errorName = error?.name || 'Error';
+            const errorMsg = error?.message || error?.toString() || 'Unknown error occurred';
+            errorMessage.textContent = `${errorName}: ${errorMsg}\n\nStack trace available in Console (F12)`;
+
+            if (error?.stack) {
                 console.error('[WASM] Stack trace:', error.stack);
             }
 
@@ -155,7 +159,9 @@
             .catch(error => {
                 showError(error);
 
-                if (error.message.includes('@js-joda')) {
+                // Safely check error message (handle undefined/null)
+                const errorMsg = error?.message || error?.toString() || 'Unknown error';
+                if (errorMsg.includes('@js-joda')) {
                     console.error('[WASM] js-joda module error detected');
                     console.error('[WASM] This is a known issue with kotlinx-datetime in WASM');
                     console.error('[WASM] Possible solutions:');
@@ -165,7 +171,7 @@
                         'WASM Module Error: kotlinx-datetime compatibility issue\n\n' +
                         'This is a known limitation with WASM target.\n' +
                         'Please use Desktop version for full functionality.\n\n' +
-                        'Technical: ' + error.message;
+                        'Technical: ' + errorMsg;
                 }
             });
 

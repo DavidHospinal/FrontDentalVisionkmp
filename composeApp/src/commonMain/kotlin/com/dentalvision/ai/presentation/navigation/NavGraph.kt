@@ -12,6 +12,7 @@ import com.dentalvision.ai.presentation.screen.dashboard.DashboardScreen
 import com.dentalvision.ai.presentation.screen.appointments.AppointmentsScreen
 import com.dentalvision.ai.presentation.screen.analysis.NewAnalysisScreen
 import com.dentalvision.ai.presentation.screen.reports.ReportsScreen
+import com.dentalvision.ai.presentation.screen.patient.PatientsScreen
 
 /**
  * Main navigation graph for Dental Vision AI application
@@ -82,18 +83,13 @@ fun DentalVisionNavGraph(
 
         // Patient List Screen
         composable(route = Screen.PatientList.route) {
-            PatientListScreenPlaceholder(
-                onPatientClick = { patientId ->
-                    navController.navigate(Screen.PatientDetail.createRoute(patientId))
-                },
-                onCreatePatient = {
-                    navController.navigate(Screen.CreatePatient.route)
-                },
-                onNewAnalysis = { patientId ->
-                    navController.navigate(Screen.NewAnalysis.createRoute(patientId))
-                },
-                onBack = {
-                    navController.popBackStack()
+            PatientsScreen(
+                currentRoute = Screen.PatientList.route,
+                onNavigate = { route -> navController.navigate(route) },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
