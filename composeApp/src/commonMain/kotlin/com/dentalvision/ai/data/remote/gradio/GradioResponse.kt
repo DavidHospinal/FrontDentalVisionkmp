@@ -73,18 +73,27 @@ data class GradioSummary(
  */
 @Serializable
 data class GradioDetection(
+    @SerialName("object_id")
+    val objectId: Int? = null,
+
+    @SerialName("class_id")
+    val classId: Int? = null,
+
     @SerialName("class")
-    val className: String,
+    val className: String? = null,
 
     @SerialName("confidence")
-    val confidence: Double,
+    val confidence: Double = 0.0,
 
     @SerialName("bbox")
-    val bbox: List<Double>,
+    val bbox: List<Double>? = null,
 
     @SerialName("fdi_number")
     val fdiNumber: String? = null,
 
     @SerialName("has_caries")
-    val hasCaries: Boolean = false
+    val hasCaries: Boolean = false,
+
+    @SerialName("label")
+    val label: String? = null
 )

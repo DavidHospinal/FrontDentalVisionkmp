@@ -72,23 +72,71 @@ class GradioApiClient(
     )
 
     @OptIn(ExperimentalEncodingApi::class)
+    private suspend fun uploadImageToGradio(imageData: ByteArray, imageName: String): String {
+        val uploadUrl = "$baseUrl/gradio_api/upload"
+        Napier.d("[TEST-LOG] Upload URL: $uploadUrl")
+
+        try {
+            val response: HttpResponse = httpClient.post(uploadUrl) {
+                setBody(
+                    io.ktor.client.request.forms.MultiPartFormDataContent(
+                        io.ktor.client.request.forms.formData {
+                            append("files", imageData, io.ktor.http.Headers.build {
+                                append(HttpHeaders.ContentType, "image/jpeg")
+                                append(HttpHeaders.ContentDisposition, "filename=\"$imageName\"")
+                            })
+                        }
+                    )
+                )
+            }
+
+            Napier.d("[TEST-LOG] Upload response status: ${response.status}")
+
+            if (response.status.value !in 200..299) {
+                val errorText = response.bodyAsText()
+                Napier.e("[TEST-LOG] Upload failed: $errorText")
+                throw Exception("Error subiendo imagen: ${response.status}")
+            }
+
+            val responseText = response.bodyAsText()
+            Napier.d("[TEST-LOG] Upload response body: $responseText")
+
+            // La respuesta es un array de strings con las rutas
+            val uploadedPaths = json.decodeFromString<List<String>>(responseText)
+            val uploadedPath = uploadedPaths.firstOrNull()
+                ?: throw Exception("No se obtuvo la ruta del archivo subido")
+
+            Napier.i("[TEST-LOG] Ruta del archivo subido: $uploadedPath")
+            return uploadedPath
+
+        } catch (e: Exception) {
+            Napier.e("[TEST-LOG] Error en uploadImageToGradio", e)
+            throw Exception("Error subiendo imagen: ${e.message}")
+        }
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
     suspend fun analyzeDentalImage(
         imageData: ByteArray,
         imageName: String,
-        confidenceThreshold: Double = 0.5
+        confidenceThreshold: Double = 0.25
     ): GradioResponse {
         return try {
             Napier.d("[TEST-LOG] Iniciando analisis de imagen: $imageName (${imageData.size} bytes)")
 
-            val base64Image = "data:image/jpeg;base64," + Base64.encode(imageData)
-            Napier.d("[TEST-LOG] Imagen convertida a Base64 (longitud: ${base64Image.length} chars)")
+            // Paso 0: Subir la imagen al servidor usando /upload
+            Napier.d("[TEST-LOG] Subiendo imagen al servidor...")
+            val uploadedFilePath = uploadImageToGradio(imageData, imageName)
+            Napier.i("[TEST-LOG] Imagen subida exitosamente: $uploadedFilePath")
 
             val requestBody = buildString {
                 append("{\"data\":[")
-                append("\"$base64Image\",")
+                append("{\"path\": \"$uploadedFilePath\"},")
                 append(confidenceThreshold)
                 append("]}")
             }
+
+            Napier.d("[TEST-LOG] Request Body: $requestBody")
 
             // Paso 1: POST para obtener event_id (endpoint correcto segun documentacion)
             val callUrl = "$baseUrl/gradio_api/call/predict_dental_image"
@@ -162,8 +210,10 @@ class GradioApiClient(
                         }
                     } else if (line.startsWith("event: error")) {
                         Napier.e("[TEST-LOG] Evento 'error' recibido")
+                        Napier.e("[TEST-LOG] Respuesta completa del error: $responseText")
                         val dataLine = lines.find { it.startsWith("data: ") }
                         val errorMsg = dataLine?.removePrefix("data: ") ?: "Error desconocido"
+                        Napier.e("[TEST-LOG] Mensaje de error parseado: $errorMsg")
                         return GradioResponse(error = "Error del servidor: $errorMsg")
                     } else if (line.startsWith("event: generating")) {
                         Napier.d("[TEST-LOG] Evento 'generating' - analisis en progreso")
@@ -186,7 +236,11 @@ class GradioApiClient(
     }
 
     private fun parseCompleteEvent(jsonData: String): GradioResponse {
-        return parseDirectResponse(jsonData)
+        // El evento SSE ya trae el array directamente, no envuelto en {"data": ...}
+        // Necesitamos envolverlo para que parseDirectResponse funcione
+        val wrappedJson = "{\"data\":$jsonData}"
+        Napier.d("[TEST-LOG] JSON envuelto para parseo: ${wrappedJson.take(300)}")
+        return parseDirectResponse(wrappedJson)
     }
 
     private fun parseDirectResponse(responseText: String): GradioResponse {
@@ -234,48 +288,74 @@ class GradioApiClient(
 
                 Napier.d("[TEST-LOG] URL imagen procesada: $processedImageUrl")
 
-                // Extraer datos tecnicos (Index 1) - String JSON
+                // Extraer datos tecnicos (Index 1) - Puede ser String JSON u Objeto JSON
                 val technicalDataElement = dataArray[1]
                 if (technicalDataElement is JsonNull) {
                     Napier.e("[TEST-LOG] Datos tecnicos son null")
                     return GradioResponse(error = "Datos tecnicos no disponibles")
                 }
 
-                val technicalDataString = technicalDataElement.jsonPrimitive.content
-                Napier.d("[TEST-LOG] String de datos tecnicos (primeros 200 chars): ${technicalDataString.take(200)}")
+                val technicalData = when {
+                    // Si es un string JSON, parsearlo
+                    technicalDataElement is JsonPrimitive && technicalDataElement.isString -> {
+                        val technicalDataString = technicalDataElement.content
+                        Napier.d("[TEST-LOG] Datos tecnicos como String (primeros 200 chars): ${technicalDataString.take(200)}")
+                        json.decodeFromString<GradioTechnicalData>(technicalDataString)
+                    }
+                    // Si ya es un objeto JSON, parsearlo directamente
+                    technicalDataElement is JsonObject -> {
+                        Napier.d("[TEST-LOG] Datos tecnicos como Objeto JSON directo")
+                        json.decodeFromJsonElement<GradioTechnicalData>(technicalDataElement)
+                    }
+                    else -> {
+                        Napier.e("[TEST-LOG] Formato de datos tecnicos no reconocido")
+                        return GradioResponse(error = "Formato de datos tecnicos invalido")
+                    }
+                }
+
+                Napier.d("[TEST-LOG] Datos tecnicos parseados: ${technicalData.detections.size} detecciones")
 
                 // Extraer reporte HTML (Index 2 - opcional)
                 val htmlReport = if (dataArray.size > 2) {
                     dataArray[2].jsonPrimitive.contentOrNull
                 } else null
 
-                // Parsear JSON interno
-                val technicalData = json.decodeFromString<GradioTechnicalData>(technicalDataString)
-                Napier.d("[TEST-LOG] Datos tecnicos parseados: ${technicalData.detections.size} detecciones")
+                // Serializar datos tecnicos de vuelta a JSON string
+                val technicalDataJsonString = json.encodeToString(GradioTechnicalData.serializer(), technicalData)
 
                 // Construir respuesta final
+                val summary = GradioSummary(
+                    totalDetections = technicalData.summary?.total_teeth_detected
+                        ?: technicalData.detections.size,
+                    healthyTeeth = technicalData.summary?.healthy_count ?: 0,
+                    cariesDetected = technicalData.summary?.cavity_count ?: 0,
+                    averageConfidence = technicalData.summary?.average_confidence ?: 0.0,
+                    severityDistribution = null,
+                    recommendations = extractRecommendations(htmlReport, technicalData)
+                )
+
                 val finalResponse = GradioResponse(
                     eventId = null,
                     data = listOf(
                         GradioDataItem(
                             image = processedImageUrl,
-                            detections = technicalDataString,
-                            summary = GradioSummary(
-                                totalDetections = technicalData.summary?.total_teeth_detected
-                                    ?: technicalData.detections.size,
-                                healthyTeeth = technicalData.summary?.healthy_count ?: 0,
-                                cariesDetected = technicalData.summary?.cavity_count ?: 0,
-                                averageConfidence = technicalData.summary?.average_confidence ?: 0.0,
-                                severityDistribution = null,
-                                recommendations = extractRecommendations(htmlReport, technicalData)
-                            )
+                            detections = technicalDataJsonString,
+                            summary = summary
                         )
                     ),
                     error = null
                 )
 
-                Napier.i("[TEST-LOG] Analisis completado exitosamente")
-                Napier.i("[TEST-LOG] Resultados: ${finalResponse.data?.first()?.summary?.totalDetections} dientes, ${finalResponse.data?.first()?.summary?.cariesDetected} caries")
+                Napier.i("[TEST-LOG] ========================================")
+                Napier.i("[TEST-LOG] ANALISIS COMPLETADO EXITOSAMENTE")
+                Napier.i("[TEST-LOG] ========================================")
+                Napier.i("[TEST-LOG] Resultados Finales: ${summary.totalDetections} Dientes, ${summary.cariesDetected} Caries")
+                Napier.i("[TEST-LOG] Dientes Sanos: ${summary.healthyTeeth}")
+                Napier.i("[TEST-LOG] Confianza Promedio: ${String.format("%.2f", summary.averageConfidence * 100)}%")
+                val healthPercentage = if (summary.totalDetections > 0) (summary.healthyTeeth.toDouble() / summary.totalDetections * 100) else 0.0
+                val cavityPercentage = if (summary.totalDetections > 0) (summary.cariesDetected.toDouble() / summary.totalDetections * 100) else 0.0
+                Napier.i("[TEST-LOG] Indice de Salud Oral: ${String.format("%.1f", healthPercentage)}% Sano / ${String.format("%.1f", cavityPercentage)}% Caries")
+                Napier.i("[TEST-LOG] ========================================")
 
                 return finalResponse
             } else {

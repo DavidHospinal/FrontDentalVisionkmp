@@ -76,7 +76,7 @@ class AnalysisRepositoryImpl(
             val analysisId = generateAnalysisId()
             val toothDetections = detections.mapIndexed { index, detection ->
                 val fdiNumber = detection.fdiNumber?.toIntOrNull() ?: 0
-                val bbox = if (detection.bbox.size >= 4) {
+                val bbox = if (detection.bbox != null && detection.bbox.size >= 4) {
                     ToothDetection.BoundingBox(
                         x = detection.bbox[0],
                         y = detection.bbox[1],
@@ -91,7 +91,7 @@ class AnalysisRepositoryImpl(
                     id = "$analysisId-DET-$index",
                     analysisId = analysisId,
                     toothNumberFDI = fdiNumber,
-                    hasCaries = detection.hasCaries || detection.className.contains("caries", ignoreCase = true),
+                    hasCaries = detection.hasCaries || detection.className?.contains("caries", ignoreCase = true) == true,
                     confidence = detection.confidence,
                     boundingBox = bbox
                 )
