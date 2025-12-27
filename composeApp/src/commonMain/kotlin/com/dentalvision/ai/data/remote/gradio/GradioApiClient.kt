@@ -323,13 +323,32 @@ class GradioApiClient(
                 // Serializar datos tecnicos de vuelta a JSON string
                 val technicalDataJsonString = json.encodeToString(GradioTechnicalData.serializer(), technicalData)
 
+                // Calcular confianza promedio desde detecciones individuales
+                val calculatedAverageConfidence = if (technicalData.detections.isNotEmpty()) {
+                    technicalData.detections.map { it.confidence }.average()
+                } else {
+                    0.0
+                }
+
+                // Usar confianza calculada si summary.average_confidence es 0.0 o null
+                val summaryConfidence = technicalData.summary?.average_confidence ?: 0.0
+                val finalConfidence = if (summaryConfidence > 0.0) {
+                    summaryConfidence
+                } else {
+                    calculatedAverageConfidence
+                }
+
+                Napier.d("[TEST-LOG] Confianza desde summary: $summaryConfidence")
+                Napier.d("[TEST-LOG] Confianza calculada desde detecciones: $calculatedAverageConfidence")
+                Napier.d("[TEST-LOG] Confianza final usada: $finalConfidence")
+
                 // Construir respuesta final
                 val summary = GradioSummary(
                     totalDetections = technicalData.summary?.total_teeth_detected
                         ?: technicalData.detections.size,
                     healthyTeeth = technicalData.summary?.healthy_count ?: 0,
                     cariesDetected = technicalData.summary?.cavity_count ?: 0,
-                    averageConfidence = technicalData.summary?.average_confidence ?: 0.0,
+                    averageConfidence = finalConfidence,
                     severityDistribution = null,
                     recommendations = extractRecommendations(htmlReport, technicalData)
                 )
@@ -351,10 +370,13 @@ class GradioApiClient(
                 Napier.i("[TEST-LOG] ========================================")
                 Napier.i("[TEST-LOG] Resultados Finales: ${summary.totalDetections} Dientes, ${summary.cariesDetected} Caries")
                 Napier.i("[TEST-LOG] Dientes Sanos: ${summary.healthyTeeth}")
-                Napier.i("[TEST-LOG] Confianza Promedio: ${String.format("%.2f", summary.averageConfidence * 100)}%")
+                val confidenceFormatted = ((summary.averageConfidence * 10000).toInt() / 100.0)
+                Napier.i("[TEST-LOG] Confianza Promedio: $confidenceFormatted%")
                 val healthPercentage = if (summary.totalDetections > 0) (summary.healthyTeeth.toDouble() / summary.totalDetections * 100) else 0.0
                 val cavityPercentage = if (summary.totalDetections > 0) (summary.cariesDetected.toDouble() / summary.totalDetections * 100) else 0.0
-                Napier.i("[TEST-LOG] Indice de Salud Oral: ${String.format("%.1f", healthPercentage)}% Sano / ${String.format("%.1f", cavityPercentage)}% Caries")
+                val healthFormatted = ((healthPercentage * 10).toInt() / 10.0)
+                val cavityFormatted = ((cavityPercentage * 10).toInt() / 10.0)
+                Napier.i("[TEST-LOG] Indice de Salud Oral: $healthFormatted% Sano / $cavityFormatted% Caries")
                 Napier.i("[TEST-LOG] ========================================")
 
                 return finalResponse

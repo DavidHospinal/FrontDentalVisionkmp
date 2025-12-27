@@ -409,46 +409,171 @@ private fun CompletedAnalysisPreview(
     imageData: com.dentalvision.ai.presentation.viewmodel.ImageData,
     analysis: com.dentalvision.ai.domain.model.Analysis
 ) {
-    // Analysis Results Display
+    // Processed Image with Detections
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = DentalColors.Success.copy(alpha = 0.1f)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C3E50)),
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(12.dp)
         ) {
-            Icon(
-                Icons.Default.Check,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = DentalColors.Success
-            )
-
-            Spacer(Modifier.height(16.dp))
-
             Text(
-                text = "Analysis Complete!",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = DentalColors.Success
+                text = "Processed Image",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
             )
 
             Spacer(Modifier.height(8.dp))
 
-            Text(
-                text = "Image analyzed successfully with YOLOv12",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            // Show processed image from backend with detection boxes
+            io.kamel.image.KamelImage(
+                resource = io.kamel.image.asyncPainterResource(data = analysis.imageUrl),
+                contentDescription = "Processed dental X-ray with detections",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                onLoading = { progress ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .background(Color(0xFF34495E)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = DentalColors.Primary)
+                    }
+                },
+                onFailure = { exception ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .background(Color(0xFF34495E)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = null,
+                                tint = DentalColors.Error,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Text(
+                                "Failed to load processed image",
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
             )
         }
     }
 
     Spacer(Modifier.height(16.dp))
+
+    // Oral Health Progress Bars (Verde/Rojo)
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F7FA)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Oral Health Index",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            val healthyPercentage = if (analysis.totalTeethDetected > 0) {
+                (analysis.totalTeethDetected - analysis.totalCariesDetected).toFloat() / analysis.totalTeethDetected
+            } else 0f
+
+            val cariesPercentage = if (analysis.totalTeethDetected > 0) {
+                analysis.totalCariesDetected.toFloat() / analysis.totalTeethDetected
+            } else 0f
+
+            // Healthy Teeth Bar (Green)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Healthy",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.width(60.dp)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(24.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFFE0E0E0))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(healthyPercentage)
+                            .background(DentalColors.Success)
+                    )
+                }
+
+                Text(
+                    text = "${(healthyPercentage * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = DentalColors.Success,
+                    modifier = Modifier.padding(start = 8.dp).width(40.dp)
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // Caries Bar (Red)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Caries",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.width(60.dp)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(24.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFFE0E0E0))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(cariesPercentage)
+                            .background(DentalColors.Error)
+                    )
+                }
+
+                Text(
+                    text = "${(cariesPercentage * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = DentalColors.Error,
+                    modifier = Modifier.padding(start = 8.dp).width(40.dp)
+                )
+            }
+        }
+    }
+
+    Spacer(Modifier.height(12.dp))
 
     // Quick stats
     QuickStatsCard(analysis)

@@ -12,6 +12,24 @@ import io.github.aakira.napier.Napier
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.Serializable
+
+/**
+ * Wrapper for parsing technical data JSON from Gradio API
+ */
+@Serializable
+private data class TechnicalDataWrapper(
+    val detections: List<GradioDetection> = emptyList(),
+    val summary: SummaryWrapper? = null
+)
+
+@Serializable
+private data class SummaryWrapper(
+    val total_teeth_detected: Int = 0,
+    val healthy_count: Int = 0,
+    val cavity_count: Int = 0,
+    val average_confidence: Double = 0.0
+)
 
 /**
  * Implementation of AnalysisRepository
@@ -63,12 +81,18 @@ class AnalysisRepositoryImpl(
                 ?: return Result.failure(Exception("No analysis data returned from AI"))
 
             // Parse detections JSON if present
+            // El JSON viene como objeto: {"detections": [...], "summary": {...}}
             val detections = try {
                 analysisData.detections?.let { detectionsJson ->
-                    json.decodeFromString<List<GradioDetection>>(detectionsJson)
+                    Napier.d("Parsing detections JSON: ${detectionsJson.take(200)}")
+
+                    // Parsear el objeto completo
+                    val technicalData = json.decodeFromString<TechnicalDataWrapper>(detectionsJson)
+                    Napier.d("Successfully parsed ${technicalData.detections.size} detections")
+                    technicalData.detections
                 } ?: emptyList()
             } catch (e: Exception) {
-                Napier.w("Failed to parse detections JSON: ${e.message}")
+                Napier.e("Failed to parse detections JSON: ${e.message}", e)
                 emptyList()
             }
 
@@ -98,6 +122,10 @@ class AnalysisRepositoryImpl(
             }
 
             // Step 3: Create Analysis domain model
+            Napier.d("Processed image URL from backend: ${analysisData.image}")
+            Napier.d("Total detections: ${detections.size}")
+            Napier.d("Average confidence from detections: ${detections.map { it.confidence }.average().takeIf { !it.isNaN() } ?: 0.0}")
+
             val analysis = Analysis(
                 id = analysisId,
                 patientId = patientId,
@@ -114,6 +142,8 @@ class AnalysisRepositoryImpl(
                 performedBy = "AI System",
                 synced = false
             )
+
+            Napier.i("Analysis created successfully with ${analysis.detections.size} detections and confidence ${analysis.confidenceScore}")
 
             // Step 4: Save to backend (optional - can fail silently for now)
             try {
