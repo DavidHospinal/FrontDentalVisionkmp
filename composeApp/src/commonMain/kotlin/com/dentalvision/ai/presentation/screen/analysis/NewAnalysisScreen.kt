@@ -432,8 +432,15 @@ private fun CompletedAnalysisPreview(
             // La URL viene del backend como: https://davidhosp-dental-vision-yolo12.hf.space/gradio_api/file=/tmp/gradio/.../image.webp
             io.github.aakira.napier.Napier.d("Loading processed image from URL: ${analysis.imageUrl}")
 
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val imageRequest = remember(analysis.imageUrl) {
+                coil3.request.ImageRequest.Builder(context)
+                    .data(analysis.imageUrl)
+                    .build()
+            }
+
             coil3.compose.SubcomposeAsyncImage(
-                model = analysis.imageUrl,
+                model = imageRequest,
                 contentDescription = "Processed dental X-ray with detections",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -497,7 +504,7 @@ private fun CompletedAnalysisPreview(
 
             Spacer(Modifier.height(8.dp))
 
-            // Leyenda de interpretación de cajas de detección
+            // Detection box legend
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF2C3E50)),
                 shape = RoundedCornerShape(8.dp)
@@ -508,7 +515,7 @@ private fun CompletedAnalysisPreview(
                         .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    // Leyenda caja verde - Dientes sanos
+                    // Green box legend - Healthy teeth
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -519,13 +526,13 @@ private fun CompletedAnalysisPreview(
                                 .background(DentalColors.Success, RoundedCornerShape(4.dp))
                         )
                         Text(
-                            text = "Dientes sanos",
+                            text = "Healthy Teeth",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White
                         )
                     }
 
-                    // Leyenda caja roja - Caries detectadas
+                    // Red box legend - Detected cavities
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -536,7 +543,7 @@ private fun CompletedAnalysisPreview(
                                 .background(DentalColors.Error, RoundedCornerShape(4.dp))
                         )
                         Text(
-                            text = "Caries detectadas",
+                            text = "Detected Cavities",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White
                         )
