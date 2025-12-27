@@ -429,49 +429,120 @@ private fun CompletedAnalysisPreview(
             Spacer(Modifier.height(8.dp))
 
             // Show processed image from backend with detection boxes
-            io.kamel.image.KamelImage(
-                resource = io.kamel.image.asyncPainterResource(data = analysis.imageUrl),
+            // La URL viene del backend como: https://davidhosp-dental-vision-yolo12.hf.space/gradio_api/file=/tmp/gradio/.../image.webp
+            io.github.aakira.napier.Napier.d("Loading processed image from URL: ${analysis.imageUrl}")
+
+            coil3.compose.SubcomposeAsyncImage(
+                model = analysis.imageUrl,
                 contentDescription = "Processed dental X-ray with detections",
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp)
                     .clip(RoundedCornerShape(4.dp)),
                 contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                onLoading = { progress ->
+                loading = {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)
-                            .background(Color(0xFF34495E)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = DentalColors.Primary)
-                    }
-                },
-                onFailure = { exception ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)
+                            .fillMaxSize()
                             .background(Color(0xFF34495E)),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(color = DentalColors.Primary)
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Cargando imagen procesada...",
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                },
+                error = {
+                    // Log del error para debugging
+                    io.github.aakira.napier.Napier.e("Failed to load image: ${analysis.imageUrl}")
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF34495E)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(16.dp)
+                        ) {
                             Icon(
                                 Icons.Default.Close,
                                 contentDescription = null,
                                 tint = DentalColors.Error,
                                 modifier = Modifier.size(48.dp)
                             )
+                            Spacer(Modifier.height(8.dp))
                             Text(
-                                "Failed to load processed image",
+                                "Error al cargar imagen procesada",
                                 color = Color.White,
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                analysis.imageUrl.take(50) + "...",
+                                color = Color.White.copy(alpha = 0.7f),
+                                style = MaterialTheme.typography.labelSmall
                             )
                         }
                     }
                 }
             )
+
+            Spacer(Modifier.height(8.dp))
+
+            // Leyenda de interpretación de cajas de detección
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF2C3E50)),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    // Leyenda caja verde - Dientes sanos
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .background(DentalColors.Success, RoundedCornerShape(4.dp))
+                        )
+                        Text(
+                            text = "Dientes sanos",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White
+                        )
+                    }
+
+                    // Leyenda caja roja - Caries detectadas
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .background(DentalColors.Error, RoundedCornerShape(4.dp))
+                        )
+                        Text(
+                            text = "Caries detectadas",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
         }
     }
 

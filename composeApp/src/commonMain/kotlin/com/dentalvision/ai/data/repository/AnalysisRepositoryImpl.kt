@@ -111,11 +111,20 @@ class AnalysisRepositoryImpl(
                     ToothDetection.BoundingBox(0.0, 0.0, 0.0, 0.0)
                 }
 
+                // Detectar caries basado en className (backend envía "cavity" no "caries")
+                val hasCavity = detection.hasCaries ||
+                    detection.className?.contains("cavity", ignoreCase = true) == true ||
+                    detection.className?.contains("caries", ignoreCase = true) == true
+
+                if (index < 3) {
+                    Napier.d("Detection $index: className='${detection.className}', hasCaries=${detection.hasCaries}, calculated=$hasCavity")
+                }
+
                 ToothDetection(
                     id = "$analysisId-DET-$index",
                     analysisId = analysisId,
                     toothNumberFDI = fdiNumber,
-                    hasCaries = detection.hasCaries || detection.className?.contains("caries", ignoreCase = true) == true,
+                    hasCaries = hasCavity,
                     confidence = detection.confidence,
                     boundingBox = bbox
                 )

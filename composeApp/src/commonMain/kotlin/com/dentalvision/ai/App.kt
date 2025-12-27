@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import com.dentalvision.ai.presentation.navigation.DentalVisionNavGraph
 import com.dentalvision.ai.presentation.theme.DentalVisionAITheme
 import org.koin.compose.KoinContext
-
 /**
  * Main Application Composable
  * Entry point for Dental Vision AI Kotlin Multiplatform App
