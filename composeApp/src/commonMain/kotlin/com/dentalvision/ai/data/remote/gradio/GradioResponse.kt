@@ -70,6 +70,7 @@ data class GradioSummary(
 
 /**
  * Detection result for a single tooth
+ * Matches HuggingFace YOLOv12 backend format
  */
 @Serializable
 data class GradioDetection(
@@ -79,7 +80,7 @@ data class GradioDetection(
     @SerialName("class_id")
     val classId: Int? = null,
 
-    @SerialName("class")
+    @SerialName("class_name")
     val className: String? = null,
 
     @SerialName("confidence")
@@ -92,8 +93,5 @@ data class GradioDetection(
     val fdiNumber: String? = null,
 
     @SerialName("has_caries")
-    val hasCaries: Boolean = false,
-
-    @SerialName("label")
-    val label: String? = null
+    val hasCaries: Boolean = false
 )

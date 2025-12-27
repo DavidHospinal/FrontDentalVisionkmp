@@ -49,7 +49,7 @@ class AnalysisRepositoryImpl(
             val gradioResponse = gradioClient.analyzeDentalImage(
                 imageData = imageData,
                 imageName = imageName,
-                confidenceThreshold = 0.5
+                confidenceThreshold = 0.25
             )
 
             // Check for errors
