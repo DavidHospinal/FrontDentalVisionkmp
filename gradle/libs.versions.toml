@@ -89,7 +89,7 @@ sqldelight-web-worker-driver = { module = "app.cash.sqldelight:web-worker-driver
 
 # Image Loading
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
-coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor", version.ref = "coil" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 kamel-image = { module = "media.kamel:kamel-image", version.ref = "kamel" }
 
 # Dependency Injection - Koin

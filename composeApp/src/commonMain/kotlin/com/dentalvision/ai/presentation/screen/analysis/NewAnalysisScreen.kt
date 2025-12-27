@@ -433,14 +433,15 @@ private fun CompletedAnalysisPreview(
             io.github.aakira.napier.Napier.d("Loading processed image from URL: ${analysis.imageUrl}")
 
             val context = androidx.compose.ui.platform.LocalContext.current
-            val imageRequest = remember(analysis.imageUrl) {
-                coil3.request.ImageRequest.Builder(context)
-                    .data(analysis.imageUrl)
-                    .build()
+
+            // Use custom ImageLoader with HTTP headers for HuggingFace compatibility
+            val imageLoader = remember {
+                com.dentalvision.ai.platform.createImageLoader(context)
             }
 
             coil3.compose.SubcomposeAsyncImage(
-                model = imageRequest,
+                model = analysis.imageUrl,
+                imageLoader = imageLoader,
                 contentDescription = "Processed dental X-ray with detections",
                 modifier = Modifier
                     .fillMaxWidth()

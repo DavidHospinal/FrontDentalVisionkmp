@@ -128,7 +128,7 @@ kotlin {
 
             // Coil Image Loading (Android optimized)
             implementation(libs.coil.compose)
-            //implementation(libs.coil.network.ktor)
+            implementation(libs.coil.network.ktor)
 
             // Koin Android
             implementation(libs.koin.android)
