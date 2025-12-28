@@ -99,7 +99,9 @@ class DashboardViewModel(
             ),
             analyses = com.dentalvision.ai.domain.model.AnalysisStats(
                 total = dto.analyses.total,
-                this_month = dto.analyses.this_month
+                this_month = dto.analyses.this_month,
+                average_health_percentage = dto.analyses.average_health_percentage,
+                average_confidence = dto.analyses.average_confidence
             ),
             appointments = com.dentalvision.ai.domain.model.AppointmentStats(
                 scheduled = dto.appointments.scheduled,

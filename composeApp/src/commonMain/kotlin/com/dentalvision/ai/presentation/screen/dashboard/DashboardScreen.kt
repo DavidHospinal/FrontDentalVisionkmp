@@ -272,8 +272,8 @@ private fun DashboardContent(
 
                         MetricCard(
                             title = "Generated Reports",
-                            value = statistics.reports.generated.toString(),
-                            subtitle = "${statistics.reports.this_month} this month",
+                            value = statistics.analyses.total.toString(),
+                            subtitle = "${statistics.analyses.this_month} this month",
                             change = "",
                             icon = ExtendedIcons.Description,
                             iconColor = DentalColors.Secondary,
@@ -319,8 +319,8 @@ private fun DashboardContent(
 
                     MetricCard(
                         title = "Generated Reports",
-                        value = statistics.reports.generated.toString(),
-                        subtitle = "${statistics.reports.this_month} this month",
+                        value = statistics.analyses.total.toString(),
+                        subtitle = "${statistics.analyses.this_month} this month",
                         change = "",
                         icon = ExtendedIcons.Description,
                         iconColor = DentalColors.Secondary,
@@ -401,7 +401,7 @@ private fun DashboardContent(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "Dental health distribution",
+                                text = "Dental health distribution (Last 6 months: ${statistics.monthlyTrend.firstOrNull()?.month ?: ""} - ${statistics.monthlyTrend.lastOrNull()?.month ?: ""})",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -493,7 +493,7 @@ private fun DashboardContent(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "Dental health distribution",
+                                text = "Dental health distribution (Last 6 months: ${statistics.monthlyTrend.firstOrNull()?.month ?: ""} - ${statistics.monthlyTrend.lastOrNull()?.month ?: ""})",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

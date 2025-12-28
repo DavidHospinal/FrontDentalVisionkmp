@@ -66,7 +66,7 @@ class PatientsViewModel(
                         val errorMessage = buildErrorMessage(
                             operation = "Backend API Call",
                             error = error,
-                            context = "GET /patients?page=$page&limit=50"
+                            context = "GET /patients?page=$page&per_page=50"
                         )
                         Napier.e("❌ BACKEND ERROR: ${error.message}", error)
                         _uiState.value = PatientsUiState.Error(errorMessage)

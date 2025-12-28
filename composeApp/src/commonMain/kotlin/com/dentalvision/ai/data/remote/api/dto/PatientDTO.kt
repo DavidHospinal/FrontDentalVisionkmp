@@ -8,8 +8,8 @@ data class PatientDTO(
     val name: String,
     val age: Int,
     val gender: String,
-    val email: String,
-    val phone: String,
+    val email: String? = null,
+    val phone: String? = null,
     val created_at: String,
     val updated_at: String
 )

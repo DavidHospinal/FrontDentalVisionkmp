@@ -167,7 +167,7 @@ fun DonutChart(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Tendencia Salud Dental (6 meses)",
+                text = "Dental Health Trend (6 months)",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
