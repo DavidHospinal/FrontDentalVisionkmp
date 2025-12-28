@@ -20,7 +20,9 @@ data class PatientStats(
 @Serializable
 data class AnalysisStats(
     val total: Int,
-    val this_month: Int
+    val this_month: Int,
+    val average_health_percentage: Float = 0f,  // Salud promedio de todos los análisis
+    val average_confidence: Float = 0f  // Confianza promedio del modelo
 )
 
 @Serializable

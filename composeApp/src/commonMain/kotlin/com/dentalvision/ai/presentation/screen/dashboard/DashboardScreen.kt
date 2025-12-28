@@ -412,16 +412,16 @@ private fun DashboardContent(
                                 data = listOf(
                                     PieChartData(
                                         label = "Healthy Teeth",
-                                        value = 85f,
+                                        value = statistics.analyses.average_health_percentage,
                                         color = DentalColors.ToothHealthy
                                     ),
                                     PieChartData(
                                         label = "Caries",
-                                        value = 15f,
+                                        value = 100f - statistics.analyses.average_health_percentage,
                                         color = DentalColors.ToothCaries
                                     )
                                 ),
-                                centerText = "85%",
+                                centerText = "${statistics.analyses.average_health_percentage.toInt()}%",
                                 strokeWidth = 40f,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -504,16 +504,16 @@ private fun DashboardContent(
                                 data = listOf(
                                     PieChartData(
                                         label = "Healthy Teeth",
-                                        value = 85f,
+                                        value = statistics.analyses.average_health_percentage,
                                         color = DentalColors.ToothHealthy
                                     ),
                                     PieChartData(
                                         label = "Caries",
-                                        value = 15f,
+                                        value = 100f - statistics.analyses.average_health_percentage,
                                         color = DentalColors.ToothCaries
                                     )
                                 ),
-                                centerText = "85%",
+                                centerText = "${statistics.analyses.average_health_percentage.toInt()}%",
                                 strokeWidth = 40f,
                                 modifier = Modifier.fillMaxWidth()
                             )
