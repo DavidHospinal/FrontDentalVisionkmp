@@ -39,9 +39,15 @@ fun DentalVisionNavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: String = Screen.Login.route
 ) {
-    Napier.d("NAV GRAPH: DentalVisionNavGraph composing with startDestination: $startDestination")
-    Napier.d("NAV GRAPH: NavController instance: ${navController.hashCode()}")
+    Napier.d("NAV GRAPH: ========== DentalVisionNavGraph RECOMPOSING ==========")
+    Napier.d("NAV GRAPH: NavController hashCode: ${navController.hashCode()}")
+    Napier.d("NAV GRAPH: Current backstack destinations:")
+    navController.currentBackStack.value.forEachIndexed { index, entry ->
+        Napier.d("NAV GRAPH:   [$index] ${entry.destination.route}")
+    }
     Napier.d("NAV GRAPH: Current destination: ${navController.currentDestination?.route}")
+    Napier.d("NAV GRAPH: startDestination parameter: $startDestination")
+    Napier.d("NAV GRAPH: ================================================")
 
     NavHost(
         navController = navController,

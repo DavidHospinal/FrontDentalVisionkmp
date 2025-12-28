@@ -48,8 +48,9 @@ sealed class Screen(val route: String) {
 
     /**
      * New analysis screen - Create analysis (standalone, patient selected inside)
+     * Route changed from "analysis/new" to "new-analysis" to avoid conflict with "analysis/new/{patientId}"
      */
-    data object NewAnalysisStandalone : Screen("analysis/new")
+    data object NewAnalysisStandalone : Screen("new-analysis")
 
     /**
      * New analysis screen - Create analysis for a specific patient
