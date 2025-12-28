@@ -25,7 +25,11 @@ data class PatientStatsDTO(
 data class AnalysisStatsDTO(
     @SerialName("total_analyses")
     val total: Int = 0,
-    val this_month: Int = 0
+    val this_month: Int = 0,
+    @SerialName("average_health_percentage")
+    val average_health_percentage: Float = 0f,
+    @SerialName("average_confidence")
+    val average_confidence: Float = 0f
 )
 
 @Serializable

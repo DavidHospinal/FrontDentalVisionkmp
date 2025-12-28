@@ -14,7 +14,7 @@ class PatientService(
     private val apiClient: ApiClient = ApiClientFactory.backendClient
 ) {
     suspend fun getPatients(page: Int = 1, limit: Int = 10): ApiResponse<PatientListResponse> {
-        val endpoint = "${ApiConfig.Endpoints.PATIENTS}?page=$page&limit=$limit"
+        val endpoint = "${ApiConfig.Endpoints.PATIENTS}?page=$page&per_page=$limit"
         return apiClient.get(endpoint)
     }
 
