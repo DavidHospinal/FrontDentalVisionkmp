@@ -303,7 +303,7 @@ private fun MainContentSection(
             // Step 2: Upload Image
             StepCard(
                 stepNumber = 2,
-                title = "Upload Dental X-Ray",
+                title = "Upload Dental Photo",
                 isActive = selectedPatient != null,
                 isCompleted = selectedImage != null
             ) {
@@ -432,11 +432,11 @@ private fun CompletedAnalysisPreview(
             // La URL viene del backend como: https://davidhosp-dental-vision-yolo12.hf.space/gradio_api/file=/tmp/gradio/.../image.webp
             io.github.aakira.napier.Napier.d("Loading processed image from URL: ${analysis.imageUrl}")
 
-            val context = androidx.compose.ui.platform.LocalContext.current
+            val platformContext = coil3.compose.LocalPlatformContext.current
 
             // Use custom ImageLoader with HTTP headers for HuggingFace compatibility
             val imageLoader = remember {
-                com.dentalvision.ai.platform.createImageLoader(context)
+                com.dentalvision.ai.platform.createImageLoader(platformContext)
             }
 
             coil3.compose.SubcomposeAsyncImage(

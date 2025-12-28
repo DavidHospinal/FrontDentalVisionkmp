@@ -2,6 +2,7 @@ package com.dentalvision.ai.platform
 
 import io.github.aakira.napier.Napier
 import org.khronos.webgl.ArrayBuffer
+import org.khronos.webgl.Int8Array
 import org.khronos.webgl.Uint8Array
 import org.w3c.dom.HTMLInputElement
 import org.w3c.files.File
@@ -13,19 +14,26 @@ import kotlinx.browser.document
 
 /**
  * Convert ArrayBuffer to ByteArray for WASM
- * FIXED: Proper implementation using Uint8Array
+ * Uses Int8Array for signed byte conversion matching Kotlin's Byte type
  */
 private fun arrayBufferToByteArray(buffer: ArrayBuffer): ByteArray {
-    val uint8Array = Uint8Array(buffer)
-    val byteArray = ByteArray(uint8Array.length)
+    val int8Array = Int8Array(buffer)
+    val length = int8Array.length
 
-    for (i in 0 until uint8Array.length) {
-        byteArray[i] = uint8Array[i].toByte()
+    return ByteArray(length) { index ->
+        // Int8Array values are -128 to 127 (signed), matching Kotlin Byte
+        getInt8ArrayValue(int8Array, index)
+    }.also {
+        Napier.d("WebFilePicker: Converted ArrayBuffer (${buffer.byteLength} bytes) to ByteArray (${it.size} bytes)")
     }
-
-    Napier.d("WebFilePicker: Converted ArrayBuffer (${buffer.byteLength} bytes) to ByteArray (${byteArray.size} bytes)")
-    return byteArray
 }
+
+/**
+ * Helper function to extract byte value from Int8Array at given index
+ * Uses JS eval to avoid WASM operator overloading issues
+ */
+@JsFun("(array, index) => array[index]")
+private external fun getInt8ArrayValue(array: Int8Array, index: Int): Byte
 
 /**
  * Web/WASM implementation of FilePicker

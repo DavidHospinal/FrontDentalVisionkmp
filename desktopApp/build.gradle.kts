@@ -13,8 +13,11 @@ kotlin {
         val jvmMain by getting  {
             dependencies {
                 implementation(compose.desktop.currentOs)
-                // 2. CORREGIDO: Apuntamos a composeApp en lugar de shared
                 implementation(project(":composeApp"))
+
+                // Dependencias explícitas necesarias para main.kt
+                implementation(libs.koin.core)
+                implementation(libs.napier)
             }
         }
     }

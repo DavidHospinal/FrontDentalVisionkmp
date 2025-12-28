@@ -99,6 +99,8 @@ kotlin {
 
             // Image Loading
             implementation(libs.kamel.image)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
 
             // Dependency Injection - Koin
             implementation(libs.koin.core)
@@ -125,10 +127,6 @@ kotlin {
 
             // SQLDelight Android Driver - Commented until schema is implemented
             // implementation(libs.sqldelight.android.driver)
-
-            // Coil Image Loading (Android optimized)
-            implementation(libs.coil.compose)
-            implementation(libs.coil.network.ktor)
 
             // Koin Android
             implementation(libs.koin.android)
