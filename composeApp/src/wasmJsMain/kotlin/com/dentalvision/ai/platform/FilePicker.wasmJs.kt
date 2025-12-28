@@ -61,45 +61,52 @@ private external fun getInt8ArrayValue(array: Int8Array, index: Int): Byte
 
 /**
  * Web/WASM implementation of FilePicker
- * FIXED: Proper DOM cleanup and efficient ArrayBuffer conversion
+ * ULTRA-SAFE: Comprehensive error handling to prevent UI crashes
  */
 class WebFilePicker : FilePicker {
 
     override suspend fun pickImage(): FilePickerResult {
-        var input: HTMLInputElement? = null
+        Napier.d("WebFilePicker: Starting file selection (WASM)")
 
+        // MASTER TRY-CATCH: No exceptions should escape this function
         return try {
-            Napier.d("WebFilePicker: Starting file selection")
+            // Step 1: Verify document.body exists
+            val body = document.body
+            if (body == null) {
+                Napier.e("WebFilePicker: document.body is null - cannot create file picker")
+                return FilePickerResult.Error("Browser environment not ready")
+            }
 
-            // Create hidden file input element
-            input = try {
-                (document.createElement("input") as HTMLInputElement).apply {
+            // Step 2: Create input element with full error handling
+            val input: HTMLInputElement = try {
+                val element = document.createElement("input") as? HTMLInputElement
+                    ?: throw Exception("createElement did not return HTMLInputElement")
+
+                element.apply {
                     type = "file"
                     accept = "image/jpeg,image/png,image/jpg"
                     style.display = "none"
                 }
             } catch (e: Exception) {
                 Napier.e("WebFilePicker: Failed to create input element", e)
-                return FilePickerResult.Error("Failed to create file picker: ${e.message}")
+                return FilePickerResult.Error("Could not create file picker (${e.message})")
             }
 
-            // Add to DOM temporarily
+            // Step 3: Add to DOM with error handling
             try {
-                document.body?.appendChild(input)
-                    ?: run {
-                        Napier.e("WebFilePicker: document.body is null")
-                        return FilePickerResult.Error("Document body not available")
-                    }
+                body.appendChild(input)
+                Napier.d("WebFilePicker: Input element added to DOM")
             } catch (e: Exception) {
                 Napier.e("WebFilePicker: Failed to append input to DOM", e)
-                return FilePickerResult.Error("Failed to show file picker: ${e.message}")
+                return FilePickerResult.Error("Could not show file picker (${e.message})")
             }
 
-            // Wait for file selection
-            val file = try {
-                suspendCoroutine<File?> { continuation ->
+            // Step 4: Wait for user selection with full error recovery
+            val file: File? = try {
+                suspendCoroutine { continuation ->
                     var resumed = false
 
+                    // Success handler
                     input.onchange = {
                         if (!resumed) {
                             resumed = true
@@ -108,25 +115,25 @@ class WebFilePicker : FilePicker {
                                 Napier.d("WebFilePicker: File selected - ${selectedFile?.name ?: "none"}")
                                 continuation.resume(selectedFile)
                             } catch (e: Exception) {
-                                Napier.e("WebFilePicker: Error getting selected file", e)
+                                Napier.e("WebFilePicker: Error in onchange handler", e)
                                 continuation.resume(null)
                             }
                         }
                     }
 
-                    // Handle cancellation
+                    // Cancel handler
                     input.oncancel = {
                         if (!resumed) {
                             resumed = true
-                            Napier.d("WebFilePicker: File selection cancelled")
+                            Napier.d("WebFilePicker: File selection cancelled by user")
                             continuation.resume(null)
                         }
                     }
 
-                    // Trigger file picker dialog
+                    // Trigger picker dialog
                     try {
-                        Napier.d("WebFilePicker: Opening file picker dialog")
                         input.click()
+                        Napier.d("WebFilePicker: File picker dialog opened")
                     } catch (e: Exception) {
                         Napier.e("WebFilePicker: Failed to trigger file picker", e)
                         if (!resumed) {
@@ -136,59 +143,53 @@ class WebFilePicker : FilePicker {
                     }
                 }
             } catch (e: Exception) {
-                Napier.e("WebFilePicker: Exception in file selection coroutine", e)
+                Napier.e("WebFilePicker: Coroutine exception during file selection", e)
                 null
+            } finally {
+                // Step 5: ALWAYS cleanup DOM (even on error)
+                try {
+                    body.removeChild(input)
+                    Napier.d("WebFilePicker: Input element cleaned up from DOM")
+                } catch (e: Exception) {
+                    Napier.w("WebFilePicker: Could not cleanup input element", e)
+                }
             }
 
-            // Clean up DOM IMMEDIATELY after file selection (or cancellation)
-            try {
-                document.body?.removeChild(input)
-                Napier.d("WebFilePicker: Input element removed from DOM")
-            } catch (e: Exception) {
-                Napier.w("WebFilePicker: Could not remove input from DOM (already removed?)", e)
-            }
-
+            // Step 6: Process selection result
             if (file == null) {
-                Napier.d("WebFilePicker: No file selected - user cancelled")
+                Napier.d("WebFilePicker: No file selected (user cancelled or error)")
                 return FilePickerResult.Cancelled
             }
 
-            // Read file as ByteArray with error handling
-            Napier.d("WebFilePicker: Reading file as bytes...")
+            // Step 7: Read file with comprehensive error handling
+            Napier.d("WebFilePicker: Reading file '${file.name}' (${file.size} bytes)")
             val fileBytes = try {
                 readFileAsBytes(file)
             } catch (e: Exception) {
-                Napier.e("WebFilePicker: Failed to read file bytes", e)
-                return FilePickerResult.Error("Failed to read file: ${e.message}")
+                Napier.e("WebFilePicker: Failed to read file data", e)
+                return FilePickerResult.Error("Could not read file: ${e.message ?: "unknown error"}")
             }
 
+            // Step 8: Validate result
             if (fileBytes.isEmpty()) {
-                Napier.w("WebFilePicker: File bytes are empty")
+                Napier.w("WebFilePicker: File read resulted in empty ByteArray")
                 return FilePickerResult.Error("File is empty or could not be read")
             }
 
-            Napier.i("WebFilePicker: Successfully read image - ${file.name} (${fileBytes.size} bytes, ${file.type})")
+            // Step 9: Success!
+            val mimeType = file.type.takeIf { it.isNotEmpty() } ?: "image/jpeg"
+            Napier.i("WebFilePicker: SUCCESS - Read ${file.name} (${fileBytes.size} bytes, $mimeType)")
 
             FilePickerResult.Success(
                 data = fileBytes,
                 name = file.name,
-                mimeType = file.type.takeIf { it.isNotEmpty() } ?: "image/jpeg"
+                mimeType = mimeType
             )
 
         } catch (e: Exception) {
-            Napier.e("WebFilePicker: Error during file selection", e)
-
-            // Ensure cleanup even on error
-            input?.let {
-                try {
-                    document.body?.removeChild(it)
-                    Napier.d("WebFilePicker: Input element cleaned up after error")
-                } catch (cleanupError: Exception) {
-                    Napier.w("WebFilePicker: Could not cleanup input after error", cleanupError)
-                }
-            }
-
-            FilePickerResult.Error(e.message ?: "Unknown error during file selection")
+            // ULTIMATE FALLBACK: Log and return error instead of crashing
+            Napier.e("WebFilePicker: CRITICAL - Unhandled exception in pickImage()", e)
+            FilePickerResult.Error("Critical error: ${e.message ?: "Unknown failure"}")
         }
     }
 
