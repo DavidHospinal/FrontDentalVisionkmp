@@ -406,7 +406,7 @@ private fun DashboardContent(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(24.dp))
 
                             DonutChart(
                                 data = listOf(
@@ -498,7 +498,7 @@ private fun DashboardContent(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(24.dp))
 
                             DonutChart(
                                 data = listOf(
