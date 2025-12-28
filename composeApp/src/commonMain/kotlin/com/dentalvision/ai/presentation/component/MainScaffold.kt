@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.presentation.navigation.Screen
 import kotlinx.coroutines.launch
+import io.github.aakira.napier.Napier
 
 /**
  * Main Scaffold Layout
@@ -28,7 +29,10 @@ fun MainScaffold(
             NavigationDrawerContent(
                 currentRoute = currentRoute,
                 onNavigate = { route ->
+                    Napier.d("MAIN SCAFFOLD: Navigation requested to route: $route")
+                    Napier.d("MAIN SCAFFOLD: Calling parent onNavigate callback")
                     onNavigate(route)
+                    Napier.d("MAIN SCAFFOLD: Closing drawer")
                     scope.launch {
                         drawerState.close()
                     }

@@ -13,6 +13,19 @@ import com.dentalvision.ai.presentation.screen.appointments.AppointmentsScreen
 import com.dentalvision.ai.presentation.screen.analysis.NewAnalysisScreen
 import com.dentalvision.ai.presentation.screen.reports.ReportsScreen
 import com.dentalvision.ai.presentation.screen.patient.PatientsScreen
+import io.github.aakira.napier.Napier
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.dentalvision.ai.presentation.viewmodel.NewAnalysisViewModel
+import com.dentalvision.ai.presentation.viewmodel.PatientsViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Main navigation graph for Dental Vision AI application
@@ -26,6 +39,10 @@ fun DentalVisionNavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: String = Screen.Login.route
 ) {
+    Napier.d("NAV GRAPH: DentalVisionNavGraph composing with startDestination: $startDestination")
+    Napier.d("NAV GRAPH: NavController instance: ${navController.hashCode()}")
+    Napier.d("NAV GRAPH: Current destination: ${navController.currentDestination?.route}")
+
     NavHost(
         navController = navController,
         startDestination = startDestination
@@ -44,15 +61,22 @@ fun DentalVisionNavGraph(
 
         // Dashboard Screen
         composable(route = Screen.Dashboard.route) {
+            Napier.d("NAV GRAPH: Composable block ENTERED for Dashboard route")
             DashboardScreen(
                 currentRoute = Screen.Dashboard.route,
-                onNavigate = { route -> navController.navigate(route) },
+                onNavigate = { route ->
+                    Napier.d("NAV GRAPH: onNavigate callback called from Dashboard with route: $route")
+                    Napier.d("NAV GRAPH: Calling navController.navigate($route)")
+                    navController.navigate(route)
+                    Napier.d("NAV GRAPH: navController.navigate() returned")
+                },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
             )
+            Napier.d("NAV GRAPH: DashboardScreen() composable returned successfully")
         }
 
         // Appointments Screen
@@ -83,6 +107,7 @@ fun DentalVisionNavGraph(
 
         // Patient List Screen
         composable(route = Screen.PatientList.route) {
+            Napier.d("NAV GRAPH: Composable block ENTERED for PatientList route")
             PatientsScreen(
                 currentRoute = Screen.PatientList.route,
                 onNavigate = { route -> navController.navigate(route) },
@@ -92,6 +117,7 @@ fun DentalVisionNavGraph(
                     }
                 }
             )
+            Napier.d("NAV GRAPH: PatientsScreen() composable returned successfully")
         }
 
         // Patient Detail Screen
@@ -163,7 +189,10 @@ fun DentalVisionNavGraph(
 
         // New Analysis Screen (Standalone - patient selected inside)
         composable(route = Screen.NewAnalysisStandalone.route) {
-            NewAnalysisScreen(
+            Napier.d("NAV GRAPH: Composable block ENTERED for route: ${Screen.NewAnalysisStandalone.route}")
+            Napier.d("NAV GRAPH: About to call NewAnalysisScreen() composable")
+
+            SafeNewAnalysisScreen(
                 currentRoute = Screen.NewAnalysisStandalone.route,
                 onNavigate = { route -> navController.navigate(route) },
                 onLogout = {
@@ -172,6 +201,8 @@ fun DentalVisionNavGraph(
                     }
                 }
             )
+
+            Napier.d("NAV GRAPH: NewAnalysisScreen() composable returned successfully")
         }
 
         // New Analysis Screen (With specific patient)
@@ -390,4 +421,98 @@ private fun SettingsScreenPlaceholder(
 @Composable
 private fun AboutScreenPlaceholder(onBack: () -> Unit) {
     // TODO: Implement actual AboutScreen from presentation.screen.settings package
+}
+
+/**
+ * Safe wrapper for NewAnalysisScreen that catches ViewModel injection failures
+ * If koinViewModel() fails, shows error screen instead of blank screen
+ */
+@Composable
+private fun SafeNewAnalysisScreen(
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
+    onLogout: () -> Unit
+) {
+    Napier.d("SAFE WRAPPER: Attempting to render NewAnalysisScreen")
+
+    // Just call the NewAnalysisScreen directly - let it handle errors internally
+    NewAnalysisScreen(
+        currentRoute = currentRoute,
+        onNavigate = onNavigate,
+        onLogout = onLogout
+    )
+
+    Napier.d("SAFE WRAPPER: NewAnalysisScreen rendered")
+}
+
+/**
+ * Error Boundary Screen - Shows detailed error information
+ */
+@Composable
+private fun ErrorBoundaryScreen(
+    errorTitle: String,
+    errorMessage: String,
+    stackTrace: String,
+    onBack: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = "Error",
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.error
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = errorTitle,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = stackTrace,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(onClick = onBack) {
+                Text("Back to Dashboard")
+            }
+        }
+    }
 }

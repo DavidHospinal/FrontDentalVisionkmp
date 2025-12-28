@@ -30,6 +30,7 @@ import com.dentalvision.ai.presentation.theme.DentalColors
 import com.dentalvision.ai.presentation.viewmodel.AnalysisUiState
 import com.dentalvision.ai.presentation.viewmodel.NewAnalysisViewModel
 import com.dentalvision.ai.presentation.viewmodel.PatientsViewModel
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -46,21 +47,93 @@ fun NewAnalysisScreen(
     analysisViewModel: NewAnalysisViewModel = koinViewModel(),
     patientsViewModel: PatientsViewModel = koinViewModel()
 ) {
+    // CRITICAL: Add logging to detect if screen is reached
+    Napier.d("NEW ANALYSIS SCREEN: Composing - route: $currentRoute")
+
+    // Track initialization errors
+    var initError by remember { mutableStateOf<String?>(null) }
+
     // Load patients on first composition
     LaunchedEffect(Unit) {
-        patientsViewModel.loadPatients()
+        Napier.d("NEW ANALYSIS SCREEN: LaunchedEffect started")
+        try {
+            Napier.d("NEW ANALYSIS SCREEN: Loading patients...")
+            patientsViewModel.loadPatients()
+            Napier.d("NEW ANALYSIS SCREEN: Patients load initiated successfully")
+        } catch (e: Exception) {
+            Napier.e("NEW ANALYSIS SCREEN: CRITICAL - Failed to load patients", e)
+            initError = "Failed to load patients: ${e.message}"
+        }
     }
 
+    // Show error UI if initialization failed
+    if (initError != null) {
+        Napier.e("NEW ANALYSIS SCREEN: Showing error UI - $initError")
+        ErrorScreen(
+            errorMessage = initError ?: "Unknown error",
+            onNavigate = onNavigate
+        )
+        return
+    }
+
+    Napier.d("NEW ANALYSIS SCREEN: Rendering MainScaffold")
     MainScaffold(
         currentRoute = currentRoute,
         onNavigate = onNavigate,
         onLogout = onLogout
     ) { paddingValues ->
+        Napier.d("NEW ANALYSIS SCREEN: Rendering NewAnalysisContent")
         NewAnalysisContent(
             modifier = Modifier.padding(paddingValues),
             analysisViewModel = analysisViewModel,
             patientsViewModel = patientsViewModel
         )
+    }
+    Napier.d("NEW ANALYSIS SCREEN: MainScaffold rendered successfully")
+}
+
+/**
+ * Error screen shown when NewAnalysisScreen fails to initialize
+ */
+@Composable
+private fun ErrorScreen(
+    errorMessage: String,
+    onNavigate: (String) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(24.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = "Error",
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Error Loading Analysis Screen",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = { onNavigate("dashboard") }) {
+                Text("Return to Dashboard")
+            }
+        }
     }
 }
 

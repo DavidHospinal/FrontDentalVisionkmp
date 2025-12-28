@@ -22,6 +22,7 @@ import com.dentalvision.ai.presentation.component.ExtendedIcons
 import dentalvisionai.composeapp.generated.resources.Res
 import dentalvisionai.composeapp.generated.resources.dental0
 import org.jetbrains.compose.resources.painterResource
+import io.github.aakira.napier.Napier
 
 /**
  * Navigation Drawer Content
@@ -103,6 +104,8 @@ fun NavigationDrawerContent(
                 icon = ExtendedIcons.Analytics,
                 selected = currentRoute.startsWith("analysis/new"),
                 onClick = {
+                    Napier.d("NAVIGATION DRAWER: 'New Analysis' menu item clicked")
+                    Napier.d("NAVIGATION DRAWER: Navigating to route: ${Screen.NewAnalysisStandalone.route}")
                     onNavigate(Screen.NewAnalysisStandalone.route)
                 }
             )
