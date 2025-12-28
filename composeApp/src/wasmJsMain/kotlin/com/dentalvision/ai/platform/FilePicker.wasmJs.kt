@@ -15,16 +15,40 @@ import kotlinx.browser.document
 /**
  * Convert ArrayBuffer to ByteArray for WASM
  * Uses Int8Array for signed byte conversion matching Kotlin's Byte type
+ * Includes error handling to prevent crashes
  */
 private fun arrayBufferToByteArray(buffer: ArrayBuffer): ByteArray {
-    val int8Array = Int8Array(buffer)
-    val length = int8Array.length
+    return try {
+        val bufferLength = buffer.byteLength
+        Napier.d("WebFilePicker: Converting ArrayBuffer of $bufferLength bytes")
 
-    return ByteArray(length) { index ->
-        // Int8Array values are -128 to 127 (signed), matching Kotlin Byte
-        getInt8ArrayValue(int8Array, index)
-    }.also {
-        Napier.d("WebFilePicker: Converted ArrayBuffer (${buffer.byteLength} bytes) to ByteArray (${it.size} bytes)")
+        if (bufferLength == 0) {
+            Napier.w("WebFilePicker: ArrayBuffer is empty")
+            return ByteArray(0)
+        }
+
+        val int8Array = Int8Array(buffer)
+        val arrayLength = int8Array.length
+
+        if (arrayLength == 0) {
+            Napier.w("WebFilePicker: Int8Array has length 0")
+            return ByteArray(0)
+        }
+
+        ByteArray(arrayLength) { index ->
+            try {
+                // Int8Array values are -128 to 127 (signed), matching Kotlin Byte
+                getInt8ArrayValue(int8Array, index)
+            } catch (e: Exception) {
+                Napier.e("WebFilePicker: Failed to get byte at index $index", e)
+                0 // Return 0 as fallback
+            }
+        }.also {
+            Napier.d("WebFilePicker: Successfully converted ArrayBuffer ($bufferLength bytes) to ByteArray (${it.size} bytes)")
+        }
+    } catch (e: Exception) {
+        Napier.e("WebFilePicker: Failed to convert ArrayBuffer to ByteArray", e)
+        throw e
     }
 }
 
@@ -48,40 +72,72 @@ class WebFilePicker : FilePicker {
             Napier.d("WebFilePicker: Starting file selection")
 
             // Create hidden file input element
-            input = (document.createElement("input") as HTMLInputElement).apply {
-                type = "file"
-                accept = "image/jpeg,image/png,image/jpg"
-                style.display = "none"
+            input = try {
+                (document.createElement("input") as HTMLInputElement).apply {
+                    type = "file"
+                    accept = "image/jpeg,image/png,image/jpg"
+                    style.display = "none"
+                }
+            } catch (e: Exception) {
+                Napier.e("WebFilePicker: Failed to create input element", e)
+                return FilePickerResult.Error("Failed to create file picker: ${e.message}")
             }
 
             // Add to DOM temporarily
-            document.body?.appendChild(input)
+            try {
+                document.body?.appendChild(input)
+                    ?: run {
+                        Napier.e("WebFilePicker: document.body is null")
+                        return FilePickerResult.Error("Document body not available")
+                    }
+            } catch (e: Exception) {
+                Napier.e("WebFilePicker: Failed to append input to DOM", e)
+                return FilePickerResult.Error("Failed to show file picker: ${e.message}")
+            }
 
             // Wait for file selection
-            val file = suspendCoroutine<File?> { continuation ->
-                var resumed = false
+            val file = try {
+                suspendCoroutine<File?> { continuation ->
+                    var resumed = false
 
-                input!!.onchange = {
-                    if (!resumed) {
-                        resumed = true
-                        val selectedFile = input.files?.item(0)
-                        Napier.d("WebFilePicker: File selected - ${selectedFile?.name ?: "none"}")
-                        continuation.resume(selectedFile)
+                    input.onchange = {
+                        if (!resumed) {
+                            resumed = true
+                            try {
+                                val selectedFile = input.files?.item(0)
+                                Napier.d("WebFilePicker: File selected - ${selectedFile?.name ?: "none"}")
+                                continuation.resume(selectedFile)
+                            } catch (e: Exception) {
+                                Napier.e("WebFilePicker: Error getting selected file", e)
+                                continuation.resume(null)
+                            }
+                        }
+                    }
+
+                    // Handle cancellation
+                    input.oncancel = {
+                        if (!resumed) {
+                            resumed = true
+                            Napier.d("WebFilePicker: File selection cancelled")
+                            continuation.resume(null)
+                        }
+                    }
+
+                    // Trigger file picker dialog
+                    try {
+                        Napier.d("WebFilePicker: Opening file picker dialog")
+                        input.click()
+                    } catch (e: Exception) {
+                        Napier.e("WebFilePicker: Failed to trigger file picker", e)
+                        if (!resumed) {
+                            resumed = true
+                            continuation.resume(null)
+                        }
                     }
                 }
-
-                // Handle cancellation
-                input!!.oncancel = {
-                    if (!resumed) {
-                        resumed = true
-                        Napier.d("WebFilePicker: File selection cancelled")
-                        continuation.resume(null)
-                    }
-                }
-
-                // Trigger file picker dialog
-                Napier.d("WebFilePicker: Opening file picker dialog")
-                input.click()
+            } catch (e: Exception) {
+                Napier.e("WebFilePicker: Exception in file selection coroutine", e)
+                null
             }
 
             // Clean up DOM IMMEDIATELY after file selection (or cancellation)
@@ -97,9 +153,19 @@ class WebFilePicker : FilePicker {
                 return FilePickerResult.Cancelled
             }
 
-            // Read file as ByteArray
+            // Read file as ByteArray with error handling
             Napier.d("WebFilePicker: Reading file as bytes...")
-            val fileBytes = readFileAsBytes(file)
+            val fileBytes = try {
+                readFileAsBytes(file)
+            } catch (e: Exception) {
+                Napier.e("WebFilePicker: Failed to read file bytes", e)
+                return FilePickerResult.Error("Failed to read file: ${e.message}")
+            }
+
+            if (fileBytes.isEmpty()) {
+                Napier.w("WebFilePicker: File bytes are empty")
+                return FilePickerResult.Error("File is empty or could not be read")
+            }
 
             Napier.i("WebFilePicker: Successfully read image - ${file.name} (${fileBytes.size} bytes, ${file.type})")
 
@@ -128,30 +194,73 @@ class WebFilePicker : FilePicker {
 
     /**
      * Read File as ByteArray using FileReader API
+     * Includes comprehensive error handling to prevent UI crashes
      */
     private suspend fun readFileAsBytes(file: File): ByteArray = suspendCoroutine { continuation ->
-        val reader = FileReader()
+        try {
+            val reader = FileReader()
+            var resumed = false
 
-        reader.onload = {
-            try {
-                Napier.d("WebFilePicker: FileReader onload triggered")
-                val arrayBuffer = reader.result as ArrayBuffer
-                val byteArray = arrayBufferToByteArray(arrayBuffer)
-                continuation.resume(byteArray)
-            } catch (e: Exception) {
-                Napier.e("WebFilePicker: Error in FileReader onload", e)
-                continuation.resumeWithException(e)
+            reader.onload = onload@{
+                if (!resumed) {
+                    resumed = true
+                    try {
+                        Napier.d("WebFilePicker: FileReader onload triggered")
+                        val result = reader.result
+
+                        if (result == null) {
+                            Napier.e("WebFilePicker: FileReader result is null")
+                            continuation.resumeWithException(Exception("FileReader result is null"))
+                            return@onload
+                        }
+
+                        val arrayBuffer = result as? ArrayBuffer
+                        if (arrayBuffer == null) {
+                            Napier.e("WebFilePicker: FileReader result is not an ArrayBuffer")
+                            continuation.resumeWithException(Exception("FileReader result is not an ArrayBuffer"))
+                            return@onload
+                        }
+
+                        val byteArray = try {
+                            arrayBufferToByteArray(arrayBuffer)
+                        } catch (e: Exception) {
+                            Napier.e("WebFilePicker: Failed to convert ArrayBuffer to ByteArray", e)
+                            continuation.resumeWithException(e)
+                            return@onload
+                        }
+
+                        continuation.resume(byteArray)
+                    } catch (e: Exception) {
+                        Napier.e("WebFilePicker: Error in FileReader onload", e)
+                        continuation.resumeWithException(e)
+                    }
+                }
             }
-        }
 
-        reader.onerror = {
-            val error = Exception("Error reading file: ${reader.error}")
-            Napier.e("WebFilePicker: FileReader onerror triggered", error)
-            continuation.resumeWithException(error)
-        }
+            reader.onerror = {
+                if (!resumed) {
+                    resumed = true
+                    val error = Exception("Error reading file: ${reader.error ?: "unknown error"}")
+                    Napier.e("WebFilePicker: FileReader onerror triggered", error)
+                    continuation.resumeWithException(error)
+                }
+            }
 
-        Napier.d("WebFilePicker: Starting FileReader.readAsArrayBuffer")
-        reader.readAsArrayBuffer(file)
+            reader.onabort = {
+                if (!resumed) {
+                    resumed = true
+                    val error = Exception("File reading was aborted")
+                    Napier.e("WebFilePicker: FileReader onabort triggered", error)
+                    continuation.resumeWithException(error)
+                }
+            }
+
+            Napier.d("WebFilePicker: Starting FileReader.readAsArrayBuffer for ${file.name} (${file.size} bytes)")
+            reader.readAsArrayBuffer(file)
+        } catch (e: Exception) {
+            Napier.e("WebFilePicker: Failed to initialize FileReader", e)
+            continuation.resumeWithException(e)
+        }
     }
 }
 

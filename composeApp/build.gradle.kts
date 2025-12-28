@@ -38,11 +38,11 @@ kotlin {
     // JVM Target (Desktop)
     jvm()
 
-    // JavaScript Target (Web)
-    js {
-        browser()
-        binaries.executable()
-    }
+    // JavaScript Target (Web) - Disabled, using wasmJs instead
+    // js {
+    //     browser()
+    //     binaries.executable()
+    // }
 
     // WebAssembly Target (Modern Web)
     @OptIn(ExperimentalWasmDsl::class)
@@ -158,11 +158,11 @@ kotlin {
             // implementation(libs.coil.network.ktor)
         }
 
-        // JavaScript/Web Specific
-        jsMain.dependencies {
-            // Ktor JS Engine
-            implementation(libs.ktor.client.js)
-        }
+        // JavaScript/Web Specific - Disabled, using wasmJs instead
+        // jsMain.dependencies {
+        //     // Ktor JS Engine
+        //     implementation(libs.ktor.client.js)
+        // }
 
         // WebAssembly Specific
         wasmJsMain.dependencies {

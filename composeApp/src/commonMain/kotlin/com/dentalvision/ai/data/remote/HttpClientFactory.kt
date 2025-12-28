@@ -86,7 +86,7 @@ object HttpClientFactory {
             install(DefaultRequest) {
                 headers.append("Accept", "application/json")
                 headers.append("Content-Type", "application/json")
-                // Desactivar compresión GZIP para WASM (evita Content-Length mismatch)
+                // Request uncompressed responses for WASM compatibility
                 headers.append("Accept-Encoding", "identity")
             }
         }
@@ -135,7 +135,7 @@ object HttpClientFactory {
             // Default request configuration
             install(DefaultRequest) {
                 headers.append("Accept", "application/json")
-                // Desactivar compresión GZIP para WASM (evita Content-Length mismatch)
+                // Request uncompressed responses for WASM compatibility
                 headers.append("Accept-Encoding", "identity")
             }
         }
