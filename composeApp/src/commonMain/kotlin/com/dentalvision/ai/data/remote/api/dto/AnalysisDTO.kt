@@ -43,3 +43,54 @@ data class AnalysisRequest(
     val confidence_threshold: Double = 0.5,
     val analysis_type: String = "complete"
 )
+
+/**
+ * DTOs for listing all analyses
+ */
+@Serializable
+data class AnalysisListResponseDTO(
+    val success: Boolean,
+    val data: AnalysisListDataDTO,
+    val message: String
+)
+
+@Serializable
+data class AnalysisListDataDTO(
+    val analyses: List<AnalysisItemDTO>,
+    val pagination: PaginationDTO
+)
+
+@Serializable
+data class AnalysisItemDTO(
+    val analysis_id: String,
+    val patient: AnalysisPatientDTO,
+    val date: String,
+    val summary: AnalysisSummaryItemDTO,
+    val status: String,
+    val type: String
+)
+
+@Serializable
+data class AnalysisPatientDTO(
+    val id: String,
+    val name: String,
+    val age: Int
+)
+
+@Serializable
+data class AnalysisSummaryItemDTO(
+    val total_teeth: Int,
+    val cavities: Int,
+    val healthy: Int,
+    val health_percentage: Double
+)
+
+@Serializable
+data class PaginationDTO(
+    val page: Int,
+    val per_page: Int,
+    val total: Int,
+    val pages: Int,
+    val has_next: Boolean,
+    val has_prev: Boolean
+)

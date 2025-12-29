@@ -4,6 +4,7 @@ import com.dentalvision.ai.domain.model.Report
 import com.dentalvision.ai.domain.repository.ReportRepository
 import com.dentalvision.ai.data.remote.api.dto.AnalysisReport
 import com.dentalvision.ai.data.remote.api.dto.toDomainModel
+import com.dentalvision.ai.data.remote.api.dto.AnalysisItemDTO
 import com.dentalvision.ai.data.remote.service.ReportService
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,60 @@ class ReportsViewModel(
 
     private val _selectedAnalysisReport = MutableStateFlow<AnalysisReport?>(null)
     val selectedAnalysisReport: StateFlow<AnalysisReport?> = _selectedAnalysisReport.asStateFlow()
+
+    private val _allAnalyses = MutableStateFlow<List<AnalysisItemDTO>>(emptyList())
+    val allAnalyses: StateFlow<List<AnalysisItemDTO>> = _allAnalyses.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    init {
+        loadAllAnalyses()
+    }
+
+    /**
+     * Load all analyses across all patients
+     */
+    fun loadAllAnalyses(page: Int = 1, perPage: Int = 50) {
+        launchWithErrorHandler {
+            _uiState.value = ReportsUiState.Loading
+            val query = _searchQuery.value
+            Napier.d("Loading all analyses (page=$page, perPage=$perPage, query=$query)")
+
+            try {
+                val response = reportService.getAllAnalyses(
+                    page = page,
+                    perPage = perPage,
+                    searchQuery = query.ifBlank { null }
+                )
+                if (response.success) {
+                    _allAnalyses.value = response.data.analyses
+                    _uiState.value = if (response.data.analyses.isEmpty()) {
+                        ReportsUiState.Empty
+                    } else {
+                        ReportsUiState.Success
+                    }
+                    Napier.i("Loaded ${response.data.analyses.size} analyses")
+                } else {
+                    Napier.e("Failed to load analyses: ${response.message}")
+                    _uiState.value = ReportsUiState.Error(response.message)
+                }
+            } catch (e: Exception) {
+                Napier.e("Error loading all analyses", e)
+                _uiState.value = ReportsUiState.Error(
+                    "Failed to load analyses: ${e.message}"
+                )
+            }
+        }
+    }
+
+    /**
+     * Update search query and reload results
+     */
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+        loadAllAnalyses()
+    }
 
     /**
      * Load reports for a patient

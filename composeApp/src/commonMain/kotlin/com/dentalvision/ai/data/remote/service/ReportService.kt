@@ -7,6 +7,7 @@ import com.dentalvision.ai.data.remote.api.dto.ApiResponse
 import com.dentalvision.ai.data.remote.api.dto.GenerateReportRequest
 import com.dentalvision.ai.data.remote.api.dto.ReportDTO
 import com.dentalvision.ai.data.remote.api.dto.AnalysisReportDTO
+import com.dentalvision.ai.data.remote.api.dto.AnalysisListResponseDTO
 
 class ReportService(
     private val apiClient: ApiClient = ApiClientFactory.backendClient
@@ -51,6 +52,31 @@ class ReportService(
      */
     suspend fun getAnalysisData(analysisId: String): AnalysisReportDTO {
         val endpoint = "${ApiConfig.Endpoints.REPORTS}/analysis/$analysisId/data"
+        return apiClient.get(endpoint)
+    }
+
+    /**
+     * Get all analyses across all patients with pagination and search
+     */
+    suspend fun getAllAnalyses(
+        page: Int = 1,
+        perPage: Int = 20,
+        sortBy: String = "created_at",
+        sortOrder: String = "desc",
+        searchQuery: String? = null
+    ): AnalysisListResponseDTO {
+        val queryParams = mutableListOf(
+            "page=$page",
+            "per_page=$perPage",
+            "sort_by=$sortBy",
+            "sort_order=$sortOrder"
+        )
+
+        if (!searchQuery.isNullOrBlank()) {
+            queryParams.add("q=${searchQuery.trim()}")
+        }
+
+        val endpoint = "${ApiConfig.Endpoints.ANALYSIS}/list?${queryParams.joinToString("&")}"
         return apiClient.get(endpoint)
     }
 }

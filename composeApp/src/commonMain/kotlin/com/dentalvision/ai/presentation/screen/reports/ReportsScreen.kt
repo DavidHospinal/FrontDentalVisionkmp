@@ -55,19 +55,14 @@ private fun ReportsContent(
     val uiState by viewModel.uiState.collectAsState()
     val reports by viewModel.reports.collectAsState()
     val selectedAnalysisReport by viewModel.selectedAnalysisReport.collectAsState()
+    val allAnalyses by viewModel.allAnalyses.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
-    // Show Report Detail Dialog when a report is selected
     selectedAnalysisReport?.let { analysisReport ->
         ReportDetailDialog(
             analysisReport = analysisReport,
             onDismiss = { viewModel.closeAnalysisReportViewer() }
         )
-    }
-
-    // Real analysis IDs from backend database
-    // These correspond to actual patients with completed analyses
-    val demoAnalysisIds = remember {
-        listOf("ANA-2025-8630", "ANA-2025-7157", "ANA-2025-8161", "ANA-2025-3113")
     }
 
     // Responsive Layout
@@ -147,6 +142,7 @@ private fun ReportsContent(
 
             // Stats Cards
             item {
+                val totalAnalyses = allAnalyses.size
                 if (isMobile) {
                     // Mobile: 2x2 Grid
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -156,14 +152,14 @@ private fun ReportsContent(
                         ) {
                             StatCard(
                                 title = "Total",
-                                value = "4",
+                                value = totalAnalyses.toString(),
                                 icon = ExtendedIcons.Description,
                                 color = DentalColors.Primary,
                                 modifier = Modifier.weight(1f)
                             )
                             StatCard(
                                 title = "Analysis",
-                                value = "4",
+                                value = totalAnalyses.toString(),
                                 icon = ExtendedIcons.BarChart,
                                 color = DentalColors.Success,
                                 modifier = Modifier.weight(1f)
@@ -197,14 +193,14 @@ private fun ReportsContent(
                     ) {
                         StatCard(
                             title = "Total Reports",
-                            value = "4",
+                            value = totalAnalyses.toString(),
                             icon = ExtendedIcons.Description,
                             color = DentalColors.Primary,
                             modifier = Modifier.weight(1f)
                         )
                         StatCard(
                             title = "Analysis",
-                            value = "4",
+                            value = totalAnalyses.toString(),
                             icon = ExtendedIcons.BarChart,
                             color = DentalColors.Success,
                             modifier = Modifier.weight(1f)
@@ -230,8 +226,8 @@ private fun ReportsContent(
             // Search Bar
             item {
                 OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
+                    value = searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChanged(it) },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("Search reports by patient...") },
                     leadingIcon = {
@@ -245,16 +241,16 @@ private fun ReportsContent(
             // Reports List/Grid
             if (isMobile) {
                 // Mobile: Vertical List
-                itemsIndexed(demoAnalysisIds) { index, analysisId ->
+                items(allAnalyses) { analysis ->
                     ReportCardMobile(
                         report = ReportData(
-                            id = "REP-2025-00${index + 1}",
-                            patientName = listOf("Adrián Castañeda Lledó", "Anastasio Nicolás Gutierrez", "Aroa Bru Pinto", "Aroa Bru Pinto")[index],
-                            date = listOf("Nov 27, 2025", "Oct 15, 2025", "Sep 28, 2025", "Aug 12, 2025")[index],
-                            type = "AI Analysis",
-                            status = "Completed"
+                            id = analysis.analysis_id,
+                            patientName = analysis.patient.name,
+                            date = formatDate(analysis.date),
+                            type = analysis.type,
+                            status = analysis.status
                         ),
-                        analysisId = analysisId,
+                        analysisId = analysis.analysis_id,
                         onViewReport = { viewModel.viewAnalysisReport(it) }
                     )
                 }
@@ -267,16 +263,16 @@ private fun ReportsContent(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        itemsIndexed(demoAnalysisIds) { index, analysisId ->
+                        items(allAnalyses) { analysis ->
                             ReportCardDesktop(
                                 report = ReportData(
-                                    id = "REP-2025-00${index + 1}",
-                                    patientName = listOf("Adrián Castañeda Lledó", "Anastasio Nicolás Gutierrez", "Aroa Bru Pinto", "Aroa Bru Pinto")[index],
-                                    date = listOf("Nov 27, 2025", "Oct 15, 2025", "Sep 28, 2025", "Aug 12, 2025")[index],
-                                    type = "AI Analysis",
-                                    status = "Completed"
+                                    id = analysis.analysis_id,
+                                    patientName = analysis.patient.name,
+                                    date = formatDate(analysis.date),
+                                    type = analysis.type,
+                                    status = analysis.status
                                 ),
-                                analysisId = analysisId,
+                                analysisId = analysis.analysis_id,
                                 onViewReport = { viewModel.viewAnalysisReport(it) }
                             )
                         }
@@ -535,3 +531,25 @@ private data class ReportData(
     val type: String,
     val status: String
 )
+
+/**
+ * Format ISO date string to readable format
+ */
+private fun formatDate(isoDate: String): String {
+    return try {
+        // Parse ISO date (e.g., "2025-11-27T10:30:00")
+        val parts = isoDate.split("T")[0].split("-")
+        val year = parts[0]
+        val month = parts[1].toInt()
+        val day = parts[2].toInt()
+
+        val monthNames = listOf(
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        )
+
+        "${monthNames[month - 1]} $day, $year"
+    } catch (e: Exception) {
+        isoDate.split("T")[0]  // Fallback: return date part only
+    }
+}
