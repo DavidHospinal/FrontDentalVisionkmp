@@ -39,8 +39,20 @@ fun NewAppointmentDialog(
     var observations by remember { mutableStateOf("") }
     var showPatientDropdown by remember { mutableStateOf(false) }
     var showTypeDropdown by remember { mutableStateOf(false) }
+    var showDatePickerDialog by remember { mutableStateOf(false) }
+    var showTimePickerDialog by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+
+    // Generate time slots (every 30 minutes from 8:00 to 18:00)
+    val timeSlots = remember {
+        buildList {
+            for (hour in 8..18) {
+                add(LocalTime(hour, 0))
+                if (hour < 18) add(LocalTime(hour, 30))
+            }
+        }
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -175,15 +187,13 @@ fun NewAppointmentDialog(
                             disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
-                    // CRITICAL: Transparent Box AFTER TextField to capture clicks (z-index layering)
+                    // Transparent Box on top to open DatePicker
                     Box(
                         modifier = Modifier
                             .matchParentSize()
                             .clickable {
-                                val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-                                selectedDate = today
+                                showDatePickerDialog = true
                                 showError = false
-                                println("DEBUG: Date selected - $selectedDate")
                             }
                     )
                 }
@@ -199,14 +209,23 @@ fun NewAppointmentDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Time field with clickable overlay
-                Box(modifier = Modifier.fillMaxWidth()) {
+                // Time field with dropdown selector
+                ExposedDropdownMenuBox(
+                    expanded = showTimePickerDialog,
+                    onExpandedChange = {
+                        showTimePickerDialog = it
+                        if (it) showError = false
+                    }
+                ) {
                     OutlinedTextField(
-                        value = selectedTime?.toString() ?: "Select time",
+                        value = selectedTime?.let {
+                            "${it.hour.toString().padStart(2, '0')}:${it.minute.toString().padStart(2, '0')}"
+                        } ?: "Select time",
                         onValueChange = {},
                         readOnly = true,
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
                         trailingIcon = {
                             Icon(
                                 imageVector = ExtendedIcons.Schedule,
@@ -214,22 +233,32 @@ fun NewAppointmentDialog(
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                            disabledBorderColor = MaterialTheme.colorScheme.outline,
-                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            focusedBorderColor = DentalColors.Primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         )
                     )
-                    // CRITICAL: Transparent Box AFTER TextField to capture clicks (z-index layering)
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clickable {
-                                selectedTime = LocalTime(9, 0)
-                                showError = false
-                                println("DEBUG: Time selected - $selectedTime")
-                            }
-                    )
+
+                    ExposedDropdownMenu(
+                        expanded = showTimePickerDialog,
+                        onDismissRequest = { showTimePickerDialog = false }
+                    ) {
+                        timeSlots.forEach { time ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                },
+                                onClick = {
+                                    selectedTime = time
+                                    showTimePickerDialog = false
+                                    showError = false
+                                    println("DEBUG: Time selected - $time")
+                                }
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -374,6 +403,51 @@ fun NewAppointmentDialog(
                     }
                 }
             }
+        }
+    }
+
+    // DatePicker Dialog
+    if (showDatePickerDialog) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate?.let {
+                val instant = it.atTime(0, 0).toInstant(TimeZone.currentSystemDefault())
+                instant.toEpochMilliseconds()
+            } ?: Clock.System.now().toEpochMilliseconds()
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePickerDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val instant = Instant.fromEpochMilliseconds(millis)
+                            val localDate = instant.toLocalDateTime(TimeZone.UTC).date
+                            selectedDate = localDate
+                            println("DEBUG: Date selected from picker - $localDate")
+                        }
+                        showDatePickerDialog = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePickerDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                title = {
+                    Text(
+                        text = "Select Appointment Date",
+                        modifier = Modifier.padding(16.dp)
+                    )
+                },
+                showModeToggle = false
+            )
         }
     }
 }

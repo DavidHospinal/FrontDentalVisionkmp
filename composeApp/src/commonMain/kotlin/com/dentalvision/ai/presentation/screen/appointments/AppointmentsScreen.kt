@@ -657,11 +657,24 @@ private fun AppointmentCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Display patient name prominently
             Text(
-                text = "Patient ID: ${appointment.patientId}",
+                text = appointment.patientName ?: appointment.patientId,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Bold,
+                color = DentalColors.Primary
             )
+
+            // Show patient ID in smaller text below if name is available
+            if (appointment.patientName != null) {
+                Text(
+                    text = "ID: ${appointment.patientId}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 text = appointment.appointmentType.displayName,

@@ -42,13 +42,16 @@ class AppointmentsViewModel(
 
             appointmentRepository.getAppointments()
                 .onSuccess { (appointmentsList, _) ->
-                    _appointments.value = appointmentsList
-                    _uiState.value = if (appointmentsList.isEmpty()) {
+                    // Load patient names for appointments
+                    val appointmentsWithNames = enrichAppointmentsWithPatientNames(appointmentsList)
+
+                    _appointments.value = appointmentsWithNames
+                    _uiState.value = if (appointmentsWithNames.isEmpty()) {
                         AppointmentsUiState.Empty
                     } else {
                         AppointmentsUiState.Success
                     }
-                    Napier.i("Loaded ${appointmentsList.size} appointments")
+                    Napier.i("Loaded ${appointmentsWithNames.size} appointments with patient names")
                 }
                 .onFailure { error ->
                     Napier.e("Failed to load appointments", error)
@@ -56,6 +59,19 @@ class AppointmentsViewModel(
                         error.message ?: "Failed to load appointments"
                     )
                 }
+        }
+    }
+
+    private suspend fun enrichAppointmentsWithPatientNames(appointments: List<Appointment>): List<Appointment> {
+        if (appointments.isEmpty()) return appointments
+
+        // Load all patients to get names
+        val patientsResult = patientRepository.getPatients(page = 1, limit = 100)
+        val patientNameMap = patientsResult.getOrNull()?.first?.associate { it.id to it.name } ?: emptyMap()
+
+        // Add patient names to appointments
+        return appointments.map { appointment ->
+            appointment.copy(patientName = patientNameMap[appointment.patientId] ?: "Unknown Patient")
         }
     }
 

@@ -5,6 +5,7 @@ import kotlinx.datetime.Instant
 data class Appointment(
     val id: String,
     val patientId: String,
+    val patientName: String? = null, // Patient name for UI display
     val appointmentDate: Instant,
     val appointmentType: AppointmentType,
     val status: AppointmentStatus,
