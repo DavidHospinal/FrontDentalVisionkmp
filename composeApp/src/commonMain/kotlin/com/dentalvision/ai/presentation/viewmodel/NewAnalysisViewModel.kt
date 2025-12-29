@@ -1,7 +1,12 @@
 package com.dentalvision.ai.presentation.viewmodel
 
 import com.dentalvision.ai.domain.model.Analysis
+import com.dentalvision.ai.domain.model.AppointmentStatus
+import com.dentalvision.ai.domain.model.AppointmentType
+import com.dentalvision.ai.domain.model.Patient
 import com.dentalvision.ai.domain.repository.AnalysisRepository
+import com.dentalvision.ai.domain.repository.AppointmentRepository
+import com.dentalvision.ai.domain.repository.PatientRepository
 import com.dentalvision.ai.platform.FilePicker
 import com.dentalvision.ai.platform.FilePickerResult
 import io.github.aakira.napier.Napier
@@ -9,12 +14,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/**
- * ViewModel for New Analysis screen
- * Handles dental image analysis workflow with AI integration
- */
 class NewAnalysisViewModel(
     private val analysisRepository: AnalysisRepository,
+    private val appointmentRepository: AppointmentRepository,
+    private val patientRepository: PatientRepository,
     private val filePicker: FilePicker
 ) : BaseViewModel() {
 
@@ -27,9 +30,52 @@ class NewAnalysisViewModel(
     private val _analysisResult = MutableStateFlow<Analysis?>(null)
     val analysisResult: StateFlow<Analysis?> = _analysisResult.asStateFlow()
 
-    /**
-     * Open file picker to select dental image
-     */
+    private val _eligiblePatients = MutableStateFlow<List<Patient>>(emptyList())
+    val eligiblePatients: StateFlow<List<Patient>> = _eligiblePatients.asStateFlow()
+
+    init {
+        loadEligiblePatients()
+    }
+
+    fun loadEligiblePatients() {
+        launchWithErrorHandler {
+            Napier.d("Loading eligible patients for AI Analysis")
+
+            appointmentRepository.getAppointments()
+                .onSuccess { (appointments, _) ->
+                    val eligiblePatientIds = appointments
+                        .filter {
+                            it.status == AppointmentStatus.CONFIRMED &&
+                            it.appointmentType == AppointmentType.AI_ANALYSIS
+                        }
+                        .map { it.patientId }
+                        .toSet()
+
+                    Napier.d("Found ${eligiblePatientIds.size} patients with confirmed AI Analysis appointments")
+
+                    if (eligiblePatientIds.isNotEmpty()) {
+                        patientRepository.getPatients(page = 1, limit = 100)
+                            .onSuccess { (patients, _) ->
+                                val filtered = patients.filter { it.id in eligiblePatientIds }
+                                _eligiblePatients.value = filtered
+                                Napier.i("Loaded ${filtered.size} eligible patients for analysis")
+                            }
+                            .onFailure { error ->
+                                Napier.e("Failed to load patients", error)
+                                _eligiblePatients.value = emptyList()
+                            }
+                    } else {
+                        _eligiblePatients.value = emptyList()
+                        Napier.w("No eligible patients found. Patients need CONFIRMED appointment with AI_ANALYSIS type.")
+                    }
+                }
+                .onFailure { error ->
+                    Napier.e("Failed to load appointments", error)
+                    _eligiblePatients.value = emptyList()
+                }
+        }
+    }
+
     fun selectImage() {
         launchWithErrorHandler {
             _uiState.value = AnalysisUiState.SelectingImage
@@ -59,9 +105,6 @@ class NewAnalysisViewModel(
         }
     }
 
-    /**
-     * Analyze selected image using AI
-     */
     fun analyzeImage(patientId: String) {
         val imageData = _selectedImage.value
 
@@ -70,11 +113,18 @@ class NewAnalysisViewModel(
             return
         }
 
+        if (_eligiblePatients.value.none { it.id == patientId }) {
+            _uiState.value = AnalysisUiState.Error(
+                "Patient not eligible. Patient must have a CONFIRMED appointment with AI Analysis type."
+            )
+            Napier.w("Attempted analysis for non-eligible patient: $patientId")
+            return
+        }
+
         launchWithErrorHandler {
             _uiState.value = AnalysisUiState.Analyzing(progress = 0)
             Napier.d("Starting analysis for patient: $patientId")
 
-            // Simulate progress updates
             _uiState.value = AnalysisUiState.Analyzing(progress = 25)
 
             analysisRepository.submitAnalysis(
@@ -96,9 +146,6 @@ class NewAnalysisViewModel(
         }
     }
 
-    /**
-     * Clear selected image and reset state
-     */
     fun clearImage() {
         _selectedImage.value = null
         _analysisResult.value = null
@@ -106,38 +153,30 @@ class NewAnalysisViewModel(
         Napier.d("Image cleared, state reset")
     }
 
-    /**
-     * Reset to initial state
-     */
     fun reset() {
         _uiState.value = AnalysisUiState.Idle
         _selectedImage.value = null
         _analysisResult.value = null
     }
 
-    /**
-     * Retry analysis after error
-     */
     fun retryAnalysis(patientId: String) {
         analyzeImage(patientId)
     }
+
+    fun refresh() {
+        loadEligiblePatients()
+    }
 }
 
-/**
- * UI state for New Analysis screen
- */
 sealed class AnalysisUiState {
-    object Idle : AnalysisUiState()
-    object SelectingImage : AnalysisUiState()
-    object ImageSelected : AnalysisUiState()
+    data object Idle : AnalysisUiState()
+    data object SelectingImage : AnalysisUiState()
+    data object ImageSelected : AnalysisUiState()
     data class Analyzing(val progress: Int) : AnalysisUiState()
     data class Success(val analysis: Analysis) : AnalysisUiState()
     data class Error(val message: String) : AnalysisUiState()
 }
 
-/**
- * Represents selected image data
- */
 data class ImageData(
     val bytes: ByteArray,
     val name: String,

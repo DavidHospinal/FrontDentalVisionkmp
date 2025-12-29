@@ -5,6 +5,7 @@ import com.dentalvision.ai.data.remote.api.ApiClientFactory
 import com.dentalvision.ai.data.remote.api.ApiConfig
 import com.dentalvision.ai.data.remote.gradio.GradioApiClient
 import com.dentalvision.ai.data.remote.service.AnalysisService
+import com.dentalvision.ai.data.remote.service.AppointmentService
 import com.dentalvision.ai.data.remote.service.PatientService
 import com.dentalvision.ai.data.remote.service.ReportService
 import com.dentalvision.ai.data.remote.service.SystemService
@@ -55,6 +56,12 @@ val networkModule = module {
 
     single {
         SystemService(
+            apiClient = get(named("backendClient"))
+        )
+    }
+
+    single {
+        AppointmentService(
             apiClient = get(named("backendClient"))
         )
     }

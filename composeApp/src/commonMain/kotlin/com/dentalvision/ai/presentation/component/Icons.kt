@@ -30,4 +30,6 @@ object ExtendedIcons {
     val RemoveRedEye: ImageVector = Icons.Default.Star
     val Download: ImageVector = Icons.Default.ArrowBack
     val Inventory: ImageVector = Icons.Default.Info
+    val Schedule: ImageVector = Icons.Default.DateRange
+    val EventBusy: ImageVector = Icons.Default.Clear
 }

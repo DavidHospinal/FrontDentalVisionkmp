@@ -1,21 +1,36 @@
 package com.dentalvision.ai.domain.model
 
-import kotlinx.serialization.Serializable
+import kotlinx.datetime.Instant
 
-@Serializable
 data class Appointment(
     val id: String,
-    val patient_id: String,
-    val date: String,
-    val time: String,
+    val patientId: String,
+    val appointmentDate: Instant,
+    val appointmentType: AppointmentType,
     val status: AppointmentStatus,
-    val notes: String? = null,
-    val created_at: String
+    val durationMinutes: Int = 60,
+    val treatmentDescription: String? = null,
+    val doctorName: String? = null,
+    val clinicLocation: String? = null,
+    val createdAt: Instant,
+    val updatedAt: Instant
 )
 
-@Serializable
-enum class AppointmentStatus {
-    scheduled,
-    completed,
-    cancelled
+enum class AppointmentStatus(val displayName: String) {
+    PENDING("Pending"),
+    SCHEDULED("Scheduled"),
+    CONFIRMED("Confirmed"),
+    COMPLETED("Completed"),
+    CANCELLED("Cancelled"),
+    NO_SHOW("No Show")
+}
+
+enum class AppointmentType(val displayName: String) {
+    GENERAL_CONSULTATION("General Consultation"),
+    DENTAL_CLEANING("Dental Cleaning"),
+    CHECKUP("Checkup"),
+    AI_ANALYSIS("AI Analysis"),
+    EMERGENCY("Emergency"),
+    FOLLOW_UP("Follow-up/Control"),
+    TREATMENT("Treatment")
 }

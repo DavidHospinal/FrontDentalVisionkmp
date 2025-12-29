@@ -23,6 +23,8 @@ val viewModelModule = module {
     viewModel {
         NewAnalysisViewModel(
             analysisRepository = get(),
+            appointmentRepository = get(),
+            patientRepository = get(),
             filePicker = get()
         )
     }
@@ -37,7 +39,8 @@ val viewModelModule = module {
     // Appointments ViewModel
     viewModel {
         AppointmentsViewModel(
-            appointmentRepository = get()
+            appointmentRepository = get(),
+            patientRepository = get()
         )
     }
 }

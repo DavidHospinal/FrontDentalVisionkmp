@@ -4,8 +4,6 @@ import com.dentalvision.ai.data.remote.api.ApiClient
 import com.dentalvision.ai.data.remote.api.ApiClientFactory
 import com.dentalvision.ai.data.remote.api.ApiConfig
 import com.dentalvision.ai.data.remote.api.dto.ApiResponse
-import com.dentalvision.ai.data.remote.api.dto.AppointmentDTO
-import com.dentalvision.ai.data.remote.api.dto.CreateAppointmentDTO
 import com.dentalvision.ai.data.remote.api.dto.CreatePatientDTO
 import com.dentalvision.ai.data.remote.api.dto.PatientDTO
 import com.dentalvision.ai.data.remote.api.dto.PatientListResponse
@@ -40,18 +38,5 @@ class PatientService(
     suspend fun searchPatients(query: String): ApiResponse<List<PatientDTO>> {
         val endpoint = "${ApiConfig.Endpoints.PATIENTS}/search"
         return apiClient.post(endpoint, mapOf("query" to query))
-    }
-
-    suspend fun getPatientAppointments(patientId: String): ApiResponse<List<AppointmentDTO>> {
-        val endpoint = ApiConfig.Endpoints.APPOINTMENTS.replace("{id}", patientId)
-        return apiClient.get(endpoint)
-    }
-
-    suspend fun createAppointment(
-        patientId: String,
-        appointment: CreateAppointmentDTO
-    ): ApiResponse<AppointmentDTO> {
-        val endpoint = ApiConfig.Endpoints.APPOINTMENTS.replace("{id}", patientId)
-        return apiClient.post(endpoint, appointment)
     }
 }

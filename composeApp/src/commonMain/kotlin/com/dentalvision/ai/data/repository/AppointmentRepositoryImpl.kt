@@ -1,102 +1,85 @@
 package com.dentalvision.ai.data.repository
 
 import com.dentalvision.ai.data.remote.api.dto.AppointmentDTO
-import com.dentalvision.ai.data.remote.api.dto.CreateAppointmentDTO
-import com.dentalvision.ai.data.remote.service.PatientService
+import com.dentalvision.ai.data.remote.api.dto.CreateAppointmentRequest
+import com.dentalvision.ai.data.remote.api.dto.UpdateAppointmentStatusRequest
+import com.dentalvision.ai.data.remote.service.AppointmentService
 import com.dentalvision.ai.domain.model.Appointment
 import com.dentalvision.ai.domain.model.AppointmentStatus
+import com.dentalvision.ai.domain.model.AppointmentType
 import com.dentalvision.ai.domain.repository.AppointmentRepository
 import io.github.aakira.napier.Napier
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
-/**
- * Implementation of AppointmentRepository
- * Handles appointment CRUD operations using Backend API
- */
 class AppointmentRepositoryImpl(
-    private val patientService: PatientService
+    private val appointmentService: AppointmentService
 ) : AppointmentRepository {
 
-    /**
-     * Get all appointments with pagination
-     * Note: Backend might not have a global appointments endpoint
-     * This method may need to aggregate from all patients
-     */
     override suspend fun getAppointments(page: Int, limit: Int): Result<Pair<List<Appointment>, Int>> {
         return try {
-            Napier.w("Global appointments endpoint not implemented yet")
-            // TODO: Implement when backend provides global appointments endpoint
-            // For now, return empty list
-            Result.success(Pair(emptyList(), 0))
+            val response = appointmentService.getAllAppointments(page, limit)
+
+            if (response.success && response.data != null) {
+                val appointments = response.data.appointments.map { it.toDomainModel() }
+                val total = response.data.total ?: appointments.size
+                Result.success(Pair(appointments, total))
+            } else {
+                Result.failure(Exception(response.message ?: "Unknown error"))
+            }
         } catch (e: Exception) {
             Napier.e("Error fetching appointments", e)
             Result.failure(e)
         }
     }
 
-    /**
-     * Get appointments for a specific patient
-     */
     override suspend fun getPatientAppointments(patientId: String): Result<List<Appointment>> {
         return try {
-            Napier.d("Fetching appointments for patient: $patientId")
-
-            val response = patientService.getPatientAppointments(patientId)
+            val response = appointmentService.getPatientAppointments(patientId)
 
             if (response.success && response.data != null) {
-                val appointments = response.data.map { it.toDomainModel() }
-                Napier.i("Successfully fetched ${appointments.size} appointments for patient: $patientId")
+                val appointments = response.data.appointments.map { it.toDomainModel() }
                 Result.success(appointments)
             } else {
-                Napier.e("Failed to fetch patient appointments: ${response.message ?: response.error}")
-                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
+                Result.failure(Exception(response.message ?: "Unknown error"))
             }
         } catch (e: Exception) {
-            Napier.e("Error fetching patient appointments: $patientId", e)
+            Napier.e("Error fetching patient appointments", e)
             Result.failure(e)
         }
     }
 
-    /**
-     * Get appointment by ID
-     * Note: Backend might not have a direct appointment endpoint by ID
-     */
     override suspend fun getAppointmentById(id: String): Result<Appointment> {
         return try {
-            Napier.w("Get appointment by ID endpoint not implemented yet")
-            // TODO: Implement when backend provides this endpoint
-            Result.failure(Exception("Not implemented"))
+            val response = appointmentService.getAppointmentById(id)
+
+            if (response.success && response.data != null) {
+                Result.success(response.data.toDomainModel())
+            } else {
+                Result.failure(Exception(response.message ?: "Unknown error"))
+            }
         } catch (e: Exception) {
-            Napier.e("Error fetching appointment by ID: $id", e)
+            Napier.e("Error fetching appointment", e)
             Result.failure(e)
         }
     }
 
-    /**
-     * Create new appointment
-     */
-    override suspend fun createAppointment(
-        patientId: String,
-        appointment: Appointment
-    ): Result<Appointment> {
+    override suspend fun createAppointment(patientId: String, appointment: Appointment): Result<Appointment> {
         return try {
-            Napier.d("Creating appointment for patient: $patientId")
-
-            val createDTO = CreateAppointmentDTO(
-                date = appointment.date,
-                time = appointment.time,
-                status = appointment.status.name,
-                notes = appointment.notes
+            val request = CreateAppointmentRequest(
+                patientId = patientId,
+                appointmentDate = appointment.appointmentDate.toString(),
+                appointmentType = appointment.appointmentType.name.lowercase(),
+                durationMinutes = appointment.durationMinutes,
+                treatmentDescription = appointment.treatmentDescription
             )
 
-            val response = patientService.createAppointment(patientId, createDTO)
+            val response = appointmentService.createAppointment(patientId, request)
 
             if (response.success && response.data != null) {
-                val createdAppointment = response.data.toDomainModel()
-                Napier.i("Successfully created appointment: ${createdAppointment.id}")
-                Result.success(createdAppointment)
+                Result.success(response.data.toDomainModel())
             } else {
-                Napier.e("Failed to create appointment: ${response.message ?: response.error}")
-                Result.failure(Exception(response.message ?: response.error ?: "Unknown error"))
+                Result.failure(Exception(response.message ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Napier.e("Error creating appointment", e)
@@ -104,71 +87,92 @@ class AppointmentRepositoryImpl(
         }
     }
 
-    /**
-     * Update existing appointment
-     */
     override suspend fun updateAppointment(id: String, appointment: Appointment): Result<Appointment> {
         return try {
-            Napier.w("Update appointment endpoint not implemented yet")
-            // TODO: Implement when backend provides this endpoint
-            Result.failure(Exception("Not implemented"))
+            val request = UpdateAppointmentStatusRequest(
+                status = appointment.status.name.lowercase(),
+                treatmentDescription = appointment.treatmentDescription
+            )
+
+            val response = appointmentService.updateAppointmentStatus(
+                appointment.patientId,
+                id,
+                request
+            )
+
+            if (response.success && response.data != null) {
+                Result.success(response.data.toDomainModel())
+            } else {
+                Result.failure(Exception(response.message ?: "Unknown error"))
+            }
         } catch (e: Exception) {
-            Napier.e("Error updating appointment: $id", e)
+            Napier.e("Error updating appointment", e)
             Result.failure(e)
         }
     }
 
-    /**
-     * Delete appointment
-     */
     override suspend fun deleteAppointment(id: String): Result<Unit> {
         return try {
-            Napier.w("Delete appointment endpoint not implemented yet")
-            // TODO: Implement when backend provides this endpoint
-            Result.failure(Exception("Not implemented"))
+            Result.failure(Exception("Not implemented - use cancelAppointment instead"))
         } catch (e: Exception) {
-            Napier.e("Error deleting appointment: $id", e)
             Result.failure(e)
         }
     }
 
-    /**
-     * Cancel appointment (soft delete)
-     */
     override suspend fun cancelAppointment(id: String): Result<Appointment> {
         return try {
-            Napier.w("Cancel appointment endpoint not implemented yet")
-            // TODO: Implement by calling updateAppointment with status = cancelled
-            Result.failure(Exception("Not implemented"))
+            Result.failure(Exception("Use updateAppointment with CANCELLED status"))
         } catch (e: Exception) {
-            Napier.e("Error cancelling appointment: $id", e)
             Result.failure(e)
         }
     }
 
-    /**
-     * Convert AppointmentDTO to domain Appointment model
-     */
     private fun AppointmentDTO.toDomainModel(): Appointment {
         return Appointment(
             id = this.id,
-            patient_id = this.patient_id,
-            date = this.date,
-            time = this.time,
+            patientId = this.patientId,
+            appointmentDate = parseInstant(this.appointmentDate),
+            appointmentType = parseAppointmentType(this.appointmentType),
             status = parseStatus(this.status),
-            notes = this.notes,
-            created_at = this.created_at
+            durationMinutes = this.durationMinutes,
+            treatmentDescription = this.treatmentDescription,
+            doctorName = this.doctorName,
+            clinicLocation = this.clinicLocation,
+            createdAt = parseInstant(this.createdAt),
+            updatedAt = parseInstant(this.updatedAt)
         )
     }
 
-    /**
-     * Parse status string to AppointmentStatus enum
-     */
-    private fun parseStatus(status: String): AppointmentStatus {
+    private fun parseInstant(timestamp: String): Instant {
         return try {
-            AppointmentStatus.valueOf(status.lowercase())
+            Instant.parse(timestamp)
         } catch (e: Exception) {
-            AppointmentStatus.scheduled
+            Clock.System.now()
+        }
+    }
+
+    private fun parseStatus(status: String): AppointmentStatus {
+        return when (status.lowercase()) {
+            "pending" -> AppointmentStatus.PENDING
+            "scheduled" -> AppointmentStatus.SCHEDULED
+            "confirmed" -> AppointmentStatus.CONFIRMED
+            "completed" -> AppointmentStatus.COMPLETED
+            "cancelled" -> AppointmentStatus.CANCELLED
+            "no_show" -> AppointmentStatus.NO_SHOW
+            else -> AppointmentStatus.PENDING
+        }
+    }
+
+    private fun parseAppointmentType(type: String): AppointmentType {
+        return when (type.lowercase()) {
+            "general_consultation" -> AppointmentType.GENERAL_CONSULTATION
+            "dental_cleaning" -> AppointmentType.DENTAL_CLEANING
+            "checkup" -> AppointmentType.CHECKUP
+            "ai_analysis" -> AppointmentType.AI_ANALYSIS
+            "emergency" -> AppointmentType.EMERGENCY
+            "follow_up" -> AppointmentType.FOLLOW_UP
+            "treatment" -> AppointmentType.TREATMENT
+            else -> AppointmentType.GENERAL_CONSULTATION
         }
     }
 }

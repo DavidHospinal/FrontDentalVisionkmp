@@ -40,7 +40,7 @@ val repositoryModule = module {
     // Appointment Repository
     single<AppointmentRepository> {
         AppointmentRepositoryImpl(
-            patientService = get()
+            appointmentService = get()
         )
     }
 }
