@@ -135,14 +135,16 @@ private fun PatientInformationSection(patient: PatientInfo, analysisDate: String
             patient.phone?.let { InfoRow("Phone:", it) }
 
             // Format analysis date
-            try {
-                val instant = Instant.parse(analysisDate)
-                val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-                val formattedDate = "${localDateTime.dayOfMonth}/${localDateTime.monthNumber}/${localDateTime.year}"
-                InfoRow("Analysis Date:", formattedDate)
-            } catch (e: Exception) {
-                InfoRow("Analysis Date:", analysisDate)
+            val formattedDate = remember(analysisDate) {
+                try {
+                    val instant = Instant.parse(analysisDate)
+                    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+                    "${localDateTime.dayOfMonth}/${localDateTime.monthNumber}/${localDateTime.year}"
+                } catch (e: Exception) {
+                    analysisDate
+                }
             }
+            InfoRow("Analysis Date:", formattedDate)
         }
     }
 }

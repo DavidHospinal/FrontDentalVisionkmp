@@ -8,13 +8,13 @@ data class DentalAnalysisDTO(
     val patient_id: String? = null,
     val image_path: String,
     val confidence_threshold: Double,
-    val detections: List<DetectionDTO>,
-    val summary: AnalysisSummaryDTO,
+    val detections: List<DentalDetectionDTO>,
+    val summary: DentalAnalysisSummaryDTO,
     val created_at: String
 )
 
 @Serializable
-data class DetectionDTO(
+data class DentalDetectionDTO(
     val `class`: String,
     val confidence: Double,
     val bbox: List<Double>,
@@ -22,7 +22,7 @@ data class DetectionDTO(
 )
 
 @Serializable
-data class AnalysisSummaryDTO(
+data class DentalAnalysisSummaryDTO(
     val total_detections: Int,
     val healthy_teeth: Int,
     val caries_detected: Int,
