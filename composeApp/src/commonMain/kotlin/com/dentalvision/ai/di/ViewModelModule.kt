@@ -32,7 +32,8 @@ val viewModelModule = module {
     // Reports ViewModel
     viewModel {
         ReportsViewModel(
-            reportRepository = get()
+            reportRepository = get(),
+            reportService = get()
         )
     }
 

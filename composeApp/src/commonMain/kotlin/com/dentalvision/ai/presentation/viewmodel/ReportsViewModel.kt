@@ -2,6 +2,9 @@ package com.dentalvision.ai.presentation.viewmodel
 
 import com.dentalvision.ai.domain.model.Report
 import com.dentalvision.ai.domain.repository.ReportRepository
+import com.dentalvision.ai.data.remote.api.dto.AnalysisReport
+import com.dentalvision.ai.data.remote.api.dto.toDomainModel
+import com.dentalvision.ai.data.remote.service.ReportService
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +15,8 @@ import kotlinx.coroutines.flow.asStateFlow
  * Handles report listing, generation, and PDF downloads
  */
 class ReportsViewModel(
-    private val reportRepository: ReportRepository
+    private val reportRepository: ReportRepository,
+    private val reportService: ReportService
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow<ReportsUiState>(ReportsUiState.Loading)
@@ -23,6 +27,9 @@ class ReportsViewModel(
 
     private val _downloadingReportId = MutableStateFlow<String?>(null)
     val downloadingReportId: StateFlow<String?> = _downloadingReportId.asStateFlow()
+
+    private val _selectedAnalysisReport = MutableStateFlow<AnalysisReport?>(null)
+    val selectedAnalysisReport: StateFlow<AnalysisReport?> = _selectedAnalysisReport.asStateFlow()
 
     /**
      * Load reports for a patient
@@ -98,6 +105,33 @@ class ReportsViewModel(
                     )
                 }
         }
+    }
+
+    /**
+     * View full analysis report data
+     */
+    fun viewAnalysisReport(analysisId: String) {
+        launchWithErrorHandler {
+            Napier.d("Loading analysis report data: $analysisId")
+
+            try {
+                val analysisData = reportService.getAnalysisData(analysisId)
+                _selectedAnalysisReport.value = analysisData.toDomainModel()
+                Napier.i("Analysis report data loaded successfully")
+            } catch (e: Exception) {
+                Napier.e("Failed to load analysis report data", e)
+                _uiState.value = ReportsUiState.Error(
+                    "Failed to load report details: ${e.message}"
+                )
+            }
+        }
+    }
+
+    /**
+     * Close the analysis report viewer
+     */
+    fun closeAnalysisReportViewer() {
+        _selectedAnalysisReport.value = null
     }
 
     /**

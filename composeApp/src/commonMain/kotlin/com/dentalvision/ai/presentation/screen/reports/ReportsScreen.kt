@@ -19,7 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.presentation.component.ExtendedIcons
 import com.dentalvision.ai.presentation.component.MainScaffold
+import com.dentalvision.ai.presentation.component.ReportDetailDialog
 import com.dentalvision.ai.presentation.theme.DentalColors
+import com.dentalvision.ai.presentation.viewmodel.ReportsViewModel
+import org.koin.compose.koinInject
 
 /**
  * Reports Screen - Responsive
@@ -44,16 +47,25 @@ fun ReportsScreen(
 
 @Composable
 private fun ReportsContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ReportsViewModel = koinInject()
 ) {
-    // Demo reports data
-    val reports = remember {
-        listOf(
-            ReportData("REP-2025-001", "Maria Gonzalez", "Dec 25, 2025", "AI Analysis", "Completed"),
-            ReportData("REP-2025-002", "Juan Perez", "Dec 24, 2025", "Diagnosis", "Completed"),
-            ReportData("REP-2025-003", "Ana Lopez", "Dec 23, 2025", "AI Analysis", "Completed"),
-            ReportData("REP-2025-004", "Carlos Gomez", "Dec 22, 2025", "Treatment", "Pending")
+    val uiState by viewModel.uiState.collectAsState()
+    val reports by viewModel.reports.collectAsState()
+    val selectedAnalysisReport by viewModel.selectedAnalysisReport.collectAsState()
+
+    // Show Report Detail Dialog when a report is selected
+    selectedAnalysisReport?.let { analysisReport ->
+        ReportDetailDialog(
+            analysisReport = analysisReport,
+            onDismiss = { viewModel.closeAnalysisReportViewer() }
         )
+    }
+
+    // For demo, using hardcoded analysis IDs
+    // In production, these would come from the backend
+    val demoAnalysisIds = remember {
+        listOf("AN-1767015163637", "AN-1767015163638", "AN-1767015163639", "AN-1767015163640")
     }
 
     // Responsive Layout
@@ -231,8 +243,18 @@ private fun ReportsContent(
             // Reports List/Grid
             if (isMobile) {
                 // Mobile: Vertical List
-                items(reports) { report ->
-                    ReportCardMobile(report)
+                itemsIndexed(demoAnalysisIds) { index, analysisId ->
+                    ReportCardMobile(
+                        report = ReportData(
+                            id = "REP-2025-00${index + 1}",
+                            patientName = listOf("Maria Gonzalez", "Juan Perez", "Ana Lopez", "Carlos Gomez")[index],
+                            date = "Dec ${25 - index}, 2025",
+                            type = "AI Analysis",
+                            status = "Completed"
+                        ),
+                        analysisId = analysisId,
+                        onViewReport = { viewModel.viewAnalysisReport(it) }
+                    )
                 }
             } else {
                 // Desktop: Grid layout
@@ -243,8 +265,18 @@ private fun ReportsContent(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(reports) { report ->
-                            ReportCardDesktop(report)
+                        itemsIndexed(demoAnalysisIds) { index, analysisId ->
+                            ReportCardDesktop(
+                                report = ReportData(
+                                    id = "REP-2025-00${index + 1}",
+                                    patientName = listOf("Maria Gonzalez", "Juan Perez", "Ana Lopez", "Carlos Gomez")[index],
+                                    date = "Dec ${25 - index}, 2025",
+                                    type = "AI Analysis",
+                                    status = "Completed"
+                                ),
+                                analysisId = analysisId,
+                                onViewReport = { viewModel.viewAnalysisReport(it) }
+                            )
                         }
                     }
                 }
@@ -303,7 +335,11 @@ private fun StatCard(
 }
 
 @Composable
-private fun ReportCardMobile(report: ReportData) {
+private fun ReportCardMobile(
+    report: ReportData,
+    analysisId: String,
+    onViewReport: (String) -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -367,7 +403,7 @@ private fun ReportCardMobile(report: ReportData) {
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
-                    onClick = {},
+                    onClick = { onViewReport(analysisId) },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = DentalColors.Primary
@@ -392,7 +428,11 @@ private fun ReportCardMobile(report: ReportData) {
 }
 
 @Composable
-private fun ReportCardDesktop(report: ReportData) {
+private fun ReportCardDesktop(
+    report: ReportData,
+    analysisId: String,
+    onViewReport: (String) -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -460,7 +500,7 @@ private fun ReportCardDesktop(report: ReportData) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
-                    onClick = {},
+                    onClick = { onViewReport(analysisId) },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = DentalColors.Primary
