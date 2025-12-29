@@ -21,8 +21,9 @@ class PatientRepositoryImpl(
 
             if (response.success && response.data != null) {
                 val patients = response.data.patients.map { it.toDomainModel() }
-                // Use total from response, fallback to patients size if null (backend didn't provide pagination metadata)
-                val total = response.data.total ?: patients.size
+                // Support both old and new backend response structures
+                // Try: new structure (data.total) -> old structure (data.pagination.total) -> fallback (patients.size)
+                val total = response.data.total ?: response.data.pagination?.total ?: patients.size
                 Napier.i("Successfully fetched ${patients.size} patients (total: $total)")
                 Result.success(Pair(patients, total))
             } else {
