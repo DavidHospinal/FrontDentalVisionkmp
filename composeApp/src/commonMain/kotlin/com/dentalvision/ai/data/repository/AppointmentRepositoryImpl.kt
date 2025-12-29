@@ -11,6 +11,8 @@ import com.dentalvision.ai.domain.repository.AppointmentRepository
 import io.github.aakira.napier.Napier
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class AppointmentRepositoryImpl(
     private val appointmentService: AppointmentService
@@ -66,9 +68,27 @@ class AppointmentRepositoryImpl(
 
     override suspend fun createAppointment(patientId: String, appointment: Appointment): Result<Appointment> {
         return try {
+            // Format date manually to avoid 'Z' timezone that Python can't parse
+            val dateTime = appointment.appointmentDate.toLocalDateTime(TimeZone.currentSystemDefault())
+            val formattedDate = buildString {
+                append(dateTime.year)
+                append("-")
+                append(dateTime.monthNumber.toString().padStart(2, '0'))
+                append("-")
+                append(dateTime.dayOfMonth.toString().padStart(2, '0'))
+                append("T")
+                append(dateTime.hour.toString().padStart(2, '0'))
+                append(":")
+                append(dateTime.minute.toString().padStart(2, '0'))
+                append(":")
+                append(dateTime.second.toString().padStart(2, '0'))
+            }
+
+            println("DEBUG: Creating appointment with formatted date: $formattedDate")
+
             val request = CreateAppointmentRequest(
                 patientId = patientId,
-                appointmentDate = appointment.appointmentDate.toString(),
+                appointmentDate = formattedDate,
                 appointmentType = appointment.appointmentType.name.lowercase(),
                 durationMinutes = appointment.durationMinutes,
                 treatmentDescription = appointment.treatmentDescription
@@ -77,11 +97,14 @@ class AppointmentRepositoryImpl(
             val response = appointmentService.createAppointment(patientId, request)
 
             if (response.success && response.data != null) {
+                println("SUCCESS: Appointment created successfully")
                 Result.success(response.data.toDomainModel())
             } else {
+                println("ERROR CREATING: ${response.message}")
                 Result.failure(Exception(response.message ?: "Unknown error"))
             }
         } catch (e: Exception) {
+            println("ERROR CREATING: ${e.message}")
             Napier.e("Error creating appointment", e)
             Result.failure(e)
         }

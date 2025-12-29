@@ -154,14 +154,8 @@ fun NewAppointmentDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-                            selectedDate = today
-                        }
-                ) {
+                // Date field with clickable overlay
+                Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = selectedDate?.toString() ?: "Select date",
                         onValueChange = {},
@@ -181,6 +175,17 @@ fun NewAppointmentDialog(
                             disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
+                    // CRITICAL: Transparent Box AFTER TextField to capture clicks (z-index layering)
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable {
+                                val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+                                selectedDate = today
+                                showError = false
+                                println("DEBUG: Date selected - $selectedDate")
+                            }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -194,13 +199,8 @@ fun NewAppointmentDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            selectedTime = LocalTime(9, 0)
-                        }
-                ) {
+                // Time field with clickable overlay
+                Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = selectedTime?.toString() ?: "Select time",
                         onValueChange = {},
@@ -219,6 +219,16 @@ fun NewAppointmentDialog(
                             disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    )
+                    // CRITICAL: Transparent Box AFTER TextField to capture clicks (z-index layering)
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable {
+                                selectedTime = LocalTime(9, 0)
+                                showError = false
+                                println("DEBUG: Time selected - $selectedTime")
+                            }
                     )
                 }
 
