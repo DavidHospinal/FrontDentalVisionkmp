@@ -6,10 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +20,7 @@ import com.dentalvision.ai.domain.model.Patient
 import com.dentalvision.ai.presentation.theme.DentalColors
 import kotlinx.datetime.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewAppointmentDialog(
     patients: List<Patient>,
@@ -155,27 +154,34 @@ fun NewAppointmentDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = selectedDate?.toString() ?: "Select date",
-                    onValueChange = {},
-                    readOnly = true,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
                             val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
                             selectedDate = today
+                        }
+                ) {
+                    OutlinedTextField(
+                        value = selectedDate?.toString() ?: "Select date",
+                        onValueChange = {},
+                        readOnly = true,
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            Icon(
+                                imageVector = ExtendedIcons.CalendarToday,
+                                contentDescription = "Select date"
+                            )
                         },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = "Select date"
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DentalColors.Primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     )
-                )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -188,26 +194,33 @@ fun NewAppointmentDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = selectedTime?.toString() ?: "Select time",
-                    onValueChange = {},
-                    readOnly = true,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
                             selectedTime = LocalTime(9, 0)
+                        }
+                ) {
+                    OutlinedTextField(
+                        value = selectedTime?.toString() ?: "Select time",
+                        onValueChange = {},
+                        readOnly = true,
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            Icon(
+                                imageVector = ExtendedIcons.Schedule,
+                                contentDescription = "Select time"
+                            )
                         },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Schedule,
-                            contentDescription = "Select time"
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DentalColors.Primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     )
-                )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 

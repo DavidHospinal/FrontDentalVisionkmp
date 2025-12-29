@@ -67,6 +67,13 @@ fun AppointmentsScreen(
         )
 
         if (showNewAppointmentDialog) {
+            // Reload patients when dialog opens to show newly created ones
+            LaunchedEffect(showNewAppointmentDialog) {
+                if (showNewAppointmentDialog) {
+                    viewModel.loadRecentPatients()
+                }
+            }
+
             NewAppointmentDialog(
                 patients = recentPatients,
                 onDismiss = { showNewAppointmentDialog = false },
@@ -188,7 +195,7 @@ private fun AppointmentsContent(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        Icons.Default.EventBusy,
+                        ExtendedIcons.EventBusy,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(64.dp)
