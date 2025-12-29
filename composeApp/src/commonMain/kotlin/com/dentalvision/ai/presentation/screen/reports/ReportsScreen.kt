@@ -62,10 +62,10 @@ private fun ReportsContent(
         )
     }
 
-    // For demo, using hardcoded analysis IDs
-    // In production, these would come from the backend
+    // Real analysis IDs from backend database
+    // These correspond to actual patients with completed analyses
     val demoAnalysisIds = remember {
-        listOf("AN-1767015163637", "AN-1767015163638", "AN-1767015163639", "AN-1767015163640")
+        listOf("ANA-2025-8630", "ANA-2025-7157", "ANA-2025-8161", "ANA-2025-3113")
     }
 
     // Responsive Layout
@@ -247,8 +247,8 @@ private fun ReportsContent(
                     ReportCardMobile(
                         report = ReportData(
                             id = "REP-2025-00${index + 1}",
-                            patientName = listOf("Maria Gonzalez", "Juan Perez", "Ana Lopez", "Carlos Gomez")[index],
-                            date = "Dec ${25 - index}, 2025",
+                            patientName = listOf("Adrián Castañeda Lledó", "Anastasio Nicolás Gutierrez", "Aroa Bru Pinto", "Aroa Bru Pinto")[index],
+                            date = listOf("Nov 27, 2025", "Oct 15, 2025", "Sep 28, 2025", "Aug 12, 2025")[index],
                             type = "AI Analysis",
                             status = "Completed"
                         ),
@@ -269,8 +269,8 @@ private fun ReportsContent(
                             ReportCardDesktop(
                                 report = ReportData(
                                     id = "REP-2025-00${index + 1}",
-                                    patientName = listOf("Maria Gonzalez", "Juan Perez", "Ana Lopez", "Carlos Gomez")[index],
-                                    date = "Dec ${25 - index}, 2025",
+                                    patientName = listOf("Adrián Castañeda Lledó", "Anastasio Nicolás Gutierrez", "Aroa Bru Pinto", "Aroa Bru Pinto")[index],
+                                    date = listOf("Nov 27, 2025", "Oct 15, 2025", "Sep 28, 2025", "Aug 12, 2025")[index],
                                     type = "AI Analysis",
                                     status = "Completed"
                                 ),
