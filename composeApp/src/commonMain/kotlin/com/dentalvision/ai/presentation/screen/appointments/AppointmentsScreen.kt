@@ -429,7 +429,7 @@ private fun CalendarSection(
             Spacer(modifier = Modifier.height(8.dp))
 
             CalendarGrid(
-                currentMonth = currentMonth.value,
+                currentMonth = currentMonth.number,
                 currentYear = currentYear,
                 selectedDate = selectedDate,
                 appointments = appointments,
@@ -449,8 +449,14 @@ private fun CalendarGrid(
 ) {
     val timezone = TimeZone.currentSystemDefault()
     val firstDay = LocalDate(currentYear, currentMonth, 1)
-    val daysInMonth = firstDay.month.length(false)
-    val firstDayOfWeek = firstDay.dayOfWeek.value % 7
+    // Calculate days in month by finding the last day
+    val daysInMonth = when (currentMonth) {
+        1, 3, 5, 7, 8, 10, 12 -> 31
+        4, 6, 9, 11 -> 30
+        2 -> if (currentYear % 4 == 0 && (currentYear % 100 != 0 || currentYear % 400 == 0)) 29 else 28
+        else -> 30
+    }
+    val firstDayOfWeek = firstDay.dayOfWeek.isoDayNumber % 7
 
     val appointmentDays = appointments.map { appointment ->
         appointment.appointmentDate.toLocalDateTime(timezone).date.dayOfMonth
@@ -475,7 +481,7 @@ private fun CalendarGrid(
                     val isSelected = selectedDate?.let { selected ->
                         val selectedLocal = selected.toLocalDateTime(timezone).date
                         selectedLocal.dayOfMonth == day &&
-                        selectedLocal.month.value == currentMonth &&
+                        selectedLocal.monthNumber == currentMonth &&
                         selectedLocal.year == currentYear
                     } ?: false
 

@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -163,7 +164,7 @@ fun NewAppointmentDialog(
                                 placeholder = { Text("Search patient by name, ID...") },
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                                        imageVector = Icons.Default.Search,
                                         contentDescription = "Search"
                                     )
                                 },
