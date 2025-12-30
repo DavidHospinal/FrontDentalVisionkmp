@@ -77,12 +77,14 @@ class AnalysisRepositoryImpl(
     }
 
     /**
-     * Submit dental image for AI analysis
+     * Submit dental image for AI analysis (PREVIEW ONLY)
      * Flow:
      * 1. Send image to Gradio API (HuggingFace Space)
      * 2. Parse AI results
-     * 3. Save to backend database
-     * 4. Return Analysis domain model
+     * 3. Return Analysis domain model for preview
+     *
+     * Note: Does NOT save to backend database.
+     * Use saveAnalysisToBackend() explicitly to persist.
      */
     override suspend fun submitAnalysis(
         patientId: String,
@@ -182,16 +184,7 @@ class AnalysisRepositoryImpl(
             )
 
             Napier.i("Analysis created successfully with ${analysis.detections.size} detections and confidence ${analysis.confidenceScore}")
-
-            // Step 4: Save to backend (optional - can fail silently for now)
-            try {
-                saveAnalysisToBackend(analysis)
-                Napier.i("Analysis saved to backend successfully")
-            } catch (e: Exception) {
-                Napier.w("Failed to save to backend (continuing anyway): ${e.message}")
-            }
-
-            Napier.i("Analysis completed successfully: ${analysis.id}")
+            Napier.i("Analysis preview ready: ${analysis.id} (NOT saved to backend yet)")
             Result.success(analysis)
 
         } catch (e: Exception) {
@@ -235,7 +228,7 @@ class AnalysisRepositoryImpl(
      * Save analysis to backend database
      * Calls /analysis/register to save with sequential ID
      */
-    private suspend fun saveAnalysisToBackend(analysis: Analysis) {
+    override suspend fun saveAnalysis(analysis: Analysis): Result<Unit> {
         try {
             Napier.d("Registering analysis to backend: ${analysis.id} for patient: ${analysis.patientId}")
 
@@ -281,15 +274,17 @@ class AnalysisRepositoryImpl(
             if (response["success"] == true) {
                 val data = response["data"] as? Map<*, *>
                 val backendAnalysisId = data?.get("analysis_id") as? String
-                Napier.i("✅ Analysis registered successfully with backend ID: $backendAnalysisId")
+                Napier.i("Analysis registered successfully with backend ID: $backendAnalysisId")
+                return Result.success(Unit)
             } else {
                 val message = response["message"] ?: "Unknown error"
-                Napier.w("⚠️ Failed to register analysis to backend: $message")
+                Napier.w("Failed to register analysis to backend: $message")
+                return Result.failure(Exception(message.toString()))
             }
 
         } catch (e: Exception) {
-            Napier.e("❌ Error registering analysis to backend for patient ${analysis.patientId}", e)
-            // Don't throw - allow analysis to complete even if backend save fails
+            Napier.e("Error registering analysis to backend for patient ${analysis.patientId}", e)
+            return Result.failure(e)
         }
     }
 

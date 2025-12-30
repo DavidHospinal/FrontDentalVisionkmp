@@ -34,4 +34,11 @@ interface AnalysisRepository {
      * @return Result containing list of analyses and total count
      */
     suspend fun getPatientAnalyses(patientId: String): Result<Pair<List<Analysis>, Int>>
+
+    /**
+     * Save analysis to backend database
+     * @param analysis Analysis to save
+     * @return Result indicating success or error
+     */
+    suspend fun saveAnalysis(analysis: Analysis): Result<Unit>
 }
