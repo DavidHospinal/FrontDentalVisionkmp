@@ -30,6 +30,7 @@ import com.dentalvision.ai.presentation.theme.DentalColors
 import com.dentalvision.ai.presentation.viewmodel.AnalysisUiState
 import com.dentalvision.ai.presentation.viewmodel.NewAnalysisViewModel
 import com.dentalvision.ai.presentation.viewmodel.PatientsViewModel
+import com.dentalvision.ai.presentation.viewmodel.SaveState
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -148,6 +149,7 @@ private fun NewAnalysisContent(
     val uiState by analysisViewModel.uiState.collectAsState()
     val selectedImage by analysisViewModel.selectedImage.collectAsState()
     val analysisResult by analysisViewModel.analysisResult.collectAsState()
+    val saveState by analysisViewModel.saveState.collectAsState()
 
     val patients by patientsViewModel.patients.collectAsState()
     var selectedPatient by remember { mutableStateOf<Patient?>(null) }
@@ -188,6 +190,8 @@ private fun NewAnalysisContent(
                     onClearImage = { analysisViewModel.clearImage() },
                     uiState = uiState,
                     analysisResult = analysisResult,
+                    saveState = saveState,
+                    onSaveAnalysis = { analysisViewModel.saveAnalysisToBackend() },
                     isMobile = true
                 )
 
@@ -225,6 +229,8 @@ private fun NewAnalysisContent(
                     onClearImage = { analysisViewModel.clearImage() },
                     uiState = uiState,
                     analysisResult = analysisResult,
+                    saveState = saveState,
+                    onSaveAnalysis = { analysisViewModel.saveAnalysisToBackend() },
                     modifier = Modifier.weight(2f),
                     isMobile = false
                 )
@@ -269,6 +275,8 @@ private fun MainContentSection(
     onClearImage: () -> Unit,
     uiState: AnalysisUiState,
     analysisResult: com.dentalvision.ai.domain.model.Analysis?,
+    saveState: SaveState,
+    onSaveAnalysis: () -> Unit,
     modifier: Modifier = Modifier,
     isMobile: Boolean
 ) {
@@ -491,6 +499,13 @@ private fun MainContentSection(
             if (analysisResult != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 ResultsSummaryCard(analysisResult)
+
+                // Save Analysis Button
+                Spacer(modifier = Modifier.height(16.dp))
+                SaveAnalysisButton(
+                    saveState = saveState,
+                    onSave = onSaveAnalysis
+                )
             }
         }
     }
@@ -1329,6 +1344,118 @@ private fun ImageReadyPreview(imageData: com.dentalvision.ai.presentation.viewmo
                 )
                 Text(
                     text = "Click 'Analyze with AI' to start detection",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SaveAnalysisButton(
+    saveState: SaveState,
+    onSave: () -> Unit
+) {
+    Button(
+        onClick = onSave,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = saveState !is SaveState.Saving,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = when (saveState) {
+                is SaveState.Success -> DentalColors.Success
+                is SaveState.Error -> DentalColors.Error
+                else -> DentalColors.Primary
+            }
+        )
+    ) {
+        when (saveState) {
+            is SaveState.Saving -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Saving to Backend...")
+            }
+            is SaveState.Success -> {
+                Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Saved! ID: ${saveState.analysisId.takeLast(8)}")
+            }
+            is SaveState.Error -> {
+                Icon(Icons.Default.Warning, null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Error: ${saveState.message}")
+            }
+            is SaveState.Idle -> {
+                Icon(ExtendedIcons.Save, null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Save Analysis to Backend")
+            }
+        }
+    }
+
+    // Show success message
+    if (saveState is SaveState.Success) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = DentalColors.Success.copy(alpha = 0.1f)
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = DentalColors.Success,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Analysis saved successfully! It will appear in Reports module.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+
+    // Show error details
+    if (saveState is SaveState.Error) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = DentalColors.Error.copy(alpha = 0.1f)
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Info,
+                        contentDescription = null,
+                        tint = DentalColors.Error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Failed to save analysis to backend",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = saveState.message,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

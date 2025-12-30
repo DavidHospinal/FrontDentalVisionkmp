@@ -30,6 +30,9 @@ class NewAnalysisViewModel(
     private val _analysisResult = MutableStateFlow<Analysis?>(null)
     val analysisResult: StateFlow<Analysis?> = _analysisResult.asStateFlow()
 
+    private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
+    val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
+
     private val _eligiblePatients = MutableStateFlow<List<Patient>>(emptyList())
     val eligiblePatients: StateFlow<List<Patient>> = _eligiblePatients.asStateFlow()
 
@@ -166,6 +169,55 @@ class NewAnalysisViewModel(
     fun refresh() {
         loadEligiblePatients()
     }
+
+    /**
+     * Manually save analysis to backend
+     * Called when user clicks "Save Analysis" button
+     */
+    fun saveAnalysisToBackend() {
+        val analysis = _analysisResult.value
+        if (analysis == null) {
+            _saveState.value = SaveState.Error("No analysis to save")
+            return
+        }
+
+        launchWithErrorHandler {
+            _saveState.value = SaveState.Saving
+            Napier.d("Manually saving analysis to backend: ${analysis.id}")
+
+            // Call the repository's submitAnalysis again to force backend save
+            // The analysis is already created, but we need to ensure it's in the backend
+            val imageData = _selectedImage.value
+            if (imageData != null) {
+                analysisRepository.submitAnalysis(
+                    patientId = analysis.patientId,
+                    imageData = imageData.bytes,
+                    imageName = imageData.name
+                )
+                    .onSuccess { savedAnalysis ->
+                        _saveState.value = SaveState.Success(savedAnalysis.id)
+                        Napier.i("Analysis saved to backend successfully with ID: ${savedAnalysis.id}")
+                    }
+                    .onFailure { error ->
+                        _saveState.value = SaveState.Error(error.message ?: "Failed to save")
+                        Napier.e("Failed to save analysis to backend", error)
+                    }
+            } else {
+                _saveState.value = SaveState.Error("Image data not available")
+            }
+        }
+    }
+
+    fun resetSaveState() {
+        _saveState.value = SaveState.Idle
+    }
+}
+
+sealed class SaveState {
+    data object Idle : SaveState()
+    data object Saving : SaveState()
+    data class Success(val analysisId: String) : SaveState()
+    data class Error(val message: String) : SaveState()
 }
 
 sealed class AnalysisUiState {
