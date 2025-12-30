@@ -32,4 +32,5 @@ object ExtendedIcons {
     val Inventory: ImageVector = Icons.Default.Info
     val Schedule: ImageVector = Icons.Default.DateRange
     val EventBusy: ImageVector = Icons.Default.Clear
+    val Save: ImageVector = Icons.Default.Done
 }
