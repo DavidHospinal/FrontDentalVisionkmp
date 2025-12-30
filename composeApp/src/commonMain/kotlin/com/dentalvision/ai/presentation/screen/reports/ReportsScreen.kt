@@ -210,7 +210,7 @@ private fun ReportsContent(
             // Reports List/Grid
             if (isMobile) {
                 // Mobile: Vertical List
-                items(allAnalyses) { analysis ->
+                items(allAnalyses.distinctBy { it.analysis_id }) { analysis ->
                     ReportCardMobile(
                         report = ReportData(
                             id = analysis.analysis_id,
@@ -232,7 +232,7 @@ private fun ReportsContent(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(allAnalyses) { analysis ->
+                        items(allAnalyses.distinctBy { it.analysis_id }) { analysis ->
                             ReportCardDesktop(
                                 report = ReportData(
                                     id = analysis.analysis_id,

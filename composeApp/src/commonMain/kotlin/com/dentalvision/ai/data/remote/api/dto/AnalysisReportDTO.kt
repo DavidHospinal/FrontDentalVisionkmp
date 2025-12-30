@@ -29,14 +29,14 @@ data class AnalysisReportDTO(
 @Serializable
 data class DetectionDTO(
     @SerialName("object_id")
-    val objectId: Int,
+    val objectId: Int = 0,
     @SerialName("class_id")
-    val classId: Int,
+    val classId: Int = 0,
     @SerialName("class_name")
-    val className: String,
-    val confidence: Double,
-    val bbox: List<Double>, // [x1, y1, x2, y2]
-    val probabilities: List<Double>
+    val className: String = "Unknown",
+    val confidence: Double = 0.0,
+    val bbox: List<Double> = emptyList(),
+    val probabilities: List<Double> = emptyList()
 )
 
 @Serializable
