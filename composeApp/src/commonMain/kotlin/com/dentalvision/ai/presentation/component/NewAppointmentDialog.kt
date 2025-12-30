@@ -43,6 +43,21 @@ fun NewAppointmentDialog(
     var showTimePickerDialog by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var patientSearchQuery by remember { mutableStateOf("") }
+
+    // Filter patients based on search query
+    val filteredPatients = remember(patients, patientSearchQuery) {
+        if (patientSearchQuery.isBlank()) {
+            patients
+        } else {
+            patients.filter { patient ->
+                patient.name.contains(patientSearchQuery, ignoreCase = true) ||
+                        patient.id.contains(patientSearchQuery, ignoreCase = true) ||
+                        (patient.email?.contains(patientSearchQuery, ignoreCase = true) == true) ||
+                        (patient.phone?.contains(patientSearchQuery, ignoreCase = true) == true)
+            }
+        }
+    }
 
     // Generate time slots (every 30 minutes from 8:00 to 18:00)
     val timeSlots = remember {
@@ -105,7 +120,13 @@ fun NewAppointmentDialog(
 
                 ExposedDropdownMenuBox(
                     expanded = showPatientDropdown,
-                    onExpandedChange = { showPatientDropdown = it }
+                    onExpandedChange = {
+                        showPatientDropdown = it
+                        if (!it) {
+                            // Clear search when dropdown closes
+                            patientSearchQuery = ""
+                        }
+                    }
                 ) {
                     OutlinedTextField(
                         value = selectedPatient?.name ?: "Select patient",
@@ -128,29 +149,75 @@ fun NewAppointmentDialog(
 
                     ExposedDropdownMenu(
                         expanded = showPatientDropdown,
-                        onDismissRequest = { showPatientDropdown = false }
+                        onDismissRequest = {
+                            showPatientDropdown = false
+                            patientSearchQuery = ""
+                        }
                     ) {
-                        patients.forEach { patient ->
-                            DropdownMenuItem(
-                                text = {
-                                    Column {
-                                        Text(
-                                            text = patient.name,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                        Text(
-                                            text = "ID: ${patient.id}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
+                        // Search field inside dropdown
+                        Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                            OutlinedTextField(
+                                value = patientSearchQuery,
+                                onValueChange = { patientSearchQuery = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Search patient by name, ID...") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                                        contentDescription = "Search"
+                                    )
                                 },
-                                onClick = {
-                                    selectedPatient = patient
-                                    showPatientDropdown = false
-                                }
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = DentalColors.Primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                                )
                             )
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                        if (filteredPatients.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (patientSearchQuery.isBlank()) {
+                                        "No patients available"
+                                    } else {
+                                        "No patients found for \"$patientSearchQuery\""
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            filteredPatients.forEach { patient ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(
+                                                text = patient.name,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Text(
+                                                text = "ID: ${patient.id}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedPatient = patient
+                                        showPatientDropdown = false
+                                        patientSearchQuery = ""
+                                    }
+                                )
+                            }
                         }
                     }
                 }
