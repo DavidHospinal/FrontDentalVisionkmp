@@ -9,14 +9,16 @@ import com.dentalvision.ai.domain.model.Patient
 interface PatientRepository {
 
     /**
-     * Get all patients with pagination
+     * Get all patients with pagination and search
      * @param page Page number (default: 1)
      * @param limit Items per page (default: 50)
+     * @param searchQuery Search query for filtering patients (optional)
      * @return Result containing list of patients and total count
      */
     suspend fun getPatients(
         page: Int = 1,
-        limit: Int = 50
+        limit: Int = 50,
+        searchQuery: String? = null
     ): Result<Pair<List<Patient>, Int>>
 
     /**

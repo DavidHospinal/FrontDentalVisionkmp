@@ -22,8 +22,6 @@ class PatientsViewModel(
     private val _patients = MutableStateFlow<List<Patient>>(emptyList())
     val patients: StateFlow<List<Patient>> = _patients.asStateFlow()
 
-    private val _filteredPatients = MutableStateFlow<List<Patient>>(emptyList())
-
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -35,38 +33,40 @@ class PatientsViewModel(
     }
 
     /**
-     * Load patients with pagination
+     * Load patients with pagination and search
      * ROBUST ERROR HANDLING - Shows REAL errors, NO demo data fallback
      */
-    fun loadPatients(page: Int = 1) {
+    fun loadPatients(page: Int = 1, searchQuery: String? = null) {
         currentPage = page
 
         launchWithErrorHandler {
             try {
                 _uiState.value = PatientsUiState.Loading
+                val query = searchQuery ?: _searchQuery.value.ifBlank { null }
 
-                patientRepository.getPatients(page = page, limit = 50)
+                patientRepository.getPatients(page = page, limit = 50, searchQuery = query)
                     .onSuccess { response ->
                         val list = response.first
                         val total = response.second
 
                         totalPatients = total
                         _patients.value = list
-                        _filteredPatients.value = list
 
                         _uiState.value = if (list.isEmpty()) {
                             PatientsUiState.Empty
                         } else {
                             PatientsUiState.Success
                         }
-                        Napier.i("✅ SUCCESS: Loaded ${list.size} patients from REAL backend (Total: $total, Page: $page)")
+                        val searchLog = if (query != null) " (search='$query')" else ""
+                        Napier.i("✅ SUCCESS: Loaded ${list.size} patients from REAL backend (Total: $total, Page: $page)$searchLog")
                     }
                     .onFailure { error ->
                         // Backend returned error - show REAL error to user, NO demo data
+                        val searchParam = if (query != null) "&search=$query" else ""
                         val errorMessage = buildErrorMessage(
                             operation = "Backend API Call",
                             error = error,
-                            context = "GET /patients?page=$page&per_page=50"
+                            context = "GET /patients?page=$page&per_page=50$searchParam"
                         )
                         Napier.e("❌ BACKEND ERROR: ${error.message}", error)
                         _uiState.value = PatientsUiState.Error(errorMessage)
@@ -87,34 +87,12 @@ class PatientsViewModel(
     }
 
     /**
-     * Search patients by query
+     * Search patients by query (backend search)
      */
     fun searchPatients(query: String) {
         _searchQuery.value = query
-
-        if (query.isBlank()) {
-            loadPatients(currentPage)
-            return
-        }
-
-        launchWithErrorHandler {
-            _uiState.value = PatientsUiState.Loading
-
-            val filtered = _patients.value.filter {
-                it.name.contains(query, ignoreCase = true) ||
-                        it.id.contains(query, ignoreCase = true) ||
-                        (it.email?.contains(query, ignoreCase = true) == true) ||
-                        (it.phone?.contains(query, ignoreCase = true) == true)
-            }
-
-            _filteredPatients.value = filtered
-
-            _uiState.value = if (filtered.isEmpty()) {
-                PatientsUiState.Empty
-            } else {
-                PatientsUiState.Success
-            }
-        }
+        // Call loadPatients with search query - backend will filter
+        loadPatients(page = 1, searchQuery = query.ifBlank { null })
     }
 
     fun createPatient(patient: Patient, onSuccess: () -> Unit) {

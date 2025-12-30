@@ -11,8 +11,21 @@ import com.dentalvision.ai.data.remote.api.dto.PatientListResponse
 class PatientService(
     private val apiClient: ApiClient = ApiClientFactory.backendClient
 ) {
-    suspend fun getPatients(page: Int = 1, limit: Int = 10): ApiResponse<PatientListResponse> {
-        val endpoint = "${ApiConfig.Endpoints.PATIENTS}?page=$page&per_page=$limit"
+    suspend fun getPatients(
+        page: Int = 1,
+        limit: Int = 10,
+        searchQuery: String? = null
+    ): ApiResponse<PatientListResponse> {
+        val queryParams = mutableListOf(
+            "page=$page",
+            "per_page=$limit"
+        )
+
+        if (!searchQuery.isNullOrBlank()) {
+            queryParams.add("search=${searchQuery.trim()}")
+        }
+
+        val endpoint = "${ApiConfig.Endpoints.PATIENTS}?${queryParams.joinToString("&")}"
         return apiClient.get(endpoint)
     }
 

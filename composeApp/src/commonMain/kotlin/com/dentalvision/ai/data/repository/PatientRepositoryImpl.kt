@@ -13,11 +13,12 @@ class PatientRepositoryImpl(
     private val patientService: PatientService
 ) : PatientRepository {
 
-    override suspend fun getPatients(page: Int, limit: Int): Result<Pair<List<Patient>, Int>> {
+    override suspend fun getPatients(page: Int, limit: Int, searchQuery: String?): Result<Pair<List<Patient>, Int>> {
         return try {
-            Napier.d("Fetching patients: page=$page, limit=$limit")
+            val searchLog = if (!searchQuery.isNullOrBlank()) " search='$searchQuery'" else ""
+            Napier.d("Fetching patients: page=$page, limit=$limit$searchLog")
 
-            val response = patientService.getPatients(page, limit)
+            val response = patientService.getPatients(page, limit, searchQuery)
 
             if (response.success && response.data != null) {
                 val patients = response.data.patients.map { it.toDomainModel() }
