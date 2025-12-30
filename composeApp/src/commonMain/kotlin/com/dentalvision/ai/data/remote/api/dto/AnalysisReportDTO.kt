@@ -35,7 +35,7 @@ data class DetectionDTO(
     @SerialName("class_name")
     val className: String,
     val confidence: Double,
-    val bbox: List<Int>, // [x1, y1, x2, y2]
+    val bbox: List<Double>, // [x1, y1, x2, y2]
     val probabilities: List<Double>
 )
 
@@ -91,7 +91,7 @@ data class Detection(
     val classId: Int,
     val className: String,
     val confidence: Double,
-    val bbox: List<Int>,
+    val bbox: List<Double>,
     val probabilities: List<Double>
 ) {
     fun getConfidencePercentage(): String = "${(confidence * 100).toInt()}%"
