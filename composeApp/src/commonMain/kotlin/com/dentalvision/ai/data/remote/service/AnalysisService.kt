@@ -11,6 +11,22 @@ class AnalysisService(
     private val backendClient: ApiClient = ApiClientFactory.backendClient,
     private val huggingFaceClient: ApiClient = ApiClientFactory.huggingFaceClient
 ) {
+    /**
+     * Submit dental image for AI analysis
+     * Calls backend endpoint which processes with YOLO and generates sequential ID
+     */
+    suspend fun submitAnalysis(
+        patientId: String,
+        imageData: ByteArray,
+        imageName: String,
+        confidence: Double = 0.25
+    ): ApiResponse<DentalAnalysisDTO> {
+        val endpoint = ApiConfig.Endpoints.ANALYSIS
+        // TODO: Implement multipart/form-data upload
+        // For now, use existing Gradio-based flow
+        throw NotImplementedError("Use AnalysisRepository.submitAnalysis instead")
+    }
+
     suspend fun getAnalysis(id: String): ApiResponse<DentalAnalysisDTO> {
         val endpoint = "${ApiConfig.Endpoints.ANALYSIS}/$id"
         return backendClient.get(endpoint)

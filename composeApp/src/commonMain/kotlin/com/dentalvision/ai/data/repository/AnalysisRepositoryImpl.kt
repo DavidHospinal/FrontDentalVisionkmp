@@ -204,11 +204,58 @@ class AnalysisRepositoryImpl(
 
     /**
      * Save analysis to backend database
+     * Calls /analysis/register to save with sequential ID
      */
     private suspend fun saveAnalysisToBackend(analysis: Analysis) {
-        // TODO: Implement when backend endpoint is ready
-        // For now, this is a placeholder
-        Napier.d("Saving analysis to backend: ${analysis.id}")
+        try {
+            Napier.d("Registering analysis to backend: ${analysis.id}")
+
+            // Prepare request data
+            val requestData = mapOf(
+                "patient_id" to analysis.patientId,
+                "image_filename" to (analysis.imageUrl.substringAfterLast("/") ?: "analysis.jpg"),
+                "confidence_threshold" to analysis.confidenceScore,
+                "detections" to analysis.detections.map { detection ->
+                    mapOf(
+                        "fdi_number" to detection.toothNumberFDI.toString(),
+                        "has_caries" to detection.hasCaries,
+                        "confidence" to detection.confidence,
+                        "bbox" to listOf(
+                            detection.boundingBox.x,
+                            detection.boundingBox.y,
+                            detection.boundingBox.width,
+                            detection.boundingBox.height
+                        )
+                    )
+                },
+                "summary" to mapOf(
+                    "total_teeth_detected" to analysis.totalTeethDetected,
+                    "cavity_count" to analysis.totalCariesDetected,
+                    "healthy_count" to (analysis.totalTeethDetected - analysis.totalCariesDetected),
+                    "health_percentage" to ((analysis.totalTeethDetected - analysis.totalCariesDetected).toDouble() / analysis.totalTeethDetected * 100),
+                    "average_confidence" to analysis.confidenceScore
+                )
+            )
+
+            // Make POST request to /analysis/register
+            val response: Map<String, Any> = backendClient.post(
+                "${ApiConfig.Endpoints.ANALYSIS}/register",
+                requestData
+            )
+
+            if (response["success"] == true) {
+                val data = response["data"] as? Map<*, *>
+                val backendAnalysisId = data?.get("analysis_id") as? String
+                Napier.i("Analysis registered successfully with backend ID: $backendAnalysisId")
+            } else {
+                val message = response["message"] ?: "Unknown error"
+                Napier.w("Failed to register analysis to backend: $message")
+            }
+
+        } catch (e: Exception) {
+            Napier.e("Error registering analysis to backend", e)
+            // Don't throw - allow analysis to complete even if backend save fails
+        }
     }
 
     /**
