@@ -96,7 +96,23 @@ data class Detection(
 ) {
     fun getConfidencePercentage(): String = "${(confidence * 100).toInt()}%"
 
-    fun isCavity(): Boolean = className.equals("cavity", ignoreCase = true)
+    fun isCavity(): Boolean = classId == 0
+
+    fun getDisplayName(): String {
+        return when (classId) {
+            0 -> "Cavity"
+            1 -> "Healthy Tooth"
+            else -> "Unknown"
+        }
+    }
+
+    fun getDisplayColor(): String {
+        return when (classId) {
+            0 -> "#FF0000"
+            1 -> "#00C853"
+            else -> "#FFC107"
+        }
+    }
 
     fun getSeverity(): DetectionSeverity {
         return when {

@@ -328,7 +328,7 @@ private fun DetectionItem(detection: Detection) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Object #${detection.objectId}: ${detection.className.uppercase()}",
+                text = "Object #${detection.objectId}: ${detection.getDisplayName().uppercase()}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = if (detection.isCavity()) Color(0xFFC62828) else Color(0xFF2E7D32)
