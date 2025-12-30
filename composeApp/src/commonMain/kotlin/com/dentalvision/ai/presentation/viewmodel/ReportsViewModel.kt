@@ -49,7 +49,7 @@ class ReportsViewModel(
         launchWithErrorHandler {
             _uiState.value = ReportsUiState.Loading
             val query = _searchQuery.value
-            Napier.d("Loading all analyses (page=$page, perPage=$perPage, query=$query)")
+            Napier.d("📊 REPORTS: Loading analyses (page=$page, perPage=$perPage, query='$query')")
 
             try {
                 val response = reportService.getAllAnalyses(
@@ -57,20 +57,35 @@ class ReportsViewModel(
                     perPage = perPage,
                     searchQuery = query.ifBlank { null }
                 )
+
+                Napier.d("📊 REPORTS: Backend response - success=${response.success}, message=${response.message}")
+
                 if (response.success) {
-                    _allAnalyses.value = response.data.analyses
-                    _uiState.value = if (response.data.analyses.isEmpty()) {
+                    val analyses = response.data.analyses
+                    _allAnalyses.value = analyses
+
+                    Napier.i("📊 REPORTS: Loaded ${analyses.size} analyses from backend")
+
+                    // Log first 5 analyses for debugging
+                    analyses.take(5).forEachIndexed { index, analysis ->
+                        Napier.d("📊 REPORTS: Analysis #$index - ID=${analysis.analysis_id}, Patient=${analysis.patient.name} (${analysis.patient.id}), Date=${analysis.date}")
+                    }
+
+                    if (query.isNotBlank() && analyses.isEmpty()) {
+                        Napier.w("📊 REPORTS: Search query '$query' returned 0 results")
+                    }
+
+                    _uiState.value = if (analyses.isEmpty()) {
                         ReportsUiState.Empty
                     } else {
                         ReportsUiState.Success
                     }
-                    Napier.i("Loaded ${response.data.analyses.size} analyses")
                 } else {
-                    Napier.e("Failed to load analyses: ${response.message}")
+                    Napier.e("📊 REPORTS: Backend error: ${response.message}")
                     _uiState.value = ReportsUiState.Error(response.message)
                 }
             } catch (e: Exception) {
-                Napier.e("Error loading all analyses", e)
+                Napier.e("📊 REPORTS: Exception loading analyses: ${e.message}", e)
                 _uiState.value = ReportsUiState.Error(
                     "Failed to load analyses: ${e.message}"
                 )

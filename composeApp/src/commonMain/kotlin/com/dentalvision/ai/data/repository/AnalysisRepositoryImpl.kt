@@ -32,6 +32,35 @@ private data class SummaryWrapper(
 )
 
 /**
+ * DTOs for backend analysis registration
+ */
+@Serializable
+private data class AnalysisRegistrationRequest(
+    val patient_id: String,
+    val image_filename: String,
+    val confidence_threshold: Double,
+    val detections: List<DetectionData>,
+    val summary: SummaryData
+)
+
+@Serializable
+private data class DetectionData(
+    val fdi_number: String,
+    val has_caries: Boolean,
+    val confidence: Double,
+    val bbox: List<Double>
+)
+
+@Serializable
+private data class SummaryData(
+    val total_teeth_detected: Int,
+    val cavity_count: Int,
+    val healthy_count: Int,
+    val health_percentage: Double,
+    val average_confidence: Double
+)
+
+/**
  * Implementation of AnalysisRepository
  * Handles dental image analysis using:
  * - GradioApiClient for AI processing (YOLOv12)
@@ -208,19 +237,19 @@ class AnalysisRepositoryImpl(
      */
     private suspend fun saveAnalysisToBackend(analysis: Analysis) {
         try {
-            Napier.d("Registering analysis to backend: ${analysis.id}")
+            Napier.d("Registering analysis to backend: ${analysis.id} for patient: ${analysis.patientId}")
 
-            // Prepare request data
-            val requestData = mapOf(
-                "patient_id" to analysis.patientId,
-                "image_filename" to (analysis.imageUrl.substringAfterLast("/") ?: "analysis.jpg"),
-                "confidence_threshold" to analysis.confidenceScore,
-                "detections" to analysis.detections.map { detection ->
-                    mapOf(
-                        "fdi_number" to detection.toothNumberFDI.toString(),
-                        "has_caries" to detection.hasCaries,
-                        "confidence" to detection.confidence,
-                        "bbox" to listOf(
+            // Prepare serializable request data
+            val requestData = AnalysisRegistrationRequest(
+                patient_id = analysis.patientId,
+                image_filename = analysis.imageUrl.substringAfterLast("/").ifBlank { "analysis.jpg" },
+                confidence_threshold = analysis.confidenceScore,
+                detections = analysis.detections.map { detection ->
+                    DetectionData(
+                        fdi_number = detection.toothNumberFDI.toString(),
+                        has_caries = detection.hasCaries,
+                        confidence = detection.confidence,
+                        bbox = listOf(
                             detection.boundingBox.x,
                             detection.boundingBox.y,
                             detection.boundingBox.width,
@@ -228,14 +257,18 @@ class AnalysisRepositoryImpl(
                         )
                     )
                 },
-                "summary" to mapOf(
-                    "total_teeth_detected" to analysis.totalTeethDetected,
-                    "cavity_count" to analysis.totalCariesDetected,
-                    "healthy_count" to (analysis.totalTeethDetected - analysis.totalCariesDetected),
-                    "health_percentage" to ((analysis.totalTeethDetected - analysis.totalCariesDetected).toDouble() / analysis.totalTeethDetected * 100),
-                    "average_confidence" to analysis.confidenceScore
+                summary = SummaryData(
+                    total_teeth_detected = analysis.totalTeethDetected,
+                    cavity_count = analysis.totalCariesDetected,
+                    healthy_count = analysis.totalTeethDetected - analysis.totalCariesDetected,
+                    health_percentage = if (analysis.totalTeethDetected > 0) {
+                        (analysis.totalTeethDetected - analysis.totalCariesDetected).toDouble() / analysis.totalTeethDetected * 100
+                    } else 0.0,
+                    average_confidence = analysis.confidenceScore
                 )
             )
+
+            Napier.d("Request data prepared - ${requestData.detections.size} detections, patient=${requestData.patient_id}")
 
             // Make POST request to /analysis/register
             val response: Map<String, Any> = backendClient.post(
@@ -243,17 +276,19 @@ class AnalysisRepositoryImpl(
                 requestData
             )
 
+            Napier.d("Backend response received: success=${response["success"]}")
+
             if (response["success"] == true) {
                 val data = response["data"] as? Map<*, *>
                 val backendAnalysisId = data?.get("analysis_id") as? String
-                Napier.i("Analysis registered successfully with backend ID: $backendAnalysisId")
+                Napier.i("✅ Analysis registered successfully with backend ID: $backendAnalysisId")
             } else {
                 val message = response["message"] ?: "Unknown error"
-                Napier.w("Failed to register analysis to backend: $message")
+                Napier.w("⚠️ Failed to register analysis to backend: $message")
             }
 
         } catch (e: Exception) {
-            Napier.e("Error registering analysis to backend", e)
+            Napier.e("❌ Error registering analysis to backend for patient ${analysis.patientId}", e)
             // Don't throw - allow analysis to complete even if backend save fails
         }
     }
