@@ -29,14 +29,14 @@ data class AnalysisReportDTO(
 @Serializable
 data class DetectionDTO(
     @SerialName("object_id")
-    val objectId: Int = 0,
+    val objectId: Int? = null,
     @SerialName("class_id")
-    val classId: Int = 0,
+    val classId: Int? = null,
     @SerialName("class_name")
-    val className: String = "Unknown",
-    val confidence: Double = 0.0,
-    val bbox: List<Double> = emptyList(),
-    val probabilities: List<Double> = emptyList()
+    val className: String? = null,
+    val confidence: Double? = null,
+    val bbox: List<Double>? = null,
+    val probabilities: List<Double>? = null
 )
 
 @Serializable
@@ -167,12 +167,12 @@ fun AnalysisReportDTO.toDomainModel(): AnalysisReport {
 
 fun DetectionDTO.toDomainModel(): Detection {
     return Detection(
-        objectId = objectId,
-        classId = classId,
-        className = className,
-        confidence = confidence,
-        bbox = bbox,
-        probabilities = probabilities
+        objectId = objectId ?: 0,
+        classId = classId ?: 0,
+        className = className ?: "Unknown",
+        confidence = confidence ?: 0.0,
+        bbox = bbox ?: emptyList(),
+        probabilities = probabilities ?: emptyList()
     )
 }
 

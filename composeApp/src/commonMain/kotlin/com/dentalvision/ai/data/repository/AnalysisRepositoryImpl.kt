@@ -230,7 +230,8 @@ class AnalysisRepositoryImpl(
      */
     override suspend fun saveAnalysis(analysis: Analysis): Result<Unit> {
         try {
-            Napier.d("Registering analysis to backend: ${analysis.id} for patient: ${analysis.patientId}")
+            Napier.d("Registering analysis to backend for patient: ${analysis.patientId}")
+            Napier.d("Local preview ID: ${analysis.id} (will NOT be sent, backend generates its own ID)")
 
             // Prepare serializable request data
             val requestData = AnalysisRegistrationRequest(
