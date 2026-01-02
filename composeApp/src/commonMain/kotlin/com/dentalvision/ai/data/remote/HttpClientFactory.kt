@@ -140,4 +140,47 @@ object HttpClientFactory {
             }
         }
     }
+
+    /**
+     * Creates generic HTTP client for third-party APIs
+     * Used for Google Gemini API and other external services
+     *
+     * Features:
+     * - No authentication (API key in URL or headers)
+     * - Content negotiation
+     * - Logging
+     * - Standard timeouts
+     */
+    fun createGenericHttpClient(): HttpClient {
+        return HttpClient {
+            // JSON content negotiation
+            install(ContentNegotiation) {
+                json(jsonConfig)
+            }
+
+            // Logging
+            install(Logging) {
+                logger = object : Logger {
+                    override fun log(message: String) {
+                        Napier.d(message, tag = "GenericAPI")
+                    }
+                }
+                level = LogLevel.INFO
+            }
+
+            // Standard timeout configuration
+            install(HttpTimeout) {
+                requestTimeoutMillis = 60_000      // 60 seconds
+                connectTimeoutMillis = 30_000      // 30 seconds
+                socketTimeoutMillis = 60_000       // 60 seconds
+            }
+
+            // Default request configuration
+            install(DefaultRequest) {
+                headers.append("Accept", "application/json")
+                headers.append("Content-Type", "application/json")
+                headers.append("Accept-Encoding", "identity")
+            }
+        }
+    }
 }

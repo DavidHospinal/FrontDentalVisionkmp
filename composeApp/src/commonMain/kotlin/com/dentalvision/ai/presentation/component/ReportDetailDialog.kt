@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.dentalvision.ai.data.remote.api.dto.*
+import com.dentalvision.ai.presentation.screen.insights.ClinicalInsightsDialog
 import com.dentalvision.ai.presentation.theme.DentalColors
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -100,6 +102,11 @@ fun ReportDetailDialog(
 
                     // Clinical Recommendations
                     ClinicalRecommendationsSection(analysisReport.getHealthStatus())
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // AI Clinical Insights Button
+                    AIInsightsButton(analysisReport)
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -305,8 +312,8 @@ private fun DetectionsSection(detections: List<Detection>) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                detections.sortedByDescending { it.confidence }.forEach { detection ->
-                    DetectionItem(detection)
+                detections.sortedByDescending { it.confidence }.forEachIndexed { index, detection ->
+                    DetectionItem(detection, displayNumber = index + 1)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -315,7 +322,7 @@ private fun DetectionsSection(detections: List<Detection>) {
 }
 
 @Composable
-private fun DetectionItem(detection: Detection) {
+private fun DetectionItem(detection: Detection, displayNumber: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -328,7 +335,7 @@ private fun DetectionItem(detection: Detection) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Object #${detection.objectId}: ${detection.getDisplayName().uppercase()}",
+                text = "Object #${displayNumber}: ${detection.getDisplayName().uppercase()}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = if (detection.isCavity()) Color(0xFFC62828) else Color(0xFF2E7D32)
@@ -450,6 +457,47 @@ private fun InfoRow(label: String, value: String) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+private fun AIInsightsButton(analysisReport: AnalysisReport) {
+    var showInsightsDialog by remember { mutableStateOf(false) }
+
+    Button(
+        onClick = { showInsightsDialog = true },
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF673AB7)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Info,
+            contentDescription = "AI Insights",
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Generate AI Clinical Insights",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+
+    if (showInsightsDialog) {
+        val patientName = analysisReport.patient?.name ?: "Patient"
+        val cavityCount = analysisReport.summary.cavityCount
+        val healthyCount = analysisReport.summary.healthyCount
+        val confidence = (analysisReport.getAverageConfidence() * 100).toFloat()
+
+        ClinicalInsightsDialog(
+            patientName = patientName,
+            cavityCount = cavityCount,
+            healthyCount = healthyCount,
+            confidence = confidence,
+            onDismiss = { showInsightsDialog = false }
         )
     }
 }

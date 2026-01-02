@@ -1,6 +1,7 @@
 package com.dentalvision.ai.di
 
 import com.dentalvision.ai.presentation.viewmodel.AppointmentsViewModel
+import com.dentalvision.ai.presentation.viewmodel.ClinicalInsightsViewModel
 import com.dentalvision.ai.presentation.viewmodel.NewAnalysisViewModel
 import com.dentalvision.ai.presentation.viewmodel.PatientsViewModel
 import com.dentalvision.ai.presentation.viewmodel.ReportsViewModel
@@ -42,6 +43,13 @@ val viewModelModule = module {
         AppointmentsViewModel(
             appointmentRepository = get(),
             patientRepository = get()
+        )
+    }
+
+    // Clinical Insights ViewModel
+    viewModel {
+        ClinicalInsightsViewModel(
+            geminiClient = get()
         )
     }
 }
