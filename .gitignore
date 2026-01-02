@@ -21,9 +21,10 @@ node_modules/
 yarn.lock
 package-lock.json
 
-# Ignorar logs locales
-*.md
-!README.md
+# API Secrets (never commit real keys)
+**/Secrets.kt
+!**/Secrets.sample.kt
 
+# Documentation
 *.md
 !README.md
