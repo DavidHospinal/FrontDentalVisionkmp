@@ -183,28 +183,19 @@ class NewAnalysisViewModel(
 
         launchWithErrorHandler {
             _saveState.value = SaveState.Saving
-            Napier.d("Manually saving analysis to backend: ${analysis.id}")
+            Napier.d("Saving existing analysis to backend: ${analysis.id} for patient ${analysis.patientId}")
 
-            // Call the repository's submitAnalysis again to force backend save
-            // The analysis is already created, but we need to ensure it's in the backend
-            val imageData = _selectedImage.value
-            if (imageData != null) {
-                analysisRepository.submitAnalysis(
-                    patientId = analysis.patientId,
-                    imageData = imageData.bytes,
-                    imageName = imageData.name
-                )
-                    .onSuccess { savedAnalysis ->
-                        _saveState.value = SaveState.Success(savedAnalysis.id)
-                        Napier.i("Analysis saved to backend successfully with ID: ${savedAnalysis.id}")
-                    }
-                    .onFailure { error ->
-                        _saveState.value = SaveState.Error(error.message ?: "Failed to save")
-                        Napier.e("Failed to save analysis to backend", error)
-                    }
-            } else {
-                _saveState.value = SaveState.Error("Image data not available")
-            }
+            // Save the existing analysis object to backend
+            // This will call /analysis/register endpoint with the analysis data
+            analysisRepository.saveAnalysis(analysis)
+                .onSuccess {
+                    _saveState.value = SaveState.Success(analysis.id)
+                    Napier.i("✅ Analysis saved to backend successfully for patient ${analysis.patientId}")
+                }
+                .onFailure { error ->
+                    _saveState.value = SaveState.Error(error.message ?: "Failed to save")
+                    Napier.e("❌ Failed to save analysis to backend", error)
+                }
         }
     }
 

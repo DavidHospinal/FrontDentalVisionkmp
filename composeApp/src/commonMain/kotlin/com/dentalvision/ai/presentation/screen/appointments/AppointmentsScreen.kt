@@ -772,7 +772,7 @@ private fun AppointmentCardMobile(
             Spacer(Modifier.height(12.dp))
 
             Text(
-                "Patient ID: ${appointment.patientId}",
+                appointment.patientName ?: appointment.patientId,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -835,7 +835,7 @@ private fun ConfirmAppointmentDialog(
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    text = "Patient ID: ${appointment.patientId}",
+                    text = "Patient: ${appointment.patientName ?: appointment.patientId}",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -929,7 +929,7 @@ private fun CancelAppointmentDialog(
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    text = "Patient ID: ${appointment.patientId}",
+                    text = "Patient: ${appointment.patientName ?: appointment.patientId}",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold
                 )

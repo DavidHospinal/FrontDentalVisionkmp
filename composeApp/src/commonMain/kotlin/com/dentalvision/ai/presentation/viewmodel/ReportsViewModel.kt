@@ -182,14 +182,22 @@ class ReportsViewModel(
      */
     fun viewAnalysisReport(analysisId: String) {
         launchWithErrorHandler {
-            Napier.d("Loading analysis report data: $analysisId")
+            Napier.d("🔍 VIEWMODEL: Loading analysis report data: $analysisId")
 
             try {
                 val analysisData = reportService.getAnalysisData(analysisId)
-                _selectedAnalysisReport.value = analysisData.toDomainModel()
-                Napier.i("Analysis report data loaded successfully")
+                val domainModel = analysisData.toDomainModel()
+
+                // 🔍 LOG 3: Final domain model before UI
+                Napier.d("🔍 VIEWMODEL: Final domain model - ${domainModel.detections.size} detections")
+                domainModel.detections.take(5).forEachIndexed { index, detection ->
+                    Napier.d("🔍 VIEWMODEL: Final Detection #$index - classId=${detection.classId}, className='${detection.className}', isCavity=${detection.isCavity()}, displayName='${detection.getDisplayName()}'")
+                }
+
+                _selectedAnalysisReport.value = domainModel
+                Napier.i("✅ VIEWMODEL: Analysis report data loaded successfully")
             } catch (e: Exception) {
-                Napier.e("Failed to load analysis report data", e)
+                Napier.e("❌ VIEWMODEL: Failed to load analysis report data", e)
                 _uiState.value = ReportsUiState.Error(
                     "Failed to load report details: ${e.message}"
                 )

@@ -52,7 +52,16 @@ class ReportService(
      */
     suspend fun getAnalysisData(analysisId: String): AnalysisReportDTO {
         val endpoint = "${ApiConfig.Endpoints.REPORTS}/analysis/$analysisId/data"
-        return apiClient.get(endpoint)
+        val response: AnalysisReportDTO = apiClient.get(endpoint)
+
+        // 🔍 LOG 1: Raw backend response
+        io.github.aakira.napier.Napier.d("🔍 BACKEND RAW: Analysis ID=$analysisId")
+        io.github.aakira.napier.Napier.d("🔍 BACKEND RAW: Total detections=${response.detections.size}")
+        response.detections.take(5).forEachIndexed { index, detection ->
+            io.github.aakira.napier.Napier.d("🔍 BACKEND RAW: Detection #$index - classId=${detection.classId}, className='${detection.className}', confidence=${detection.confidence}")
+        }
+
+        return response
     }
 
     /**
