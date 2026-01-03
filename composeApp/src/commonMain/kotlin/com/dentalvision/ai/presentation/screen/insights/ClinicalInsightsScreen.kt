@@ -269,20 +269,20 @@ private fun ClinicalInsightsContent(
 private fun HighRiskPulsingBackground() {
     val infiniteTransition = rememberInfiniteTransition(label = "high_risk_pulse")
 
-    val backgroundColor by infiniteTransition.animateColor(
-        initialValue = Color.Transparent,
-        targetValue = Color(0x33F44336), // Washed deep red with 20% opacity
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 0.2f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "background_color_pulse"
+        label = "background_alpha_pulse"
     )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(Color(0xFFF44336).copy(alpha = alpha))
     )
 }
 
