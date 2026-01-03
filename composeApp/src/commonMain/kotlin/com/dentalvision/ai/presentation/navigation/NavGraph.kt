@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.dentalvision.ai.presentation.screen.splash.SplashScreen
 import com.dentalvision.ai.presentation.screen.login.LoginScreen
 import com.dentalvision.ai.presentation.screen.dashboard.DashboardScreen
 import com.dentalvision.ai.presentation.screen.appointments.AppointmentsScreen
@@ -37,7 +38,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun DentalVisionNavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Login.route
+    startDestination: String = Screen.Splash.route
 ) {
     Napier.d("NAV GRAPH: ========== DentalVisionNavGraph RECOMPOSING ==========")
     Napier.d("NAV GRAPH: NavController hashCode: ${navController.hashCode()}")
@@ -53,6 +54,17 @@ fun DentalVisionNavGraph(
         navController = navController,
         startDestination = startDestination
     ) {
+        // Splash Screen - Animated welcome screen
+        composable(route = Screen.Splash.route) {
+            SplashScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // Login Screen
         composable(route = Screen.Login.route) {
             LoginScreen(
