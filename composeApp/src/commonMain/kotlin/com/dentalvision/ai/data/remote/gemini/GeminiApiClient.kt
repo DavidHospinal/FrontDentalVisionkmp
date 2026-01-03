@@ -19,11 +19,13 @@ class GeminiApiClient(
         prettyPrint = false
     }
 
-    private val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
+    private val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
 
     suspend fun getClinicalInsight(request: ClinicalInsightRequest): Result<ClinicalInsight> {
         return try {
             Napier.d("GEMINI: Requesting clinical insight for patient ${request.patientName}")
+            Napier.d("GEMINI: Using model: gemini-2.0-flash-exp")
+            Napier.d("GEMINI: Full URL: $baseUrl")
 
             val prompt = buildPrompt(request)
             Napier.d("GEMINI: Prompt length: ${prompt.length} characters")
@@ -38,16 +40,21 @@ class GeminiApiClient(
                 )
             )
 
+            Napier.d("GEMINI: Sending POST request to: $baseUrl")
+            Napier.d("GEMINI: Request body: $geminiRequest")
+
             val response: HttpResponse = httpClient.post("$baseUrl?key=$apiKey") {
                 contentType(ContentType.Application.Json)
                 setBody(geminiRequest)
             }
 
             Napier.d("GEMINI: Response status: ${response.status}")
+            Napier.d("GEMINI: Response headers: ${response.headers}")
 
             if (!response.status.isSuccess()) {
                 val errorBody = response.bodyAsText()
                 Napier.e("GEMINI: Error response: $errorBody")
+                Napier.e("GEMINI: Full request URL was: $baseUrl?key=***HIDDEN***")
                 return Result.failure(Exception("Gemini API error: ${response.status}"))
             }
 
