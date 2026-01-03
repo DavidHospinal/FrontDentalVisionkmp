@@ -19,12 +19,12 @@ class GeminiApiClient(
         prettyPrint = false
     }
 
-    private val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
+    private val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
     suspend fun getClinicalInsight(request: ClinicalInsightRequest): Result<ClinicalInsight> {
         return try {
             Napier.d("GEMINI: Requesting clinical insight for patient ${request.patientName}")
-            Napier.d("GEMINI: Using model: gemini-2.0-flash-exp")
+            Napier.d("GEMINI: Using model: gemini-1.5-flash (stable with free tier quota)")
             Napier.d("GEMINI: Full URL: $baseUrl")
 
             val prompt = buildPrompt(request)
