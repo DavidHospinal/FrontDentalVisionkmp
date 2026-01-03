@@ -19,7 +19,7 @@ class GeminiApiClient(
         prettyPrint = false
     }
 
-    private val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+    private val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
 
     suspend fun getClinicalInsight(request: ClinicalInsightRequest): Result<ClinicalInsight> {
         return try {
