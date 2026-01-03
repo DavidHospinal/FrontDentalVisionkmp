@@ -6,6 +6,37 @@ Professional dental AI analysis system with YOLOv12 integration for cross-platfo
 
 Dental Vision AI is a multiplatform application for dental image analysis using YOLOv12 deep learning model. The system provides comprehensive patient management, automated dental image analysis, and professional reporting capabilities across Android, iOS, and Desktop platforms.
 
+## Setup & Installation
+
+### API Key Configuration
+
+The application requires a Google Gemini API key for AI-powered clinical insights. For security reasons, API keys are NOT included in the repository.
+
+#### Quick Setup (3 steps):
+
+1. **Get a Free API Key**
+   - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - Sign in with your Google account
+   - Click "Create API Key"
+   - Copy the generated key
+
+2. **Configure the Application**
+   - Copy `composeApp/Secrets.sample.kt` to `composeApp/src/commonMain/kotlin/com/dentalvision/ai/data/remote/api/Secrets.kt`
+   - Open the new `Secrets.kt` file and replace `INSERT_YOUR_API_KEY_HERE` with your actual API key
+   - The file path structure is already correct in the template
+
+3. **Build and Run**
+   - The application is now ready to build and run on any platform
+   - See Build Instructions below for platform-specific commands
+
+#### Alternative: Pre-compiled Binaries
+
+If you prefer to test the application without configuring API keys, pre-compiled binaries are available in the [Releases](https://github.com/DavidHospinal/dental-vision-ai/releases) section with demo credentials.
+
+#### Security Note
+
+The `Secrets.kt` file is excluded from version control via `.gitignore` to protect sensitive API keys. Never commit this file to public repositories.
+
 ## Architecture
 
 ### Technology Stack

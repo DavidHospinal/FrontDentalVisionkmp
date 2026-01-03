@@ -152,11 +152,23 @@ enum class DetectionSeverity(val displayName: String) {
 
 // Extension functions to convert DTOs to domain models
 fun AnalysisReportDTO.toDomainModel(): AnalysisReport {
+    // 🔍 LOG 2: Before DTO conversion
+    io.github.aakira.napier.Napier.d("🔍 DTO CONVERSION START: Converting ${detections.size} detections")
+
+    val convertedDetections = detections.mapIndexed { index, detection ->
+        val converted = detection.toDomainModel()
+        if (index < 5) {
+            io.github.aakira.napier.Napier.d("🔍 DTO CONVERSION: Detection #$index BEFORE - classId=${detection.classId}, className='${detection.className}'")
+            io.github.aakira.napier.Napier.d("🔍 DTO CONVERSION: Detection #$index AFTER  - classId=${converted.classId}, className='${converted.className}', isCavity=${converted.isCavity()}")
+        }
+        converted
+    }
+
     return AnalysisReport(
         success = success,
         analysisTimestamp = analysisTimestamp,
         modelInfo = modelInfo,
-        detections = detections.map { it.toDomainModel() },
+        detections = convertedDetections,
         summary = summary.toDomainModel(),
         confidenceThreshold = confidenceThreshold,
         patient = patient?.toDomainModel(),
@@ -166,9 +178,28 @@ fun AnalysisReportDTO.toDomainModel(): AnalysisReport {
 }
 
 fun DetectionDTO.toDomainModel(): Detection {
+    // CRITICAL: className is the source of truth, NOT classId
+    // Backend sometimes sends wrong classId, but className is always correct
+    val resolvedClassId = when {
+        // ALWAYS prioritize className parsing first (most reliable)
+        // IMPORTANT: Check for null value AND string literal "null"
+        className != null && className != "null" -> when {
+            className.contains("normal", ignoreCase = true) ||
+            className.contains("healthy", ignoreCase = true) -> 1  // Healthy tooth
+            className.contains("cavity", ignoreCase = true) ||
+            className.contains("caries", ignoreCase = true) -> 0  // Cavity
+            else -> classId ?: 0  // Fallback to classId if className is ambiguous
+        }
+        // Only use classId if className is null (rare case)
+        classId != null -> classId
+        // Ultimate fallback - className is null or "null" string, classId is null
+        // This should NEVER happen with new data, but handle legacy data gracefully
+        else -> 0  // Default to cavity for safety
+    }
+
     return Detection(
         objectId = objectId ?: 0,
-        classId = classId ?: 0,
+        classId = resolvedClassId,
         className = className ?: "Unknown",
         confidence = confidence ?: 0.0,
         bbox = bbox ?: emptyList(),

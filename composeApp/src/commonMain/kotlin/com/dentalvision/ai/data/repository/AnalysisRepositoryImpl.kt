@@ -44,11 +44,24 @@ private data class AnalysisRegistrationRequest(
 )
 
 @Serializable
+private data class AnalysisRegistrationResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: AnalysisRegistrationData? = null
+)
+
+@Serializable
+private data class AnalysisRegistrationData(
+    val analysis_id: String
+)
+
+@Serializable
 private data class DetectionData(
     val fdi_number: String,
     val has_caries: Boolean,
     val confidence: Double,
-    val bbox: List<Double>
+    val bbox: List<Double>,
+    val class_name: String  // CRITICAL: Send class_name to backend
 )
 
 @Serializable
@@ -142,10 +155,17 @@ class AnalysisRepositoryImpl(
                     ToothDetection.BoundingBox(0.0, 0.0, 0.0, 0.0)
                 }
 
-                // Detectar caries basado en className (backend envía "cavity" no "caries")
-                val hasCavity = detection.hasCaries ||
+                // Intelligent cavity detection from className and hasCaries flag
+                val hasCavity = when {
+                    // First check className for explicit healthy indicators
+                    detection.className?.contains("normal", ignoreCase = true) == true ||
+                    detection.className?.contains("healthy", ignoreCase = true) == true -> false
+                    // Then check for explicit cavity indicators
                     detection.className?.contains("cavity", ignoreCase = true) == true ||
-                    detection.className?.contains("caries", ignoreCase = true) == true
+                    detection.className?.contains("caries", ignoreCase = true) == true -> true
+                    // Fall back to AI's hasCaries flag if className is ambiguous
+                    else -> detection.hasCaries
+                }
 
                 if (index < 3) {
                     Napier.d("Detection $index: className='${detection.className}', hasCaries=${detection.hasCaries}, calculated=$hasCavity")
@@ -248,7 +268,8 @@ class AnalysisRepositoryImpl(
                             detection.boundingBox.y,
                             detection.boundingBox.width,
                             detection.boundingBox.height
-                        )
+                        ),
+                        class_name = if (detection.hasCaries) "cavity" else "normal"  // CRITICAL FIX
                     )
                 },
                 summary = SummaryData(
@@ -265,22 +286,21 @@ class AnalysisRepositoryImpl(
             Napier.d("Request data prepared - ${requestData.detections.size} detections, patient=${requestData.patient_id}")
 
             // Make POST request to /analysis/register
-            val response: Map<String, Any> = backendClient.post(
+            val response: AnalysisRegistrationResponse = backendClient.post(
                 "${ApiConfig.Endpoints.ANALYSIS}/register",
                 requestData
             )
 
-            Napier.d("Backend response received: success=${response["success"]}")
+            Napier.d("Backend response received: success=${response.success}")
 
-            if (response["success"] == true) {
-                val data = response["data"] as? Map<*, *>
-                val backendAnalysisId = data?.get("analysis_id") as? String
-                Napier.i("Analysis registered successfully with backend ID: $backendAnalysisId")
+            if (response.success) {
+                val backendAnalysisId = response.data?.analysis_id
+                Napier.i("✅ Analysis registered successfully with backend ID: $backendAnalysisId")
                 return Result.success(Unit)
             } else {
-                val message = response["message"] ?: "Unknown error"
-                Napier.w("Failed to register analysis to backend: $message")
-                return Result.failure(Exception(message.toString()))
+                val message = response.message ?: "Unknown error"
+                Napier.w("❌ Failed to register analysis to backend: $message")
+                return Result.failure(Exception(message))
             }
 
         } catch (e: Exception) {
@@ -306,11 +326,23 @@ class AnalysisRepositoryImpl(
                 ToothDetection.BoundingBox(0.0, 0.0, 0.0, 0.0)
             }
 
+            // Intelligent cavity detection from backend class string
+            val hasCavityDetected = when {
+                // If contains "normal" or "healthy", it's NOT a cavity
+                detection.`class`.contains("normal", ignoreCase = true) ||
+                detection.`class`.contains("healthy", ignoreCase = true) -> false
+                // If contains "cavity" or "caries", it IS a cavity
+                detection.`class`.contains("cavity", ignoreCase = true) ||
+                detection.`class`.contains("caries", ignoreCase = true) -> true
+                // Default: treat unknown as cavity for safety
+                else -> true
+            }
+
             ToothDetection(
                 id = "${this.id}-DET-$index",
                 analysisId = this.id,
                 toothNumberFDI = fdiNumber,
-                hasCaries = detection.`class`.contains("caries", ignoreCase = true),
+                hasCaries = hasCavityDetected,
                 confidence = detection.confidence,
                 boundingBox = bbox
             )

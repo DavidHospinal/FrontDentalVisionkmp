@@ -1,8 +1,11 @@
 package com.dentalvision.ai.di
 
+import com.dentalvision.ai.data.remote.HttpClientFactory
 import com.dentalvision.ai.data.remote.api.ApiClient
 import com.dentalvision.ai.data.remote.api.ApiClientFactory
 import com.dentalvision.ai.data.remote.api.ApiConfig
+import com.dentalvision.ai.data.remote.gemini.GeminiApiClient
+import com.dentalvision.ai.data.remote.gemini.GeminiConfig
 import com.dentalvision.ai.data.remote.gradio.GradioApiClient
 import com.dentalvision.ai.data.remote.service.AnalysisService
 import com.dentalvision.ai.data.remote.service.AppointmentService
@@ -31,6 +34,14 @@ val networkModule = module {
         GradioApiClient(
             baseUrl = ApiConfig.HUGGINGFACE_URL,
             timeout = 60_000L
+        )
+    }
+
+    // Gemini API Client for Clinical Insights
+    single {
+        GeminiApiClient(
+            httpClient = HttpClientFactory.createGenericHttpClient(),
+            apiKey = GeminiConfig.getApiKey()
         )
     }
 
