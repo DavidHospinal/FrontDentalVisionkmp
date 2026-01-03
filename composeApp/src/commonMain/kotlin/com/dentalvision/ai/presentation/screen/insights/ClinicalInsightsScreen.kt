@@ -1,5 +1,6 @@
 package com.dentalvision.ai.presentation.screen.insights
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -187,21 +188,14 @@ private fun ClinicalInsightsContent(
     onDismiss: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // Background animation based on risk level
-        when (insight.riskLevel) {
-            RiskLevel.LOW -> {
-                ConfettiAnimation()
-                SerpentineAnimation()
-            }
-            RiskLevel.HIGH -> {
-                PulseAnimation(color = Color(0xFFF44336))
-            }
-            RiskLevel.MODERATE -> {
-                AmberGlowAnimation()
-            }
+        // Background layer with conditional pulsing for HIGH RISK
+        if (insight.riskLevel == RiskLevel.HIGH) {
+            HighRiskPulsingBackground()
+        } else if (insight.riskLevel == RiskLevel.MODERATE) {
+            AmberGlowAnimation()
         }
 
-        // Main content
+        // Main content card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -252,7 +246,44 @@ private fun ClinicalInsightsContent(
                 MedicalDisclaimerFooter()
             }
         }
+
+        // Celebration overlay - MUST be on top for LOW RISK
+        // This creates a fullscreen overlay that renders ABOVE the card
+        if (insight.riskLevel == RiskLevel.LOW) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                ConfettiAnimation()
+                SerpentineAnimation()
+            }
+        }
     }
+}
+
+/**
+ * Pulsing red background for HIGH RISK level
+ * Creates a subtle, rhythmic red glow to indicate medical attention needed
+ */
+@Composable
+private fun HighRiskPulsingBackground() {
+    val infiniteTransition = rememberInfiniteTransition(label = "high_risk_pulse")
+
+    val backgroundColor by infiniteTransition.animateColor(
+        initialValue = Color.Transparent,
+        targetValue = Color(0x33F44336), // Washed deep red with 20% opacity
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "background_color_pulse"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+    )
 }
 
 @Composable
