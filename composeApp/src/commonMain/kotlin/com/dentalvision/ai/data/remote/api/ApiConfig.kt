@@ -2,7 +2,7 @@ package com.dentalvision.ai.data.remote.api
 
 object ApiConfig {
     const val BACKEND_URL = "https://backenddental-vision-ai.onrender.com"
-    const val HUGGINGFACE_URL = "https://davidhosp-dental-vision-yolo12.hf.space"
+    const val HUGGINGFACE_URL = "https://davidhosp-dental-vision-kmp-contest.hf.space"
 
     object Endpoints {
         const val PATIENTS = "/api/v1/patients"

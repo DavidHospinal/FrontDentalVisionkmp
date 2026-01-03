@@ -43,7 +43,7 @@ fun SplashScreen(
         logoVisible = true
         delay(300)
         textVisible = true
-        delay(3000)
+        delay(6000)
         onNavigateToLogin()
     }
 
