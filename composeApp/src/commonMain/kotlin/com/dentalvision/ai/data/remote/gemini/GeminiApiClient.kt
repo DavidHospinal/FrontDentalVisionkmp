@@ -18,8 +18,11 @@ class GeminiApiClient(
         isLenient = true
         prettyPrint = false
     }
+    // 🛑 NO USAR gemini-1.5-flash-latest (Deprecado/Inestable)
+    // 🛑 NO USAR gemini-2.5-flash (No existe)
+    // ✅ USAR gemini-1.5-flash (Estándar y Estable)
 
-    private val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
+    private val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
     suspend fun getClinicalInsight(request: ClinicalInsightRequest): Result<ClinicalInsight> {
         return try {
