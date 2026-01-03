@@ -1,24 +1,29 @@
 package com.dentalvision.ai.presentation.component
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.presentation.navigation.Screen
 import com.dentalvision.ai.presentation.theme.DentalColors
-import com.dentalvision.ai.presentation.component.ExtendedIcons
 import dentalvisionai.composeapp.generated.resources.Res
 import dentalvisionai.composeapp.generated.resources.dental0
 import org.jetbrains.compose.resources.painterResource
@@ -80,28 +85,28 @@ fun NavigationDrawerContent(
             // Navigation Items
             NavigationDrawerItem(
                 label = "Dashboard",
-                icon = ExtendedIcons.Dashboard,
+                icon = Icons.Filled.Home,
                 selected = currentRoute == Screen.Dashboard.route,
                 onClick = { onNavigate(Screen.Dashboard.route) }
             )
 
             NavigationDrawerItem(
                 label = "Patients",
-                icon = ExtendedIcons.People,
+                icon = Icons.Filled.Person,
                 selected = currentRoute.startsWith("patients"),
                 onClick = { onNavigate(Screen.PatientList.route) }
             )
 
             NavigationDrawerItem(
                 label = "Appointments",
-                icon = ExtendedIcons.CalendarToday,
+                icon = Icons.Filled.DateRange,
                 selected = currentRoute.startsWith("appointments"),
-                onClick = { onNavigate("appointments") } // TODO: Add appointments route
+                onClick = { onNavigate("appointments") }
             )
 
             NavigationDrawerItem(
                 label = "New Analysis",
-                icon = ExtendedIcons.Analytics,
+                icon = Icons.Filled.Add,
                 selected = currentRoute.startsWith("analysis/new"),
                 onClick = {
                     Napier.d("NAVIGATION DRAWER: 'New Analysis' menu item clicked")
@@ -112,9 +117,9 @@ fun NavigationDrawerContent(
 
             NavigationDrawerItem(
                 label = "Reports",
-                icon = ExtendedIcons.Description,
+                icon = Icons.AutoMirrored.Filled.List,
                 selected = currentRoute.startsWith("reports"),
-                onClick = { onNavigate("reports") } // TODO: Add reports route
+                onClick = { onNavigate("reports") }
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -137,7 +142,7 @@ fun NavigationDrawerContent(
                 },
                 icon = {
                     Icon(
-                        imageVector = Icons.Default.ExitToApp,
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                         contentDescription = "Logout"
                     )
                 },
@@ -189,7 +194,12 @@ fun NavigationDrawerContent(
 
 /**
  * Navigation Drawer Item
- * Custom styled navigation item for the drawer
+ * Custom styled navigation item with state animations
+ *
+ * Features:
+ * - Scale animation: 1.0f to 1.15f when selected
+ * - Smooth transitions with 300ms tween
+ * - Primary color background with 0.1 alpha when selected
  */
 @Composable
 private fun NavigationDrawerItem(
@@ -198,6 +208,12 @@ private fun NavigationDrawerItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.15f else 1.0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "nav_item_scale"
+    )
+
     NavigationDrawerItem(
         label = {
             Text(
@@ -209,15 +225,16 @@ private fun NavigationDrawerItem(
         icon = {
             Icon(
                 imageVector = icon,
-                contentDescription = label
+                contentDescription = label,
+                modifier = Modifier.scale(scale)
             )
         },
         selected = selected,
         onClick = onClick,
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
         colors = NavigationDrawerItemDefaults.colors(
-            selectedContainerColor = DentalColors.Primary.copy(alpha = 0.9f),
-            selectedIconColor = Color.White,
+            selectedContainerColor = DentalColors.Primary.copy(alpha = 0.1f),
+            selectedIconColor = DentalColors.Primary,
             selectedTextColor = Color.White,
             unselectedContainerColor = Color.Transparent,
             unselectedIconColor = Color.White.copy(alpha = 0.7f),
