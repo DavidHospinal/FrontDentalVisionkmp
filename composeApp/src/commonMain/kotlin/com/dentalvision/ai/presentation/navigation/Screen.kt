@@ -7,6 +7,11 @@ package com.dentalvision.ai.presentation.navigation
 sealed class Screen(val route: String) {
 
     /**
+     * Splash screen - Animated welcome screen shown on app launch
+     */
+    data object Splash : Screen("splash")
+
+    /**
      * Login screen - Entry point for unauthenticated users
      */
     data object Login : Screen("login")
