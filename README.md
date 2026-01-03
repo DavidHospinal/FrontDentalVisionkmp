@@ -4,13 +4,47 @@ Professional dental AI analysis system with YOLOv12 integration for cross-platfo
 
 ## Overview
 
-Dental Vision AI is a multiplatform application for dental image analysis using YOLOv12 deep learning model. The system provides comprehensive patient management, automated dental image analysis, and professional reporting capabilities across Android, iOS, and Desktop platforms.
+Dental Vision AI is a multiplatform application for dental image analysis using YOLOv12 deep learning model. The system provides comprehensive patient management, automated dental image analysis, and professional reporting capabilities across Android, iOS, Desktop, and Web platforms.
 
-## Setup & Installation
+## External APIs & Architecture
 
-### API Key Configuration
+This project integrates three key external services to deliver a robust AI-powered dental analysis solution:
 
-The application requires a Google Gemini API key for AI-powered clinical insights. For security reasons, API keys are NOT included in the repository.
+| Service | Purpose | Details |
+|---------|---------|---------|
+| **Gemini API (Google)** | AI-Powered Clinical Insights | Generates personalized clinical recommendations, treatment plans, and diagnostic summaries based on YOLOv12 detection results. Provides natural language explanations for dental professionals. |
+| **Hugging Face** | ML Model Hosting | Hosts the YOLOv12 dental detection model via Gradio Spaces. Provides REST API endpoints for real-time dental image analysis with bounding box detection and confidence scoring. |
+| **Render** | Backend Deployment | Hosts the Python Flask backend that orchestrates communication between the KMP frontend, HuggingFace inference API, and SQLite database. Handles patient management, analysis history, and report generation. |
+
+### Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Kotlin Multiplatform Frontend                │
+│          (Android, iOS, Desktop, Web - Compose UI)              │
+└──────────────────────┬──────────────────────────────────────────┘
+                       │
+                       ↓
+         ┌─────────────────────────────┐
+         │   Render (Backend Host)     │
+         │   Flask REST API Server     │
+         │   - Patient Management      │
+         │   - Analysis Orchestration  │
+         │   - SQLite Database         │
+         └─────┬───────────────────┬───┘
+               │                   │
+       ┌───────↓─────┐     ┌──────↓────────┐
+       │ HuggingFace │     │  Gemini API   │
+       │  YOLOv12    │     │  (Google AI)  │
+       │   Model     │     │   Insights    │
+       └─────────────┘     └───────────────┘
+```
+
+## Setup & Configuration
+
+### API Key Configuration (MANDATORY)
+
+The application requires a Google Gemini API key for AI-powered clinical insights. **For security and contest compliance, API keys are NOT included in the repository.**
 
 #### Quick Setup (3 steps):
 
@@ -29,13 +63,57 @@ The application requires a Google Gemini API key for AI-powered clinical insight
    - The application is now ready to build and run on any platform
    - See Build Instructions below for platform-specific commands
 
+#### Security Note
+
+The `Secrets.kt` file is excluded from version control via `.gitignore` to protect sensitive API keys. **Never commit this file to public repositories.** This configuration method complies with security best practices for software development contests and production deployments.
+
 #### Alternative: Pre-compiled Binaries
 
 If you prefer to test the application without configuring API keys, pre-compiled binaries are available in the [Releases](https://github.com/DavidHospinal/dental-vision-ai/releases) section with demo credentials.
 
-#### Security Note
+## Testing Resources & Sample Data
 
-The `Secrets.kt` file is excluded from version control via `.gitignore` to protect sensitive API keys. Never commit this file to public repositories.
+To facilitate quick testing and demonstration, the repository includes ready-to-use sample data:
+
+### Sample Images Folder
+
+- **Location**: `samples-images/` directory in the project root
+- **Contents**: 5 professionally curated dental X-ray images for immediate testing
+- **Usage**: These images are pre-validated to work optimally with the YOLOv12 detection model
+
+### Testing Flexibility
+
+- You are **NOT limited** to the provided samples
+- Use your own dental images in standard formats (JPG, PNG)
+- Download external dental X-ray datasets for extensive testing
+- The model supports panoramic and periapical radiographs
+
+### Quick Test Workflow
+
+1. Launch the application (see Build Instructions below)
+2. Navigate to "New Analysis" from the main menu
+3. Select a patient or create a test patient
+4. Upload an image from `samples-images/` or your own source
+5. View real-time detection results with bounding boxes
+6. Generate a professional PDF report with clinical insights
+
+## Supported Platforms
+
+Current implementation status across all Kotlin Multiplatform targets:
+
+| Platform | Status | Details |
+|----------|--------|---------|
+| Android | Fully Functional | API 24+ (Android 7.0+), tested on physical devices and emulators |
+| Desktop (JVM) | Fully Functional | Windows, macOS, Linux support with native window decorations |
+| Web (Wasm/JS) | Fully Functional | Modern browsers with WebAssembly support, fallback to JS |
+| iOS | Work in Progress | Beta implementation, UI functional, backend integration pending |
+
+### Platform-Specific Features
+
+- **Android**: Material You dynamic theming, notification support
+- **Desktop**: Menu bar integration, file picker dialogs
+- **Web**: Progressive Web App (PWA) capabilities, offline mode
+- **iOS**: SwiftUI interop for native components (in development)
 
 ## Architecture
 
@@ -49,13 +127,6 @@ The `Secrets.kt` file is excluded from version control via `.gitignore` to prote
 - **Navigation**: AndroidX Navigation Compose
 - **Logging**: Napier 2.7.1
 - **Image Loading**: Kamel 0.9.1
-
-### Platform Support
-
-- **Android**: API 24+ (Android 7.0 Nougat)
-- **iOS**: iOS 14.0+
-- **Desktop**: Windows, macOS, Linux (JVM 11+)
-- **Web**: JavaScript and WebAssembly targets
 
 ### Project Structure
 
@@ -104,55 +175,115 @@ Backend API: https://dental-vision-ai-backend.onrender.com
 
 The application communicates with a Flask backend that interfaces with YOLOv12 model deployed on HuggingFace Spaces for dental image analysis.
 
-## Build Instructions
+## Installation Manual - Getting Started
 
 ### Prerequisites
 
-- JDK 11 or higher
-- Android Studio Hedgehog (2023.1.1) or newer
-- Xcode 15+ (for iOS development on macOS)
+Before building the project, ensure you have the following installed:
 
-### Android Build
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| JDK | 17 or higher | OpenJDK recommended |
+| Android Studio | Hedgehog (2023.1.1)+ | Required for Android builds |
+| Xcode | 15+ | macOS only, for iOS development |
+| Gradle | 8.0+ | Included via wrapper |
 
+### Build Instructions
+
+#### Android Build
+
+**Debug Build:**
 ```bash
 ./gradlew :composeApp:assembleDebug
 ```
 
-Install on connected device:
+**Install on Connected Device:**
 ```bash
 ./gradlew :composeApp:installDebug
 ```
 
-### iOS Build
-
+**Run on Emulator:**
 ```bash
-./gradlew :composeApp:iosArm64Build
+./gradlew :composeApp:installDebug
+# Then launch the app from the emulator
 ```
 
-Open iosApp/iosApp.xcodeproj in Xcode to run on simulator or device.
+#### Desktop Build (JVM)
 
-### Desktop Build
-
+**Run Application:**
 ```bash
 ./gradlew :composeApp:run
 ```
 
-Create distributable package:
+**Create Distributable Package:**
 ```bash
 ./gradlew :composeApp:createDistributable
 ```
 
-### Web Build
+The distributable will be created in `composeApp/build/compose/binaries/main/`
 
-JavaScript target:
+#### Web Build
+
+**JavaScript Target (Development Server):**
 ```bash
 ./gradlew :composeApp:jsBrowserDevelopmentRun
 ```
 
-WebAssembly target:
+Access at: http://localhost:8080
+
+**WebAssembly Target (Development Server):**
 ```bash
 ./gradlew :composeApp:wasmJsBrowserDevelopmentRun
 ```
+
+Access at: http://localhost:8080
+
+**Production Build:**
+```bash
+./gradlew :composeApp:jsBrowserProductionWebpack
+```
+
+#### iOS Build
+
+**Build for ARM64 (Physical Devices):**
+```bash
+./gradlew :composeApp:iosArm64Build
+```
+
+**Build for Simulator:**
+```bash
+./gradlew :composeApp:iosSimulatorArm64Build
+```
+
+**Run in Xcode:**
+1. Open `iosApp/iosApp.xcodeproj` in Xcode
+2. Select your target device or simulator
+3. Press Run (Cmd + R)
+
+### First Run Checklist
+
+- [ ] JDK 17+ installed and configured in PATH
+- [ ] Gemini API key configured in `Secrets.kt`
+- [ ] Internet connection available for backend communication
+- [ ] (Android) Physical device connected or emulator running
+- [ ] (iOS) Xcode project synced and provisioning profile configured
+- [ ] Sample images available in `samples-images/` folder
+
+### Troubleshooting
+
+**Build fails with "Unresolved reference: Secrets"**
+- Ensure you copied `Secrets.sample.kt` to the correct location
+- Check that the API key is properly formatted (no extra quotes or spaces)
+
+**Cannot connect to backend**
+- Verify internet connection
+- Check if Render backend is online: https://dental-vision-ai-backend.onrender.com/health
+- Review Ktor client logs in console output
+
+**Web build shows blank screen**
+- Clear browser cache and reload
+- Check browser console for JavaScript errors
+- Ensure WebAssembly is supported (Chrome 91+, Firefox 89+, Safari 15+)
 
 ## Development
 
