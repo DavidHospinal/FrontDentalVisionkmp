@@ -20,10 +20,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.dentalvision.ai.presentation.theme.DentalColors
-import io.kamel.image.KamelImage
-import io.kamel.core.Resource
-import io.kamel.image.asyncPainterResource
+import io.github.aakira.napier.Napier
 
 @Composable
 fun DentalImagePreview(
@@ -41,80 +43,92 @@ fun DentalImagePreview(
         offset += offsetChange
     }
 
+    // Log para debugging
+    LaunchedEffect(imageBytes) {
+        Napier.d("DentalImagePreview: Loading image (${imageBytes.size} bytes)")
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
-        // Image with zoom/pan - Using Kamel for cross-platform support
-        // CRITICAL: key(imageBytes) forces recomposition when bytes change
-        key(imageBytes) {
-            KamelImage(
-                resource = asyncPainterResource(data = imageBytes),
-                contentDescription = contentDescription,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .transformable(state = transformableState)
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        translationX = offset.x,
-                        translationY = offset.y
-                    ),
-                contentScale = ContentScale.Fit,
-                onLoading = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = DentalColors.Primary)
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                "Loading image...",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                },
-                onFailure = { exception ->
-                    // CRITICAL: Show REAL error message for debugging
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                "Failed to load image",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                "Error: ${exception.message ?: "Unknown error"}",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                "Image size: ${imageBytes.size / 1024} KB",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
+        // Image with zoom/pan - Using Coil3 for cross-platform ByteArray support
+        val platformContext = LocalPlatformContext.current
+
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(platformContext)
+                .data(imageBytes)
+                .crossfade(true)
+                .build(),
+            contentDescription = contentDescription,
+            modifier = Modifier
+                .fillMaxSize()
+                .transformable(state = transformableState)
+                .graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale,
+                    translationX = offset.x,
+                    translationY = offset.y
+                ),
+            contentScale = ContentScale.Fit,
+            loading = {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = DentalColors.Primary)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Loading image...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Napier.d("DentalImagePreview: Image is loading...")
                     }
                 }
-            )
-        }
+            },
+            error = {
+                // CRITICAL: Show REAL error message for debugging
+                Napier.e("DentalImagePreview: Failed to load image - ${it.result.throwable.message}")
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Failed to load image",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Error: ${it.result.throwable.message ?: "Unknown error"}",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Image size: ${imageBytes.size / 1024} KB",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            },
+            onSuccess = {
+                Napier.i("DentalImagePreview: Image loaded successfully (${imageBytes.size} bytes)")
+            }
+        )
 
         // Zoom controls
         if (showZoomControls) {
