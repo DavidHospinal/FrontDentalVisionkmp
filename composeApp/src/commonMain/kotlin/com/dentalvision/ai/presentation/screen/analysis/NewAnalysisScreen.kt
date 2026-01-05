@@ -810,55 +810,6 @@ private fun CompletedAnalysisPreview(
 
     // Quick stats
     QuickStatsCard(analysis)
-
-    Spacer(Modifier.height(12.dp))
-
-    // Detections List
-    if (analysis.detections.isNotEmpty()) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F7FA)),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = "Detected Teeth (${analysis.detections.size})",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(Modifier.height(8.dp))
-                analysis.detections.take(5).forEach { detection ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Tooth #${detection.toothNumberFDI}",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Badge(
-                            containerColor = if (detection.hasCaries) DentalColors.Error else DentalColors.Success,
-                            contentColor = Color.White
-                        ) {
-                            Text(
-                                if (detection.hasCaries) "Cavity" else "Healthy",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    }
-                }
-                if (analysis.detections.size > 5) {
-                    Text(
-                        text = "... and ${analysis.detections.size - 5} more",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Composable
