@@ -2,62 +2,63 @@ package com.dentalvision.ai.presentation.screen.splash
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import dentalvisionai.composeapp.generated.resources.Res
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 
-/**
- * SplashScreen - Professional animated welcome screen for DentalVision AI
- *
- * Features:
- * - Vertical gradient background (Deep Blue to Light Blue)
- * - Logo bounce animation with spring overshoot effect
- * - Text fade-in with slide-up animation
- * - Floating geometric shapes for depth and parallax effect
- * - 3-second display duration before navigating to login
- */
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun SplashScreen(
     onNavigateToLogin: () -> Unit
 ) {
-    var logoVisible by remember { mutableStateOf(false) }
-    var textVisible by remember { mutableStateOf(false) }
+    val infiniteTransition = rememberInfiniteTransition(label = "gradient_animation")
 
-    LaunchedEffect(Unit) {
-        logoVisible = true
-        delay(300)
-        textVisible = true
-        delay(6000)
-        onNavigateToLogin()
-    }
+    val gradientOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "gradient_offset"
+    )
+
+    val animatedGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF1E3A8A),
+            Color(0xFF3B82F6),
+            Color(0xFF60A5FA),
+            Color(0xFF3B82F6),
+            Color(0xFF1E3A8A)
+        ),
+        startY = gradientOffset,
+        endY = gradientOffset + 1000f
+    )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1E3A8A), // Deep Blue
-                        Color(0xFF3B82F6)  // Light Blue
-                    )
-                )
-            )
+            .background(brush = animatedGradient)
+            .clickable { onNavigateToLogin() }
     ) {
         FloatingShapesBackground()
 
@@ -66,58 +67,103 @@ fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            AnimatedLogo(visible = logoVisible)
+            AnimatedGifLogo()
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            AnimatedTitle(visible = textVisible)
+            AnimatedTitle()
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            AnimatedSubtitle(visible = textVisible)
+            AnimatedSubtitle()
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Toca en cualquier lugar para continuar",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.alpha(0.8f)
+            )
         }
     }
 }
 
-/**
- * Logo animation with spring bounce effect
- */
+@OptIn(ExperimentalResourceApi::class)
 @Composable
-private fun AnimatedLogo(visible: Boolean) {
-    val scale by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
+private fun AnimatedGifLogo() {
+    val scale by rememberInfiniteTransition(label = "logo_pulse").animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
         ),
-        label = "logo_scale"
+        label = "logo_scale_pulse"
     )
 
-    Icon(
-        imageVector = Icons.Filled.Favorite,
-        contentDescription = "DentalVision AI Logo",
-        modifier = Modifier
-            .size(120.dp)
-            .scale(scale),
-        tint = Color.White
-    )
+    val platformContext = LocalPlatformContext.current
+    var gifBytes by remember { mutableStateOf<ByteArray?>(null) }
+
+    LaunchedEffect(Unit) {
+        gifBytes = Res.readBytes("drawable/BeeClean.gif")
+    }
+
+    Box(
+        modifier = Modifier.size(200.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (gifBytes != null) {
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(platformContext)
+                    .data(gifBytes)
+                    .build(),
+                contentDescription = "DentalVision AI Logo",
+                modifier = Modifier
+                    .size((180 * scale).dp)
+                    .fillMaxSize(),
+                contentScale = ContentScale.Fit,
+                loading = {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
+                },
+                error = {
+                    Box(
+                        modifier = Modifier
+                            .size(180.dp)
+                            .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "DV",
+                            style = MaterialTheme.typography.displayLarge,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            )
+        } else {
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier.size(48.dp)
+            )
+        }
+    }
 }
 
-/**
- * Title text with fade-in and slide-up animation
- */
 @Composable
-private fun AnimatedTitle(visible: Boolean) {
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
-        label = "title_alpha"
-    )
-
-    val offsetY by animateDpAsState(
-        targetValue = if (visible) 0.dp else 50.dp,
-        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
-        label = "title_offset"
+private fun AnimatedTitle() {
+    val alpha by rememberInfiniteTransition(label = "title_glow").animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "title_alpha_glow"
     )
 
     Text(
@@ -127,27 +173,20 @@ private fun AnimatedTitle(visible: Boolean) {
             fontWeight = FontWeight.Bold
         ),
         color = Color.White,
-        modifier = Modifier
-            .offset(y = offsetY)
-            .alpha(alpha)
+        modifier = Modifier.alpha(alpha)
     )
 }
 
-/**
- * Subtitle text with fade-in and slide-up animation
- */
 @Composable
-private fun AnimatedSubtitle(visible: Boolean) {
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 1000, delayMillis = 200, easing = FastOutSlowInEasing),
-        label = "subtitle_alpha"
-    )
-
-    val offsetY by animateDpAsState(
-        targetValue = if (visible) 0.dp else 30.dp,
-        animationSpec = tween(durationMillis = 1000, delayMillis = 200, easing = FastOutSlowInEasing),
-        label = "subtitle_offset"
+private fun AnimatedSubtitle() {
+    val alpha by rememberInfiniteTransition(label = "subtitle_glow").animateFloat(
+        initialValue = 0.7f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "subtitle_alpha_glow"
     )
 
     Text(
@@ -156,17 +195,10 @@ private fun AnimatedSubtitle(visible: Boolean) {
             fontSize = 18.sp,
             fontWeight = FontWeight.Normal
         ),
-        color = Color.White.copy(alpha = 0.9f),
-        modifier = Modifier
-            .offset(y = offsetY)
-            .alpha(alpha)
+        color = Color.White.copy(alpha = alpha)
     )
 }
 
-/**
- * Floating geometric shapes in the background for parallax effect
- * Creates subtle depth and professional ambiance
- */
 @Composable
 private fun FloatingShapesBackground() {
     val infiniteTransition = rememberInfiniteTransition(label = "floating_shapes")
@@ -236,9 +268,6 @@ private fun FloatingShapesBackground() {
     }
 }
 
-/**
- * Individual floating circle shape
- */
 @Composable
 private fun FloatingCircle(
     modifier: Modifier = Modifier,
