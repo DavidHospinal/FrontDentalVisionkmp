@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.domain.model.Patient
 import com.dentalvision.ai.presentation.component.ExtendedIcons
 import com.dentalvision.ai.presentation.component.MainScaffold
+import com.dentalvision.ai.presentation.component.DentalImagePreview
+import com.dentalvision.ai.presentation.component.ShimmerListItem
 import com.dentalvision.ai.presentation.theme.DentalColors
 import com.dentalvision.ai.presentation.viewmodel.AnalysisUiState
 import com.dentalvision.ai.presentation.viewmodel.NewAnalysisViewModel
@@ -1246,108 +1248,124 @@ private fun EmptyPreview() {
 
 @Composable
 private fun AnalyzingPreview(progress: Int) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-            .background(DentalColors.Primary.copy(alpha = 0.05f), RoundedCornerShape(8.dp)),
-        contentAlignment = Alignment.Center
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        // Progress indicator
+        Card(
+            colors = CardDefaults.cardColors(containerColor = DentalColors.Primary.copy(alpha = 0.1f)),
+            shape = RoundedCornerShape(8.dp)
         ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(64.dp),
-                color = DentalColors.Primary
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(48.dp),
+                    color = DentalColors.Primary
+                )
 
-            Text(
-                text = "Analyzing with AI...",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+                Spacer(Modifier.height(12.dp))
 
-            Text(
-                text = "$progress%",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = DentalColors.Primary
-            )
+                Text(
+                    text = "Analyzing with AI...",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
 
-            Text(
-                text = "Processing dental image with YOLOv12",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                Text(
+                    text = "$progress%",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = DentalColors.Primary
+                )
+            }
+        }
+
+        // Shimmer loading effects for results preview
+        Text(
+            text = "Processing results...",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        repeat(3) {
+            ShimmerListItem()
         }
     }
 }
 
 @Composable
 private fun ImageReadyPreview(imageData: com.dentalvision.ai.presentation.viewmodel.ImageData) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4FF)),
-        shape = RoundedCornerShape(8.dp)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        // Image info header
+        Card(
+            colors = CardDefaults.cardColors(containerColor = DentalColors.Primary.copy(alpha = 0.1f)),
+            shape = RoundedCornerShape(8.dp)
         ) {
-            Icon(
-                Icons.Default.Check,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = DentalColors.Primary
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = "Image Ready",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = DentalColors.Primary
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = imageData.name,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text(
-                text = "${imageData.bytes.size / 1024} KB",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            HorizontalDivider()
-
-            Spacer(Modifier.height(16.dp))
-
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    Icons.Default.Info,
-                    contentDescription = null,
-                    tint = DentalColors.Warning,
-                    modifier = Modifier.size(20.dp)
-                )
+                Column {
+                    Text(
+                        text = "Image Ready",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = DentalColors.Primary
+                    )
+                    Text(
+                        text = imageData.name,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
                 Text(
-                    text = "Click 'Analyze with AI' to start detection",
+                    text = "${imageData.bytes.size / 1024} KB",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+
+        // Dental Image Preview with Zoom/Pan
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            DentalImagePreview(
+                imageBytes = imageData.bytes,
+                contentDescription = "Dental image: ${imageData.name}",
+                showZoomControls = true
+            )
+        }
+
+        // Info message
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Info,
+                contentDescription = null,
+                tint = DentalColors.Warning,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = "Use pinch gestures to zoom. Click 'Analyze with AI' to start detection",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
