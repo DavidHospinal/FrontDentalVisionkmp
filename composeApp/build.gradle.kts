@@ -101,6 +101,7 @@ kotlin {
             implementation(libs.kamel.image)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
+            implementation(libs.telephoto.zoomable)
 
             // Dependency Injection - Koin
             implementation(libs.koin.core)

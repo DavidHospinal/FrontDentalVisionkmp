@@ -23,6 +23,9 @@ import com.dentalvision.ai.presentation.viewmodel.PatientsUiState
 import com.dentalvision.ai.presentation.viewmodel.PatientsViewModel
 import com.dentalvision.ai.presentation.theme.DentalColors
 import com.dentalvision.ai.presentation.component.NavigationDrawerContent
+import com.dentalvision.ai.presentation.component.AppSearchField
+import com.dentalvision.ai.presentation.component.ShimmerListItem
+import com.dentalvision.ai.presentation.component.EmptyStates
 import org.koin.compose.viewmodel.koinViewModel
 import io.github.aakira.napier.Napier
 
@@ -133,17 +136,15 @@ fun PatientsScreen(
                     .padding(padding)
                     .padding(16.dp)
             ) {
-                // Search Bar
-                OutlinedTextField(
+                // Search Bar with enhanced UX
+                AppSearchField(
                     value = searchQuery,
                     onValueChange = {
                         Napier.d("PATIENTS SCREEN: Search query changed to: $it")
                         viewModel.searchPatients(it)
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search by name or phone...") },
-                    leadingIcon = { Icon(Icons.Default.Search, null) },
-                    singleLine = true
+                    placeholder = "Search by name or phone...",
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -151,21 +152,18 @@ fun PatientsScreen(
                 // Content based on UI State - NO DEMO DATA
                 when (val state = uiState) {
                     is PatientsUiState.Loading -> {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator()
-                                Spacer(Modifier.height(16.dp))
-                                Text(
-                                    "Loading patients from backend...",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    "Cold start may take up to 60 seconds",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                        // Professional shimmer loading effect
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                "Loading patients from backend...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            repeat(5) {
+                                ShimmerListItem()
                             }
                         }
                     }
@@ -246,37 +244,13 @@ fun PatientsScreen(
                         }
                     }
                     is PatientsUiState.Empty -> {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(64.dp),
-                                    tint = MaterialTheme.colorScheme.outline
-                                )
-                                Spacer(Modifier.height(16.dp))
-                                Text(
-                                    "No patients registered",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    "Backend connection successful, but no patients found",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(Modifier.height(16.dp))
-                                Button(onClick = {
-                                    Napier.d("PATIENTS SCREEN: Add first patient clicked from empty state")
-                                    showNewPatientDialog = true
-                                }) {
-                                    Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
-                                    Spacer(Modifier.width(4.dp))
-                                    Text("Add First Patient")
-                                }
+                        // Professional empty state
+                        EmptyStates.NoPatients(
+                            onAddPatient = {
+                                Napier.d("PATIENTS SCREEN: Add first patient clicked from empty state")
+                                showNewPatientDialog = true
                             }
-                        }
+                        )
                     }
                     is PatientsUiState.Success -> {
                         if (patients.isEmpty()) {
