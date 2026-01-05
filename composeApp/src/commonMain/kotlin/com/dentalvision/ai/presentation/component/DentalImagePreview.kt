@@ -1,6 +1,5 @@
 package com.dentalvision.ai.presentation.component
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -19,9 +18,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.toComposeImageBitmap
-import org.jetbrains.skia.Image as SkiaImage
+import io.kamel.image.KamelImage
+import io.kamel.core.Resource
+import io.kamel.image.asyncPainterResource
 
 @Composable
 fun DentalImagePreview(
@@ -40,13 +39,9 @@ fun DentalImagePreview(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        // Image with zoom/pan
-        val imageBitmap = remember(imageBytes) {
-            SkiaImage.makeFromEncoded(imageBytes).toComposeImageBitmap()
-        }
-
-        Image(
-            bitmap = imageBitmap,
+        // Image with zoom/pan - Using Kamel for cross-platform support
+        KamelImage(
+            resource = asyncPainterResource(data = imageBytes),
             contentDescription = contentDescription,
             modifier = Modifier
                 .fillMaxSize()
@@ -57,7 +52,27 @@ fun DentalImagePreview(
                     translationX = offset.x,
                     translationY = offset.y
                 ),
-            contentScale = ContentScale.Fit
+            contentScale = ContentScale.Fit,
+            onLoading = {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            },
+            onFailure = { exception ->
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Failed to load image",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         )
 
         // Zoom controls

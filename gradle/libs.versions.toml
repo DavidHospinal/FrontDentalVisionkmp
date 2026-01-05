@@ -29,7 +29,6 @@ sqldelight = "2.0.2"
 # Image Loading
 coil = "3.0.4"
 kamel = "1.0.3"
-telephoto = "0.12.0"
 
 # Dependency Injection
 koin = "4.0.0"
@@ -92,7 +91,6 @@ sqldelight-web-worker-driver = { module = "app.cash.sqldelight:web-worker-driver
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 kamel-image = { module = "media.kamel:kamel-image", version.ref = "kamel" }
-telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "telephoto" }
 
 # Dependency Injection - Koin
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
