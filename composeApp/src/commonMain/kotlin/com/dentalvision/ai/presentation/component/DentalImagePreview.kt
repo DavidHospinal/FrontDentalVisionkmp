@@ -29,7 +29,7 @@ import io.github.aakira.napier.Napier
 
 @Composable
 fun DentalImagePreview(
-    imageBytes: ByteArray,
+    imageData: Any,
     contentDescription: String = "Dental image preview",
     showZoomControls: Boolean = true,
     onClose: (() -> Unit)? = null,
@@ -44,17 +44,21 @@ fun DentalImagePreview(
     }
 
     // Log para debugging
-    LaunchedEffect(imageBytes) {
-        Napier.d("DentalImagePreview: Loading image (${imageBytes.size} bytes)")
+    LaunchedEffect(imageData) {
+        when (imageData) {
+            is ByteArray -> Napier.d("DentalImagePreview: Loading ByteArray image (${imageData.size} bytes)")
+            is String -> Napier.d("DentalImagePreview: Loading URL image: $imageData")
+            else -> Napier.w("DentalImagePreview: Unknown image data type: ${imageData::class.simpleName}")
+        }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        // Image with zoom/pan - Using Coil3 for cross-platform ByteArray support
+        // Image with zoom/pan - Using Coil3 for cross-platform support
         val platformContext = LocalPlatformContext.current
 
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(platformContext)
-                .data(imageBytes)
+                .data(imageData)
                 .crossfade(true)
                 .build(),
             contentDescription = contentDescription,
@@ -118,7 +122,11 @@ fun DentalImagePreview(
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "Image size: ${imageBytes.size / 1024} KB",
+                            when (imageData) {
+                                is ByteArray -> "Image size: ${imageData.size / 1024} KB"
+                                is String -> "URL: ${imageData.take(50)}..."
+                                else -> "Unknown image type"
+                            },
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -126,7 +134,11 @@ fun DentalImagePreview(
                 }
             },
             onSuccess = {
-                Napier.i("DentalImagePreview: Image loaded successfully (${imageBytes.size} bytes)")
+                when (imageData) {
+                    is ByteArray -> Napier.i("DentalImagePreview: ByteArray image loaded successfully (${imageData.size} bytes)")
+                    is String -> Napier.i("DentalImagePreview: URL image loaded successfully: $imageData")
+                    else -> Napier.i("DentalImagePreview: Image loaded successfully")
+                }
             }
         )
 

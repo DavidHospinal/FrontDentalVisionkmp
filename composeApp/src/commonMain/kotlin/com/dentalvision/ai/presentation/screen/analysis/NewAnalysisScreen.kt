@@ -582,79 +582,17 @@ private fun CompletedAnalysisPreview(
 
             Spacer(Modifier.height(8.dp))
 
-            // Show processed image from backend with detection boxes
-            // La URL viene del backend como: https://davidhosp-dental-vision-yolo12.hf.space/gradio_api/file=/tmp/gradio/.../image.webp
+            // Show processed image with zoom capability
             io.github.aakira.napier.Napier.d("Loading processed image from URL: ${analysis.imageUrl}")
 
-            val platformContext = coil3.compose.LocalPlatformContext.current
-
-            // Use custom ImageLoader with HTTP headers for HuggingFace compatibility
-            val imageLoader = remember {
-                com.dentalvision.ai.platform.createImageLoader(platformContext)
-            }
-
-            coil3.compose.SubcomposeAsyncImage(
-                model = analysis.imageUrl,
-                imageLoader = imageLoader,
+            DentalImagePreview(
+                imageData = analysis.imageUrl,
                 contentDescription = "Processed dental X-ray with detections",
+                showZoomControls = true,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                loading = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color(0xFF34495E)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = DentalColors.Primary)
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                "Cargando imagen procesada...",
-                                color = Color.White,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-                },
-                error = {
-                    // Log del error para debugging
-                    io.github.aakira.napier.Napier.e("Failed to load image: ${analysis.imageUrl}")
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color(0xFF34495E)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = null,
-                                tint = DentalColors.Error,
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                "Error al cargar imagen procesada",
-                                color = Color.White,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                analysis.imageUrl.take(50) + "...",
-                                color = Color.White.copy(alpha = 0.7f),
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    }
-                }
+                    .clip(RoundedCornerShape(4.dp))
             )
 
             Spacer(Modifier.height(8.dp))
@@ -1067,7 +1005,7 @@ private fun ImageSelectedCard(
 
             if (uiState !is AnalysisUiState.Analyzing) {
                 IconButton(onClick = onClear) {
-                    Icon(Icons.Default.Close, "Clear image", tint = DentalColors.Error)
+                    Icon(Icons.Default.Delete, "Clear image", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -1295,7 +1233,7 @@ private fun ImageReadyPreview(imageData: com.dentalvision.ai.presentation.viewmo
             shape = RoundedCornerShape(8.dp)
         ) {
             DentalImagePreview(
-                imageBytes = imageData.bytes,
+                imageData = imageData.bytes,
                 contentDescription = "Dental image: ${imageData.name}",
                 showZoomControls = true
             )
