@@ -78,14 +78,14 @@ To facilitate quick testing and demonstration, the repository includes ready-to-
 ### Sample Images Folder
 
 - **Location**: `samples-images/` directory in the project root
-- **Contents**: 5 professionally curated dental X-ray images for immediate testing
+- **Contents**: 5 professionally curated dental images for immediate testing
 - **Usage**: These images are pre-validated to work optimally with the YOLOv12 detection model
 
 ### Testing Flexibility
 
 - You are **NOT limited** to the provided samples
 - Use your own dental images in standard formats (JPG, PNG)
-- Download external dental X-ray datasets for extensive testing
+- Download external dental  datasets for extensive testing
 - The model supports panoramic and periapical radiographs
 
 ### Quick Test Workflow
@@ -163,7 +163,7 @@ composeApp/
 - Multi-tooth analysis in single image
 
 ### Report Generation
-- Professional PDF report generation
+- Professional  report generation
 - Analysis summary and findings
 - Detected conditions documentation
 - Treatment recommendations
@@ -330,3 +330,4 @@ MIT License - Copyright 2025 Dental Vision AI
 David Hospinal
 Email: u202021214@upc.edu.pe
 GitHub: https://github.com/DavidHospinal
+
