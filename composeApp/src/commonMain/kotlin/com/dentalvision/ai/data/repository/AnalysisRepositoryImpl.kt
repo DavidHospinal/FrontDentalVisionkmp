@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.dentalvision.ai.data.repository
 
 import com.dentalvision.ai.data.remote.api.ApiClient
@@ -9,7 +11,7 @@ import com.dentalvision.ai.domain.model.Analysis
 import com.dentalvision.ai.domain.model.ToothDetection
 import com.dentalvision.ai.domain.repository.AnalysisRepository
 import io.github.aakira.napier.Napier
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable

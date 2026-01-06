@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.dentalvision.ai.presentation.component
 
 import androidx.compose.foundation.background

@@ -15,16 +15,16 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.SubcomposeAsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
 import dentalvisionai.composeapp.generated.resources.Res
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import io.github.alexzhirkevich.compottie.Compottie
+import io.github.alexzhirkevich.compottie.LottieCompositionSpec
+import io.github.alexzhirkevich.compottie.rememberLottieComposition
+import io.github.alexzhirkevich.compottie.rememberLottiePainter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -105,16 +105,18 @@ private fun AnimatedGifLogo() {
         label = "logo_scale_pulse"
     )
 
-    val platformContext = LocalPlatformContext.current
-
-    val gifBytes by produceState<ByteArray?>(initialValue = null) {
+    val jsonString by produceState<String?>(initialValue = null) {
         value = withContext(Dispatchers.Default) {
             try {
-                Res.readBytes("drawable/BeeClean.gif")
+                Res.readBytes("files/BeeClean.json").decodeToString()
             } catch (e: Exception) {
                 null
             }
         }
+    }
+
+    val composition = jsonString?.let {
+        rememberLottieComposition { LottieCompositionSpec.JsonString(it) }.value
     }
 
     Box(
@@ -126,65 +128,20 @@ private fun AnimatedGifLogo() {
             ),
         contentAlignment = Alignment.Center
     ) {
-        when {
-            gifBytes != null -> {
-                SubcomposeAsyncImage(
-                    model = ImageRequest.Builder(platformContext)
-                        .data(gifBytes)
-                        .build(),
-                    contentDescription = "DentalVision AI Logo",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
-                    loading = {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                color = Color.White,
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-                    },
-                    error = { error ->
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text(
-                                    text = "DV",
-                                    style = MaterialTheme.typography.displayLarge,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "GIF decode error",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.7f),
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                                Text(
-                                    text = error.result.throwable?.message ?: "Unknown",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.5f),
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                    modifier = Modifier.padding(top = 2.dp)
-                                )
-                            }
-                        }
-                    }
-                )
-            }
-            else -> {
-                CircularProgressIndicator(
-                    color = Color.White,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
+        if (composition != null) {
+            androidx.compose.foundation.Image(
+                painter = rememberLottiePainter(
+                    composition = composition,
+                    iterations = Compottie.IterateForever
+                ),
+                contentDescription = "DentalVision AI Logo Animation",
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier.size(48.dp)
+            )
         }
     }
 }

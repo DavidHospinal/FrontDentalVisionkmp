@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.dentalvision.ai.data.repository
 
 import com.dentalvision.ai.data.remote.api.dto.AppointmentDTO
@@ -9,7 +11,7 @@ import com.dentalvision.ai.domain.model.AppointmentStatus
 import com.dentalvision.ai.domain.model.AppointmentType
 import com.dentalvision.ai.domain.repository.AppointmentRepository
 import io.github.aakira.napier.Napier
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.dentalvision.ai.data.repository
 
 import com.dentalvision.ai.data.remote.api.dto.GenerateReportRequest
@@ -6,7 +8,7 @@ import com.dentalvision.ai.data.remote.service.ReportService
 import com.dentalvision.ai.domain.model.Report
 import com.dentalvision.ai.domain.repository.ReportRepository
 import io.github.aakira.napier.Napier
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 
 /**

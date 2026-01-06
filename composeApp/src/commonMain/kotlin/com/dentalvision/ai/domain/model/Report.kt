@@ -1,6 +1,9 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.dentalvision.ai.domain.model
 
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,7 +14,7 @@ data class Report(
     val id: String,
     val analysisId: String,
     val patientId: String,
-    val reportDate: Instant,
+    @Contextual val reportDate: Instant,
     val pdfUrl: String? = null,
     val summary: String,
     val recommendations: String? = null,
