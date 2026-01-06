@@ -262,6 +262,7 @@ compose.desktop {
 }
 
 // Task to print project structure
+
 tasks.register("printProjectStructure") {
     doLast {
         println("""

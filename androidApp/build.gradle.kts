@@ -15,8 +15,8 @@ kotlin {
 
                 // <--- IMPORTANTE: Estas dependencias son OBLIGATORIAS para MainActivity
                 implementation("androidx.activity:activity-compose:1.9.0")
-                implementation("androidx.appcompat:appcompat:1.6.1")
-                implementation("androidx.core:core-ktx:1.13.0")
+                implementation("androidx.appcompat:appcompat:1.7.0")
+                implementation("androidx.core:core-ktx:1.15.0")
 
                 // Logging - Napier (required for MainActivity)
                 implementation(libs.napier)
@@ -31,7 +31,7 @@ kotlin {
 
 android {
     // Usamos valores fijos para asegurar compatibilidad
-    compileSdk = 34
+    compileSdk = 35
     namespace = "com.dentalvision.ai.android"
 
     // Mapeo explicito para asegurar que encuentre tus archivos en androidMain
@@ -42,7 +42,7 @@ android {
     defaultConfig {
         applicationId = "com.dentalvision.ai"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
     }
