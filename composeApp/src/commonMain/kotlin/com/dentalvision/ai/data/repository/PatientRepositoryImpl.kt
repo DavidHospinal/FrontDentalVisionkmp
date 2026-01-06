@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.dentalvision.ai.data.repository
 
 import com.dentalvision.ai.data.remote.api.dto.CreatePatientDTO
@@ -8,7 +6,7 @@ import com.dentalvision.ai.data.remote.service.PatientService
 import com.dentalvision.ai.domain.model.Patient
 import com.dentalvision.ai.domain.repository.PatientRepository
 import io.github.aakira.napier.Napier
-import kotlin.time.Clock
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 class PatientRepositoryImpl(

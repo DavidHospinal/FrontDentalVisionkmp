@@ -17,7 +17,7 @@ composeHotReload = "1.0.0-dev-5" # Versión válida aproximada
 
 # Coroutines & Concurrency
 kotlinx-coroutines = "1.9.0"
-kotlinx-datetime = "0.7.1"
+kotlinx-datetime = "0.6.1"
 kotlinx-serialization = "1.7.3"
 
 # Networking (Ktor 3.0 es muy nuevo, usamos 2.3.12 o 3.0.0 estable)

@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.dentalvision.ai.presentation.screen.appointments
 
 import androidx.compose.foundation.background
@@ -32,7 +30,6 @@ import com.dentalvision.ai.presentation.component.NewAppointmentDialog
 import com.dentalvision.ai.presentation.theme.DentalColors
 import com.dentalvision.ai.presentation.viewmodel.AppointmentsUiState
 import com.dentalvision.ai.presentation.viewmodel.AppointmentsViewModel
-import kotlin.time.Clock
 import kotlinx.datetime.*
 import org.koin.compose.viewmodel.koinViewModel
 

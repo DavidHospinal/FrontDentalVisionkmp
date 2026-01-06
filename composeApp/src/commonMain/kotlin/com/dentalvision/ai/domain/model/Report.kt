@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.dentalvision.ai.domain.model
 
 import kotlinx.datetime.Instant

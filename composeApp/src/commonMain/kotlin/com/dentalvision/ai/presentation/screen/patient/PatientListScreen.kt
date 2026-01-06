@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.dentalvision.ai.presentation.screen.patient
 
 import androidx.compose.foundation.background
@@ -46,7 +44,7 @@ import com.dentalvision.ai.domain.model.Patient
 import com.dentalvision.ai.presentation.component.DentalCard
 import com.dentalvision.ai.presentation.component.LoadingIndicator
 import com.dentalvision.ai.presentation.theme.DentalColors
-import kotlin.time.Clock
+import kotlinx.datetime.Clock
 
 /**
  * Patient List Screen

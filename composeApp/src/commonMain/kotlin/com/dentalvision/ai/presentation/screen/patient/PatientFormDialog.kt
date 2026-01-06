@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.dentalvision.ai.presentation.screen.patient
 
 import androidx.compose.foundation.layout.*
@@ -11,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.domain.model.Patient
 import com.dentalvision.ai.presentation.theme.DentalColors
-import kotlin.time.Clock
+import kotlinx.datetime.Clock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

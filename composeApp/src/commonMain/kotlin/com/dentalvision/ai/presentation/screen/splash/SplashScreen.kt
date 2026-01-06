@@ -104,7 +104,7 @@ fun SplashScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "University: Pontificia Universidad Católica de Chile",
+                    text = "University: Pontifical Catholic University of Chile",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White
                 )
