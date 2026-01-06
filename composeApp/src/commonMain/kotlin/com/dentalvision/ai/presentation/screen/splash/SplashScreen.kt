@@ -22,9 +22,9 @@ import androidx.compose.ui.unit.sp
 import dentalvisionai.composeapp.generated.resources.Res
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import io.github.alexzhirkevich.compottie.Compottie
+import io.github.alexzhirkevich.compottie.LottieAnimation
 import io.github.alexzhirkevich.compottie.LottieCompositionSpec
 import io.github.alexzhirkevich.compottie.rememberLottieComposition
-import io.github.alexzhirkevich.compottie.rememberLottiePainter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -83,11 +83,38 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Toca en cualquier lugar para continuar",
+                text = "Tap anywhere to continue",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.7f),
                 modifier = Modifier.alpha(0.8f)
             )
+            
+            Spacer(modifier = Modifier.height(48.dp))
+            
+            // Credits section
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.alpha(0.6f)
+            ) {
+                Text(
+                    text = "Developed by: Oscar David Hospinal Roman",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "University: Pontificia Universidad Católica de Chile",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Email: oscardavid.hospinal@uc.cl",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White
+                )
+            }
         }
     }
 }
@@ -105,18 +132,17 @@ private fun AnimatedGifLogo() {
         label = "logo_scale_pulse"
     )
 
-    val jsonString by produceState<String?>(initialValue = null) {
-        value = withContext(Dispatchers.Default) {
+    var jsonString by remember { mutableStateOf<String?>(null) }
+    
+    LaunchedEffect(Unit) {
+        jsonString = withContext(Dispatchers.Default) {
             try {
                 Res.readBytes("files/BeeClean.json").decodeToString()
             } catch (e: Exception) {
+                println("Error loading BeeClean.json: ${e.message}")
                 null
             }
         }
-    }
-
-    val composition = jsonString?.let {
-        rememberLottieComposition { LottieCompositionSpec.JsonString(it) }.value
     }
 
     Box(
@@ -128,16 +154,27 @@ private fun AnimatedGifLogo() {
             ),
         contentAlignment = Alignment.Center
     ) {
-        if (composition != null) {
-            androidx.compose.foundation.Image(
-                painter = rememberLottiePainter(
+        if (jsonString != null) {
+            // Only create composition after JSON is loaded
+            val composition by rememberLottieComposition { 
+                LottieCompositionSpec.JsonString(jsonString!!) 
+            }
+            
+            if (composition != null) {
+                LottieAnimation(
                     composition = composition,
-                    iterations = Compottie.IterateForever
-                ),
-                contentDescription = "DentalVision AI Logo Animation",
-                modifier = Modifier.fillMaxSize()
-            )
+                    iterations = Compottie.IterateForever,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                // Lottie is parsing
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
         } else {
+            // JSON loading
             CircularProgressIndicator(
                 color = Color.White,
                 modifier = Modifier.size(48.dp)
