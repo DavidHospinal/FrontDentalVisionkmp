@@ -1,6 +1,7 @@
 package com.dentalvision.ai.domain.model
 
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,7 +12,7 @@ data class Analysis(
     val id: String,
     val patientId: String,
     val imageUrl: String,
-    val analysisDate: Instant,
+    @Contextual val analysisDate: Instant,
     val totalTeethDetected: Int,
     val totalCariesDetected: Int,
     val confidenceScore: Double,        // Average confidence across all detections

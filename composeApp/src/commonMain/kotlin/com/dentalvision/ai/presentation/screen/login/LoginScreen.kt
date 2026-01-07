@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -16,8 +17,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.dentalvision.ai.presentation.component.AppTextField
 import com.dentalvision.ai.presentation.component.WelcomeDialog
 import com.dentalvision.ai.presentation.theme.DentalColors
 import dentalvisionai.composeapp.generated.resources.Res
@@ -42,6 +45,7 @@ fun LoginScreen(
             .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
+        SelectionContainer {
         Card(
             modifier = Modifier
                 .widthIn(max = 500.dp)
@@ -130,27 +134,20 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Doctor Name Field
-                OutlinedTextField(
+                // Doctor Name Field with Enter key support
+                AppTextField(
                     value = doctorName,
                     onValueChange = { doctorName = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Doctor Name") },
-                    placeholder = { Text("Enter your first name to access the system") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Doctor Icon",
-                            tint = DentalColors.Primary
-                        )
+                    label = "Doctor Name",
+                    placeholder = "Enter your first name to access the system",
+                    leadingIcon = Icons.Default.Person,
+                    imeAction = ImeAction.Done,
+                    onImeAction = {
+                        if (doctorName.isNotBlank()) {
+                            showWelcomeDialog = true
+                        }
                     },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DentalColors.Primary,
-                        focusedLabelColor = DentalColors.Primary,
-                        cursorColor = DentalColors.Primary
-                    ),
-                    shape = RoundedCornerShape(12.dp)
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -189,6 +186,7 @@ fun LoginScreen(
                     textAlign = TextAlign.Center
                 )
             }
+        }
         }
     }
 

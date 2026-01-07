@@ -27,7 +27,7 @@ fun PatientFormDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (patient == null) "Nuevo Paciente" else "Editar Paciente") },
+        title = { Text(if (patient == null) "New Patient" else "Edit Patient") },
         text = {
             Column(
                 modifier = Modifier
@@ -38,7 +38,7 @@ fun PatientFormDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nombre Completo *") },
+                    label = { Text("Full Name *") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -46,7 +46,7 @@ fun PatientFormDialog(
                     OutlinedTextField(
                         value = age,
                         onValueChange = { age = it.filter { c -> c.isDigit() } },
-                        label = { Text("Edad *") },
+                        label = { Text("Age *") },
                         modifier = Modifier.weight(1f)
                     )
 
@@ -59,7 +59,7 @@ fun PatientFormDialog(
                             value = gender.name,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Genero") },
+                            label = { Text("Gender") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                             modifier = Modifier.menuAnchor()
                         )
@@ -80,7 +80,7 @@ fun PatientFormDialog(
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Telefono") },
+                    label = { Text("Phone") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -110,12 +110,12 @@ fun PatientFormDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = DentalColors.Primary),
                 enabled = name.isNotBlank() && age.isNotBlank()
             ) {
-                Text("Guardar Paciente")
+                Text("Save Patient")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text("Cancel")
             }
         }
     )

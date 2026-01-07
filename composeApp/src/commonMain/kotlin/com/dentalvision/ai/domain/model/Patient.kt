@@ -1,6 +1,7 @@
 package com.dentalvision.ai.domain.model
 
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 /**
@@ -14,8 +15,8 @@ data class Patient(
     val gender: Gender,
     val email: String? = null,
     val phone: String? = null,
-    val createdAt: Instant,
-    val updatedAt: Instant,
+    @Contextual val createdAt: Instant,
+    @Contextual val updatedAt: Instant,
     val medicalHistory: String? = null,
     val allergies: String? = null,
     val notes: String? = null,

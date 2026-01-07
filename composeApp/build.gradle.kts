@@ -102,6 +102,9 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
 
+            // Lottie Animation
+            implementation(libs.compottie)
+
             // Dependency Injection - Koin
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
@@ -259,6 +262,7 @@ compose.desktop {
 }
 
 // Task to print project structure
+
 tasks.register("printProjectStructure") {
     doLast {
         println("""
