@@ -707,13 +707,13 @@ private fun CompletedAnalysisPreview(
 
             Spacer(Modifier.height(8.dp))
 
-            // Caries Bar (Red)
+            // Cavities Bar (Red)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Caries",
+                    text = "Cavities",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.width(60.dp)
                 )

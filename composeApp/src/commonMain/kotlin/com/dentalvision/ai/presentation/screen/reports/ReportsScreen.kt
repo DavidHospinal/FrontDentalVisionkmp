@@ -211,6 +211,7 @@ private fun ReportsContent(
             if (isMobile) {
                 // Mobile: Vertical List
                 items(allAnalyses.distinctBy { it.analysis_id }) { analysis ->
+                    val analysisId = analysis.analysis_id
                     ReportCardMobile(
                         report = ReportData(
                             id = analysis.analysis_id,
@@ -219,8 +220,8 @@ private fun ReportsContent(
                             type = analysis.type,
                             status = analysis.status
                         ),
-                        analysisId = analysis.analysis_id,
-                        onViewReport = { viewModel.viewAnalysisReport(it) }
+                        analysisId = analysisId,
+                        onViewReport = remember { { id -> viewModel.viewAnalysisReport(id) } }
                     )
                 }
             } else {
@@ -233,6 +234,7 @@ private fun ReportsContent(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(allAnalyses.distinctBy { it.analysis_id }) { analysis ->
+                            val analysisId = analysis.analysis_id
                             ReportCardDesktop(
                                 report = ReportData(
                                     id = analysis.analysis_id,
@@ -241,8 +243,8 @@ private fun ReportsContent(
                                     type = analysis.type,
                                     status = analysis.status
                                 ),
-                                analysisId = analysis.analysis_id,
-                                onViewReport = { viewModel.viewAnalysisReport(it) }
+                                analysisId = analysisId,
+                                onViewReport = remember { { id -> viewModel.viewAnalysisReport(id) } }
                             )
                         }
                     }

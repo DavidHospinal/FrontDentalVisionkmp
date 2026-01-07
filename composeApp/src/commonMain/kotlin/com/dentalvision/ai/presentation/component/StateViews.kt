@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -24,7 +25,7 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         initialValue = 0f,
         targetValue = 1000f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
+            animation = tween(800, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "shimmer_translate"
@@ -33,13 +34,14 @@ fun Modifier.shimmerEffect(): Modifier = composed {
     background(
         brush = Brush.linearGradient(
             colors = listOf(
-                Color.LightGray.copy(alpha = 0.3f),
-                Color.LightGray.copy(alpha = 0.5f),
-                Color.LightGray.copy(alpha = 0.3f)
+                Color.LightGray.copy(alpha = 0.15f),
+                Color.LightGray.copy(alpha = 0.25f),
+                Color.LightGray.copy(alpha = 0.15f)
             ),
             start = Offset(translateAnim, translateAnim),
             end = Offset(translateAnim + 200f, translateAnim + 200f)
-        )
+        ),
+        shape = RoundedCornerShape(8.dp)
     )
 }
 
@@ -60,6 +62,7 @@ fun ShimmerListItem() {
             Box(
                 modifier = Modifier
                     .size(48.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .shimmerEffect()
             )
             Spacer(Modifier.width(16.dp))
@@ -68,6 +71,7 @@ fun ShimmerListItem() {
                     modifier = Modifier
                         .fillMaxWidth(0.7f)
                         .height(16.dp)
+                        .clip(RoundedCornerShape(8.dp))
                         .shimmerEffect()
                 )
                 Spacer(Modifier.height(8.dp))
@@ -75,6 +79,7 @@ fun ShimmerListItem() {
                     modifier = Modifier
                         .fillMaxWidth(0.5f)
                         .height(14.dp)
+                        .clip(RoundedCornerShape(8.dp))
                         .shimmerEffect()
                 )
             }

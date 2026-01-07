@@ -162,7 +162,7 @@ fun NavigationDrawerContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Current Patient Info (if any)
+            // Doctor Info
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -176,15 +176,16 @@ fun NavigationDrawerContent(
                     modifier = Modifier.padding(12.dp)
                 ) {
                     Text(
-                        text = "Current Patient",
+                        text = "Welcome,",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White.copy(alpha = 0.7f)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "No patient selected",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White
+                        text = "Dr. David",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
