@@ -120,6 +120,8 @@ class AppointmentsViewModel(
                 .onSuccess { created ->
                     Napier.i("Appointment created successfully: ${created.id}")
                     loadAppointments()
+                    loadRecentPatients()
+                    Napier.d("Appointments and patients refreshed after creation")
                     onSuccess()
                 }
                 .onFailure { error ->

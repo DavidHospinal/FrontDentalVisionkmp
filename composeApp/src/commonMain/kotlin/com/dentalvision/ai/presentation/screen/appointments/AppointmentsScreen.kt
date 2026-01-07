@@ -636,9 +636,14 @@ private fun AppointmentCard(
     val dateTime = appointment.appointmentDate.toLocalDateTime(timezone)
     val time = "${dateTime.hour.toString().padStart(2, '0')}:${dateTime.minute.toString().padStart(2, '0')}"
 
+    val cardBackgroundColor = when (appointment.status) {
+        AppointmentStatus.COMPLETED -> Color(0xFFE8F5E9)
+        else -> Color(0xFFF5F7FA)
+    }
+
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF5F7FA)
+            containerColor = cardBackgroundColor
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -729,12 +734,23 @@ private fun AppointmentCard(
             } else if (appointment.status == AppointmentStatus.COMPLETED) {
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = "Finished",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DentalColors.Success
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Terminado",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4CAF50)
+                    )
+                }
             }
         }
     }
@@ -750,9 +766,14 @@ private fun AppointmentCardMobile(
     val dateTime = appointment.appointmentDate.toLocalDateTime(timezone)
     val time = "${dateTime.hour.toString().padStart(2, '0')}:${dateTime.minute.toString().padStart(2, '0')}"
 
+    val cardBackgroundColor = when (appointment.status) {
+        AppointmentStatus.COMPLETED -> Color(0xFFE8F5E9)
+        else -> MaterialTheme.colorScheme.surface
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
@@ -824,12 +845,23 @@ private fun AppointmentCardMobile(
             } else if (appointment.status == AppointmentStatus.COMPLETED) {
                 Spacer(Modifier.height(16.dp))
 
-                Text(
-                    text = "Finished",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DentalColors.Success
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = "Terminado",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4CAF50)
+                    )
+                }
             }
         }
     }
@@ -1027,10 +1059,10 @@ private val AppointmentStatus.color: Color
 
 private val AppointmentStatus.displayName: String
     get() = when (this) {
-        AppointmentStatus.PENDING -> "Pending"
-        AppointmentStatus.SCHEDULED -> "Scheduled"
-        AppointmentStatus.CONFIRMED -> "Confirmed"
-        AppointmentStatus.COMPLETED -> "Completed"
-        AppointmentStatus.CANCELLED -> "Cancelled"
-        AppointmentStatus.NO_SHOW -> "No Show"
+        AppointmentStatus.PENDING -> "Pendiente"
+        AppointmentStatus.SCHEDULED -> "Programada"
+        AppointmentStatus.CONFIRMED -> "Confirmada"
+        AppointmentStatus.COMPLETED -> "Terminada"
+        AppointmentStatus.CANCELLED -> "Cancelada"
+        AppointmentStatus.NO_SHOW -> "No asistió"
     }
