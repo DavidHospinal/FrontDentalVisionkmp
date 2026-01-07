@@ -17,6 +17,10 @@ class AppointmentsViewModel(
     private val patientRepository: PatientRepository
 ) : BaseViewModel() {
 
+    companion object {
+        private const val DEFAULT_LIMIT = 15
+    }
+
     private val _uiState = MutableStateFlow<AppointmentsUiState>(AppointmentsUiState.Loading)
     val uiState: StateFlow<AppointmentsUiState> = _uiState.asStateFlow()
 
@@ -91,11 +95,12 @@ class AppointmentsViewModel(
     private suspend fun enrichAppointmentsWithPatientNames(appointments: List<Appointment>): List<Appointment> {
         if (appointments.isEmpty()) return appointments
 
-        val patientsResult = patientRepository.getPatients(page = 1, limit = 20)
+        val patientsResult = patientRepository.getPatients(page = 1, limit = DEFAULT_LIMIT)
         val patientNameMap = patientsResult.getOrNull()?.first?.associate { it.id to it.name } ?: emptyMap()
 
         return appointments.map { appointment ->
-            appointment.copy(patientName = patientNameMap[appointment.patientId] ?: "Unknown Patient")
+            val patientName = patientNameMap[appointment.patientId] ?: "Patient ${appointment.patientId}"
+            appointment.copy(patientName = patientName)
         }
     }
 
@@ -103,7 +108,7 @@ class AppointmentsViewModel(
         launchWithErrorHandler {
             Napier.d("Loading recent patients for appointments")
 
-            patientRepository.getPatients(page = 1, limit = 20)
+            patientRepository.getPatients(page = 1, limit = DEFAULT_LIMIT)
                 .onSuccess { (patients, _) ->
                     val sortedPatients = patients.sortedByDescending { it.createdAt }
                     _recentPatients.value = sortedPatients
@@ -167,6 +172,11 @@ class AppointmentsViewModel(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        if (appointment.status == AppointmentStatus.CONFIRMED) {
+            Napier.d("Appointment ${appointment.id} already confirmed, ignoring duplicate request")
+            return
+        }
+
         launchWithErrorHandler {
             Napier.d("Confirming appointment: ${appointment.id}")
 
