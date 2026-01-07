@@ -44,6 +44,7 @@ fun AppointmentsScreen(
     val appointments by viewModel.appointments.collectAsState()
     val recentPatients by viewModel.recentPatients.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
+    val currentMonth by viewModel.currentMonth.collectAsState()
 
     var showNewAppointmentDialog by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf<Appointment?>(null) }
@@ -59,11 +60,14 @@ fun AppointmentsScreen(
             uiState = uiState,
             appointments = appointments,
             selectedDate = selectedDate,
+            currentMonth = currentMonth,
             onDateSelected = { instant -> viewModel.selectDate(instant) },
             onNewAppointmentClick = { showNewAppointmentDialog = true },
             onConfirmClick = { showConfirmDialog = it },
             onCancelClick = { showCancelDialog = it },
-            onRefresh = { viewModel.refresh() }
+            onRefresh = { viewModel.refresh() },
+            onNextMonth = { viewModel.goToNextMonth() },
+            onPreviousMonth = { viewModel.goToPreviousMonth() }
         )
 
         if (showNewAppointmentDialog) {
@@ -147,11 +151,14 @@ private fun AppointmentsContent(
     uiState: AppointmentsUiState,
     appointments: List<Appointment>,
     selectedDate: Instant?,
+    currentMonth: Instant,
     onDateSelected: (Instant) -> Unit,
     onNewAppointmentClick: () -> Unit,
     onConfirmClick: (Appointment) -> Unit,
     onCancelClick: (Appointment) -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onNextMonth: () -> Unit,
+    onPreviousMonth: () -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -246,10 +253,13 @@ private fun AppointmentsContent(
                     DesktopLayout(
                         appointments = appointments,
                         selectedDate = selectedDate,
+                        currentMonth = currentMonth,
                         onDateSelected = onDateSelected,
                         onNewAppointmentClick = onNewAppointmentClick,
                         onConfirmClick = onConfirmClick,
-                        onCancelClick = onCancelClick
+                        onCancelClick = onCancelClick,
+                        onNextMonth = onNextMonth,
+                        onPreviousMonth = onPreviousMonth
                     )
                 }
             }
@@ -311,10 +321,13 @@ private fun MobileLayout(
 private fun DesktopLayout(
     appointments: List<Appointment>,
     selectedDate: Instant?,
+    currentMonth: Instant,
     onDateSelected: (Instant) -> Unit,
     onNewAppointmentClick: () -> Unit,
     onConfirmClick: (Appointment) -> Unit,
-    onCancelClick: (Appointment) -> Unit
+    onCancelClick: (Appointment) -> Unit,
+    onNextMonth: () -> Unit,
+    onPreviousMonth: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxSize(),
@@ -322,9 +335,12 @@ private fun DesktopLayout(
     ) {
         CalendarSection(
             selectedDate = selectedDate,
+            currentMonth = currentMonth,
             appointments = appointments,
             onDateSelected = onDateSelected,
             onNewAppointmentClick = onNewAppointmentClick,
+            onNextMonth = onNextMonth,
+            onPreviousMonth = onPreviousMonth,
             modifier = Modifier.weight(2f)
         )
 
@@ -341,15 +357,18 @@ private fun DesktopLayout(
 @Composable
 private fun CalendarSection(
     selectedDate: Instant?,
+    currentMonth: Instant,
     appointments: List<Appointment>,
     onDateSelected: (Instant) -> Unit,
     onNewAppointmentClick: () -> Unit,
+    onNextMonth: () -> Unit,
+    onPreviousMonth: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val timezone = TimeZone.currentSystemDefault()
-    val now = Clock.System.now()
-    val currentMonth = now.toLocalDateTime(timezone).month
-    val currentYear = now.toLocalDateTime(timezone).year
+    val currentDateTime = currentMonth.toLocalDateTime(timezone)
+    val displayMonth = currentDateTime.month
+    val displayYear = currentDateTime.year
 
     Card(
         modifier = modifier,
@@ -401,17 +420,17 @@ private fun CalendarSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = {}) {
+                IconButton(onClick = onPreviousMonth) {
                     Icon(ExtendedIcons.ChevronLeft, "Previous month")
                 }
 
                 Text(
-                    text = "$currentMonth $currentYear",
+                    text = "${displayMonth.name} $displayYear",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold
                 )
 
-                IconButton(onClick = {}) {
+                IconButton(onClick = onNextMonth) {
                     Icon(ExtendedIcons.ChevronRight, "Next month")
                 }
             }
@@ -437,8 +456,8 @@ private fun CalendarSection(
             Spacer(modifier = Modifier.height(8.dp))
 
             CalendarGrid(
-                currentMonth = currentMonth.number,
-                currentYear = currentYear,
+                currentMonth = displayMonth.number,
+                currentYear = displayYear,
                 selectedDate = selectedDate,
                 appointments = appointments,
                 onDateSelected = onDateSelected
@@ -745,7 +764,7 @@ private fun AppointmentCard(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Terminado",
+                        text = "Finished",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF4CAF50)
@@ -856,7 +875,7 @@ private fun AppointmentCardMobile(
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "Terminado",
+                        text = "Finished",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF4CAF50)
@@ -1059,10 +1078,10 @@ private val AppointmentStatus.color: Color
 
 private val AppointmentStatus.displayName: String
     get() = when (this) {
-        AppointmentStatus.PENDING -> "Pendiente"
-        AppointmentStatus.SCHEDULED -> "Programada"
-        AppointmentStatus.CONFIRMED -> "Confirmada"
-        AppointmentStatus.COMPLETED -> "Terminada"
-        AppointmentStatus.CANCELLED -> "Cancelada"
-        AppointmentStatus.NO_SHOW -> "No asistió"
+        AppointmentStatus.PENDING -> "Pending"
+        AppointmentStatus.SCHEDULED -> "Scheduled"
+        AppointmentStatus.CONFIRMED -> "Confirmed"
+        AppointmentStatus.COMPLETED -> "Completed"
+        AppointmentStatus.CANCELLED -> "Cancelled"
+        AppointmentStatus.NO_SHOW -> "No Show"
     }

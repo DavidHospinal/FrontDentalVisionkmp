@@ -10,8 +10,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlinx.datetime.*
 
 class AppointmentsViewModel(
     private val appointmentRepository: AppointmentRepository,
@@ -30,9 +29,36 @@ class AppointmentsViewModel(
     private val _selectedDate = MutableStateFlow<Instant?>(null)
     val selectedDate: StateFlow<Instant?> = _selectedDate.asStateFlow()
 
+    private val _currentMonth = MutableStateFlow(Clock.System.now())
+    val currentMonth: StateFlow<Instant> = _currentMonth.asStateFlow()
+
     init {
         loadAppointments()
         loadRecentPatients()
+    }
+
+    fun goToNextMonth() {
+        val timezone = TimeZone.currentSystemDefault()
+        val current = _currentMonth.value.toLocalDateTime(timezone)
+        val nextMonth = if (current.month.number == 12) {
+            LocalDateTime(current.year + 1, 1, 1, 0, 0, 0)
+        } else {
+            LocalDateTime(current.year, current.month.number + 1, 1, 0, 0, 0)
+        }
+        _currentMonth.value = nextMonth.toInstant(timezone)
+        Napier.d("Navigated to next month: ${nextMonth.month} ${nextMonth.year}")
+    }
+
+    fun goToPreviousMonth() {
+        val timezone = TimeZone.currentSystemDefault()
+        val current = _currentMonth.value.toLocalDateTime(timezone)
+        val previousMonth = if (current.month.number == 1) {
+            LocalDateTime(current.year - 1, 12, 1, 0, 0, 0)
+        } else {
+            LocalDateTime(current.year, current.month.number - 1, 1, 0, 0, 0)
+        }
+        _currentMonth.value = previousMonth.toInstant(timezone)
+        Napier.d("Navigated to previous month: ${previousMonth.month} ${previousMonth.year}")
     }
 
     fun loadAppointments() {
