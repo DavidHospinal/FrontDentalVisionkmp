@@ -91,8 +91,6 @@ fun PatientsScreen(
                                 text = "Manage and consult all patient information",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.9f),
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
