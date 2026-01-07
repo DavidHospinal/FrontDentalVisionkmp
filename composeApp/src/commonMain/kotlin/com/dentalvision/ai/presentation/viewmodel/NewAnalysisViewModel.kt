@@ -1,6 +1,7 @@
 package com.dentalvision.ai.presentation.viewmodel
 
 import com.dentalvision.ai.domain.model.Analysis
+import com.dentalvision.ai.domain.model.Appointment
 import com.dentalvision.ai.domain.model.AppointmentStatus
 import com.dentalvision.ai.domain.model.AppointmentType
 import com.dentalvision.ai.domain.model.Patient
@@ -13,6 +14,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.datetime.Clock
 
 class NewAnalysisViewModel(
     private val analysisRepository: AnalysisRepository,
@@ -173,6 +175,7 @@ class NewAnalysisViewModel(
     /**
      * Manually save analysis to backend
      * Called when user clicks "Save Analysis" button
+     * ALSO creates a historical "Completed" appointment record
      */
     fun saveAnalysisToBackend() {
         val analysis = _analysisResult.value
@@ -191,10 +194,49 @@ class NewAnalysisViewModel(
                 .onSuccess {
                     _saveState.value = SaveState.Success(analysis.id)
                     Napier.i("✅ Analysis saved to backend successfully for patient ${analysis.patientId}")
+
+                    // Create historical appointment record for this AI Analysis
+                    createHistoricalAppointment(analysis)
                 }
                 .onFailure { error ->
                     _saveState.value = SaveState.Error(error.message ?: "Failed to save")
                     Napier.e("❌ Failed to save analysis to backend", error)
+                }
+        }
+    }
+
+    /**
+     * Create a "phantom" historical appointment record for AI Analysis
+     * This links the analysis to the Appointments module history
+     */
+    private fun createHistoricalAppointment(analysis: Analysis) {
+        launchWithErrorHandler {
+            val now = Clock.System.now()
+            val historicalAppointment = Appointment(
+                id = "", // Backend will generate
+                patientId = analysis.patientId,
+                patientName = null, // Backend will fill from patient data
+                appointmentDate = now,
+                appointmentType = AppointmentType.AI_ANALYSIS,
+                status = AppointmentStatus.COMPLETED,
+                durationMinutes = 30,
+                treatmentDescription = "Auto-generated from AI Analysis module. Analysis ID: ${analysis.id}",
+                doctorName = "Dr. David",
+                clinicLocation = "Dental Vision AI Clinic",
+                createdAt = now,
+                updatedAt = now
+            )
+
+            appointmentRepository.createAppointment(
+                patientId = analysis.patientId,
+                appointment = historicalAppointment
+            )
+                .onSuccess { createdAppointment ->
+                    Napier.i("✅ Historical appointment created successfully: ${createdAppointment.id} for analysis ${analysis.id}")
+                }
+                .onFailure { error ->
+                    // Don't fail the save operation, just log the error
+                    Napier.w("⚠️ Failed to create historical appointment for analysis ${analysis.id}: ${error.message}")
                 }
         }
     }

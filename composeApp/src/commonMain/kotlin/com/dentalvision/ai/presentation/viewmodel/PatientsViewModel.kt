@@ -6,6 +6,8 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 /**
  * ViewModel for Patients screen
@@ -24,6 +26,9 @@ class PatientsViewModel(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _patientCreationSuccess = MutableStateFlow<PatientCreationEvent?>(null)
+    val patientCreationSuccess: StateFlow<PatientCreationEvent?> = _patientCreationSuccess.asStateFlow()
 
     private var currentPage = 1
     private var totalPatients = 0
@@ -102,7 +107,15 @@ class PatientsViewModel(
 
                 patientRepository.createPatient(patient)
                     .onSuccess {
-                        Napier.i("✅ Patient created successfully: ${patient.name}")
+                        val creationTimestamp = Clock.System.now()
+                        Napier.i("✅ Patient created successfully: ${patient.name} at $creationTimestamp")
+
+                        // Emit success event for Snackbar display
+                        _patientCreationSuccess.value = PatientCreationEvent(
+                            patientName = patient.name,
+                            timestamp = creationTimestamp
+                        )
+
                         loadPatients(currentPage)
                         onSuccess()
                     }
@@ -125,6 +138,13 @@ class PatientsViewModel(
                 _uiState.value = PatientsUiState.Error(errorMessage)
             }
         }
+    }
+
+    /**
+     * Clear patient creation success event after Snackbar is shown
+     */
+    fun clearCreationSuccessEvent() {
+        _patientCreationSuccess.value = null
     }
 
     fun updatePatient(id: String, patient: Patient, onSuccess: () -> Unit) {
@@ -268,3 +288,12 @@ sealed class PatientsUiState {
     object Empty : PatientsUiState()
     data class Error(val message: String) : PatientsUiState()
 }
+
+/**
+ * Event emitted when a patient is created successfully
+ * Used to trigger Snackbar notification
+ */
+data class PatientCreationEvent(
+    val patientName: String,
+    val timestamp: Instant
+)

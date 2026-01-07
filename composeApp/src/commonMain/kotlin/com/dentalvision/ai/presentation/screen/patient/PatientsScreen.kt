@@ -28,6 +28,8 @@ import com.dentalvision.ai.presentation.component.ShimmerListItem
 import com.dentalvision.ai.presentation.component.EmptyStates
 import org.koin.compose.viewmodel.koinViewModel
 import io.github.aakira.napier.Napier
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.TimeZone
 
 /**
  * Patients Screen - REAL BACKEND INTEGRATION
@@ -43,12 +45,30 @@ fun PatientsScreen(
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val uiState by viewModel.uiState.collectAsState()
     val patients by viewModel.patients.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val creationEvent by viewModel.patientCreationSuccess.collectAsState()
 
     var showNewPatientDialog by remember { mutableStateOf(false) }
+
+    // Show Snackbar when patient is created
+    LaunchedEffect(creationEvent) {
+        creationEvent?.let { event ->
+            val dateTime = event.timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
+            val formattedDate = "${dateTime.dayOfWeek.name.take(3)}, ${
+                dateTime.month.name.take(3)
+            } ${dateTime.dayOfMonth}, ${dateTime.year}"
+
+            snackbarHostState.showSnackbar(
+                message = "New patient created successfully. Date: $formattedDate. You can verify the creation using the patient list search.",
+                duration = SnackbarDuration.Long
+            )
+            viewModel.clearCreationSuccessEvent()
+        }
+    }
 
     // LOGGING: Track state changes
     LaunchedEffect(uiState) {
@@ -82,6 +102,7 @@ fun PatientsScreen(
         }
     ) {
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
                     title = {
