@@ -213,6 +213,15 @@ class AppointmentsViewModel(
         loadAppointments()
         loadRecentPatients()
     }
+
+    /**
+     * Reset appointment form state
+     * Call this when opening the new appointment dialog to ensure fresh state
+     */
+    fun resetAppointmentForm() {
+        Napier.d("Resetting appointment form state - reloading patients")
+        loadRecentPatients() // Force fresh reload of patient list
+    }
 }
 
 sealed class AppointmentsUiState {

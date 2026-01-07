@@ -67,31 +67,39 @@ fun AppointmentsScreen(
         )
 
         if (showNewAppointmentDialog) {
-            // Reload patients when dialog opens to show newly created ones
+            // Force fresh patient data when dialog opens
             LaunchedEffect(showNewAppointmentDialog) {
                 if (showNewAppointmentDialog) {
-                    viewModel.loadRecentPatients()
+                    viewModel.resetAppointmentForm() // Reset form and reload patients
                 }
             }
 
-            NewAppointmentDialog(
-                patients = recentPatients,
-                onDismiss = { showNewAppointmentDialog = false },
-                onCreateAppointment = { patientId, date, type, observations ->
-                    viewModel.createAppointment(
-                        patientId = patientId,
-                        appointmentDate = date,
-                        appointmentType = type,
-                        observations = observations,
-                        onSuccess = {
-                            showNewAppointmentDialog = false
-                        },
-                        onError = { error ->
-                            // TODO: Show error message
-                        }
-                    )
-                }
-            )
+            // Use key to force dialog recreation each time it opens
+            // This ensures selectedPatient state starts fresh (null)
+            key(showNewAppointmentDialog) {
+                NewAppointmentDialog(
+                    patients = recentPatients,
+                    onDismiss = {
+                        showNewAppointmentDialog = false
+                    },
+                    onCreateAppointment = { patientId, date, type, observations ->
+                        viewModel.createAppointment(
+                            patientId = patientId,
+                            appointmentDate = date,
+                            appointmentType = type,
+                            observations = observations,
+                            onSuccess = {
+                                showNewAppointmentDialog = false
+                                // Refresh appointments list after creation
+                                viewModel.refresh()
+                            },
+                            onError = { error ->
+                                // TODO: Show error message
+                            }
+                        )
+                    }
+                )
+            }
         }
 
         showConfirmDialog?.let { appointment ->

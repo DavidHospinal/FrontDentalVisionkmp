@@ -20,6 +20,7 @@ import com.dentalvision.ai.domain.model.AppointmentType
 import com.dentalvision.ai.domain.model.Patient
 import com.dentalvision.ai.presentation.theme.DentalColors
 import kotlinx.datetime.*
+import io.github.aakira.napier.Napier
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +34,17 @@ fun NewAppointmentDialog(
         observations: String
     ) -> Unit
 ) {
+    // Log patient list when dialog opens/recomposes
+    LaunchedEffect(patients) {
+        Napier.d("🔵 NEW APPOINTMENT DIALOG: Received ${patients.size} patients")
+        patients.take(5).forEachIndexed { index, patient ->
+            Napier.d("🔵   Patient [$index]: ${patient.name} (${patient.id}) - Created: ${patient.createdAt}")
+        }
+        if (patients.size > 5) {
+            Napier.d("🔵   ... and ${patients.size - 5} more patients")
+        }
+    }
+
     var selectedPatient by remember { mutableStateOf<Patient?>(null) }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
@@ -216,6 +228,7 @@ fun NewAppointmentDialog(
                                         selectedPatient = patient
                                         showPatientDropdown = false
                                         patientSearchQuery = ""
+                                        Napier.d("🔵 NEW APPOINTMENT DIALOG: Patient selected - ${patient.name} (${patient.id})")
                                     }
                                 )
                             }
