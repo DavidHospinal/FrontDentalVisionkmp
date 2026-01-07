@@ -718,6 +718,15 @@ private fun AppointmentCard(
                         Text("Cancel", style = MaterialTheme.typography.labelMedium)
                     }
                 }
+            } else if (appointment.status == AppointmentStatus.COMPLETED) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Finished",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = DentalColors.Success
+                )
             }
         }
     }
@@ -804,6 +813,15 @@ private fun AppointmentCardMobile(
                         Text("Cancel")
                     }
                 }
+            } else if (appointment.status == AppointmentStatus.COMPLETED) {
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = "Finished",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = DentalColors.Success
+                )
             }
         }
     }

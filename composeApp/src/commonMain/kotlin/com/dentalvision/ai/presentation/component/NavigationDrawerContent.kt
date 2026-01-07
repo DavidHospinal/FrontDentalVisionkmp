@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.presentation.navigation.Screen
+import com.dentalvision.ai.presentation.navigation.LocalDoctorName
 import com.dentalvision.ai.presentation.theme.DentalColors
 import dentalvisionai.composeapp.generated.resources.Res
 import dentalvisionai.composeapp.generated.resources.dental0
@@ -39,6 +40,9 @@ fun NavigationDrawerContent(
     onNavigate: (String) -> Unit,
     onLogout: () -> Unit
 ) {
+    // Get the logged-in doctor's name from CompositionLocal
+    val doctorName = LocalDoctorName.current
+
     ModalDrawerSheet(
         modifier = Modifier.width(260.dp),
         drawerContainerColor = Color(0xFF2C3E50),
@@ -182,7 +186,7 @@ fun NavigationDrawerContent(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Dr. David",
+                        text = "Dr. $doctorName",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold

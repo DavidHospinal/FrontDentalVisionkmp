@@ -1,6 +1,10 @@
 package com.dentalvision.ai.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,6 +33,12 @@ import com.dentalvision.ai.presentation.viewmodel.PatientsViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
+ * CompositionLocal for providing the logged-in doctor's name throughout the app
+ * Default value is "Doctor" if not provided
+ */
+val LocalDoctorName = compositionLocalOf { "Doctor" }
+
+/**
  * Main navigation graph for Dental Vision AI application
  * Configures all routes and navigation logic using AndroidX Navigation Compose
  *
@@ -50,10 +60,14 @@ fun DentalVisionNavGraph(
     Napier.d("NAV GRAPH: startDestination parameter: $startDestination")
     Napier.d("NAV GRAPH: ================================================")
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ) {
+    // State for logged-in doctor's name
+    val (doctorName, setDoctorName) = remember { mutableStateOf("Doctor") }
+
+    CompositionLocalProvider(LocalDoctorName provides doctorName) {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination
+        ) {
         // Splash Screen - Animated welcome screen
         composable(route = Screen.Splash.route) {
             SplashScreen(
@@ -68,7 +82,11 @@ fun DentalVisionNavGraph(
         // Login Screen
         composable(route = Screen.Login.route) {
             LoginScreen(
-                onLoginSuccess = { email ->
+                onLoginSuccess = { enteredName ->
+                    // Store the doctor's name for display in sidebar
+                    setDoctorName(enteredName)
+                    Napier.i("NAV GRAPH: Doctor logged in - Name: $enteredName")
+
                     navController.navigate(Screen.Dashboard.route) {
                         // Clear login from back stack after successful login
                         popUpTo(Screen.Login.route) { inclusive = true }
@@ -334,6 +352,7 @@ fun DentalVisionNavGraph(
                     navController.popBackStack()
                 }
             )
+        }
         }
     }
 }
