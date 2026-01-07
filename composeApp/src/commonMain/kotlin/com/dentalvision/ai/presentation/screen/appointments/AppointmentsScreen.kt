@@ -94,8 +94,8 @@ fun AppointmentsScreen(
                             observations = observations,
                             onSuccess = {
                                 showNewAppointmentDialog = false
-                                // Refresh appointments list after creation
-                                viewModel.refresh()
+                                // No need to refresh - optimistic update already handled it
+                                // The new appointment is now in the sidebar, ready for confirmation
                             },
                             onError = { error ->
                                 // TODO: Show error message

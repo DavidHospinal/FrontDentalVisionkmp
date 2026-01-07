@@ -19,6 +19,7 @@ class AppointmentsViewModel(
 
     companion object {
         private const val DEFAULT_LIMIT = 15
+        private const val DIALOG_PATIENTS_LIMIT = 50
     }
 
     private val _uiState = MutableStateFlow<AppointmentsUiState>(AppointmentsUiState.Loading)
@@ -104,11 +105,11 @@ class AppointmentsViewModel(
         }
     }
 
-    fun loadRecentPatients() {
+    fun loadRecentPatients(limit: Int = DIALOG_PATIENTS_LIMIT) {
         launchWithErrorHandler {
-            Napier.d("Loading recent patients for appointments")
+            Napier.d("Loading recent patients for appointments (limit: $limit)")
 
-            patientRepository.getPatients(page = 1, limit = DEFAULT_LIMIT)
+            patientRepository.getPatients(page = 1, limit = limit)
                 .onSuccess { (patients, _) ->
                     val sortedPatients = patients.sortedByDescending { it.createdAt }
                     _recentPatients.value = sortedPatients
@@ -149,15 +150,25 @@ class AppointmentsViewModel(
                 .onSuccess { created ->
                     Napier.i("Appointment created successfully: ${created.id}")
 
+                    // Enrich with patient name from recentPatients cache
+                    val patientName = _recentPatients.value
+                        .find { it.id == patientId }
+                        ?.name
+                        ?: "Patient $patientId"
+
+                    val enrichedAppointment = created.copy(patientName = patientName)
+
                     val currentList = _appointments.value
-                    val updatedList = listOf(created) + currentList
+                    val updatedList = listOf(enrichedAppointment) + currentList
                     _appointments.value = updatedList
 
                     _uiState.value = AppointmentsUiState.Success
 
                     loadRecentPatients()
 
-                    Napier.d("Appointment added to list optimistically, list size: ${updatedList.size}")
+                    Napier.d("📋 New appointment added to sidebar: ${enrichedAppointment.id} for ${patientName}")
+                    Napier.d("📋 Appointment appears in sidebar as PENDING - ready for confirmation")
+                    Napier.d("📋 Total appointments in list: ${updatedList.size}")
                     onSuccess()
                 }
                 .onFailure { error ->
