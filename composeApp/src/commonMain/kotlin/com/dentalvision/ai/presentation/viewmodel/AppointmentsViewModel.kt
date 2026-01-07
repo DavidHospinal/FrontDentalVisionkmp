@@ -91,11 +91,9 @@ class AppointmentsViewModel(
     private suspend fun enrichAppointmentsWithPatientNames(appointments: List<Appointment>): List<Appointment> {
         if (appointments.isEmpty()) return appointments
 
-        // Load all patients to get names
-        val patientsResult = patientRepository.getPatients(page = 1, limit = 100)
+        val patientsResult = patientRepository.getPatients(page = 1, limit = 20)
         val patientNameMap = patientsResult.getOrNull()?.first?.associate { it.id to it.name } ?: emptyMap()
 
-        // Add patient names to appointments
         return appointments.map { appointment ->
             appointment.copy(patientName = patientNameMap[appointment.patientId] ?: "Unknown Patient")
         }
@@ -105,7 +103,7 @@ class AppointmentsViewModel(
         launchWithErrorHandler {
             Napier.d("Loading recent patients for appointments")
 
-            patientRepository.getPatients(page = 1, limit = 100)
+            patientRepository.getPatients(page = 1, limit = 20)
                 .onSuccess { (patients, _) ->
                     val sortedPatients = patients.sortedByDescending { it.createdAt }
                     _recentPatients.value = sortedPatients
@@ -145,9 +143,16 @@ class AppointmentsViewModel(
             appointmentRepository.createAppointment(patientId, appointment)
                 .onSuccess { created ->
                     Napier.i("Appointment created successfully: ${created.id}")
-                    loadAppointments()
+
+                    val currentList = _appointments.value
+                    val updatedList = listOf(created) + currentList
+                    _appointments.value = updatedList
+
+                    _uiState.value = AppointmentsUiState.Success
+
                     loadRecentPatients()
-                    Napier.d("Appointments and patients refreshed after creation")
+
+                    Napier.d("Appointment added to list optimistically, list size: ${updatedList.size}")
                     onSuccess()
                 }
                 .onFailure { error ->
@@ -170,14 +175,25 @@ class AppointmentsViewModel(
                 updatedAt = Clock.System.now()
             )
 
+            val currentList = _appointments.value
+            val optimisticList = currentList.map {
+                if (it.id == appointment.id) updatedAppointment else it
+            }
+            _appointments.value = optimisticList
+
+            Napier.d("Optimistic update applied for appointment ${appointment.id}")
+
             appointmentRepository.updateAppointment(appointment.id, updatedAppointment)
                 .onSuccess {
                     Napier.i("Appointment confirmed: ${appointment.id}")
-                    loadAppointments()
                     onSuccess()
                 }
                 .onFailure { error ->
                     Napier.e("Failed to confirm appointment", error)
+
+                    _appointments.value = currentList
+                    Napier.w("Rollback: Reverted appointment ${appointment.id} to original state")
+
                     onError(error.message ?: "Failed to confirm appointment")
                 }
         }
@@ -198,14 +214,25 @@ class AppointmentsViewModel(
                 updatedAt = Clock.System.now()
             )
 
+            val currentList = _appointments.value
+            val optimisticList = currentList.map {
+                if (it.id == appointment.id) updatedAppointment else it
+            }
+            _appointments.value = optimisticList
+
+            Napier.d("Optimistic update applied for cancellation of appointment ${appointment.id}")
+
             appointmentRepository.updateAppointment(appointment.id, updatedAppointment)
                 .onSuccess {
                     Napier.i("Appointment cancelled: ${appointment.id}")
-                    loadAppointments()
                     onSuccess()
                 }
                 .onFailure { error ->
                     Napier.e("Failed to cancel appointment", error)
+
+                    _appointments.value = currentList
+                    Napier.w("Rollback: Reverted appointment ${appointment.id} to original state")
+
                     onError(error.message ?: "Failed to cancel appointment")
                 }
         }

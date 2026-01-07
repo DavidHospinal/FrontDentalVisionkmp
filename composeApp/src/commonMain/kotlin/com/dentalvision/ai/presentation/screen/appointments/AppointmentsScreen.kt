@@ -307,7 +307,10 @@ private fun MobileLayout(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        items(appointments) { appointment ->
+        items(
+            items = appointments,
+            key = { appointment -> appointment.id }
+        ) { appointment ->
             AppointmentCardMobile(
                 appointment = appointment,
                 onConfirmClick = { onConfirmClick(appointment) },
@@ -633,12 +636,14 @@ private fun AppointmentListSection(
                 }
             } else {
                 filteredAppointments.forEach { appointment ->
-                    AppointmentCard(
-                        appointment = appointment,
-                        onConfirmClick = { onConfirmClick(appointment) },
-                        onCancelClick = { onCancelClick(appointment) }
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    key(appointment.id) {
+                        AppointmentCard(
+                            appointment = appointment,
+                            onConfirmClick = { onConfirmClick(appointment) },
+                            onCancelClick = { onCancelClick(appointment) }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
             }
         }
