@@ -208,6 +208,10 @@ class NewAnalysisViewModel(
     /**
      * Create a "phantom" historical appointment record for AI Analysis
      * This links the analysis to the Appointments module history
+     *
+     * WORKAROUND: Backend forces PENDING status on creation, so we apply a two-step strategy:
+     * 1. Create appointment (will be PENDING)
+     * 2. Immediately update to COMPLETED status
      */
     private fun createHistoricalAppointment(analysis: Analysis) {
         launchWithErrorHandler {
@@ -218,7 +222,7 @@ class NewAnalysisViewModel(
                 patientName = null, // Backend will fill from patient data
                 appointmentDate = now,
                 appointmentType = AppointmentType.AI_ANALYSIS,
-                status = AppointmentStatus.COMPLETED,
+                status = AppointmentStatus.COMPLETED, // Will be ignored by backend
                 durationMinutes = 30,
                 treatmentDescription = "Auto-generated from AI Analysis module. Analysis ID: ${analysis.id}",
                 doctorName = "Dr. David",
@@ -232,7 +236,24 @@ class NewAnalysisViewModel(
                 appointment = historicalAppointment
             )
                 .onSuccess { createdAppointment ->
-                    Napier.i("✅ Historical appointment created successfully: ${createdAppointment.id} for analysis ${analysis.id}")
+                    Napier.i("✅ Historical appointment created (PENDING): ${createdAppointment.id} for analysis ${analysis.id}")
+
+                    // PATCH: Backend forced PENDING, now update to COMPLETED immediately
+                    val updatedAppointment = createdAppointment.copy(
+                        status = AppointmentStatus.COMPLETED,
+                        updatedAt = Clock.System.now()
+                    )
+
+                    appointmentRepository.updateAppointment(
+                        id = createdAppointment.id,
+                        appointment = updatedAppointment
+                    )
+                        .onSuccess { finalAppointment ->
+                            Napier.i("✅ Historical appointment status updated to COMPLETED: ${finalAppointment.id}")
+                        }
+                        .onFailure { updateError ->
+                            Napier.w("⚠️ Failed to update appointment status to COMPLETED for ${createdAppointment.id}: ${updateError.message}")
+                        }
                 }
                 .onFailure { error ->
                     // Don't fail the save operation, just log the error
