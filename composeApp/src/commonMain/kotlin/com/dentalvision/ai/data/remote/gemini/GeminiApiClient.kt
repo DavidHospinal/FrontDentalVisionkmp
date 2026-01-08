@@ -105,7 +105,10 @@ Context: Dr. ${request.doctorName} is treating patient ${request.patientName}. T
 CRITICAL INSTRUCTIONS:
 1. Return ONLY valid JSON (no markdown code blocks, no backticks, no extra text)
 2. Use the exact structure provided below
-3. Determine riskLevel: "LOW" if cavityCount = 0, "HIGH" if cavityCount > 0, "MODERATE" if uncertain
+3. Determine riskLevel STRICTLY based on detected cavities count (IGNORE model confidence for this label):
+   - IF cavityCount == 0 THEN riskLevel = "LOW"
+   - IF cavityCount BETWEEN 1 AND 2 THEN riskLevel = "MODERATE"
+   - IF cavityCount >= 3 THEN riskLevel = "HIGH"
 4. Write in professional English
 5. Keep greeting concise and professional
 6. Provide 3 prevention tips and 2-3 corrective actions
