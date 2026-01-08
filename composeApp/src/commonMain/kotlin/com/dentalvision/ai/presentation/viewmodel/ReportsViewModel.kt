@@ -10,6 +10,10 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.collect
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * ViewModel for Reports screen
@@ -40,6 +44,17 @@ class ReportsViewModel(
 
     init {
         loadAllAnalyses()
+
+        // Setup reactive search with debounce
+        launchWithErrorHandler {
+            _searchQuery
+                .debounce(300.milliseconds)
+                .distinctUntilChanged()
+                .collect { query ->
+                    Napier.d("📊 REPORTS: Search query changed to '$query', reloading analyses")
+                    loadAllAnalyses()
+                }
+        }
     }
 
     /**
@@ -94,11 +109,12 @@ class ReportsViewModel(
     }
 
     /**
-     * Update search query and reload results
+     * Update search query - debounced reload is handled by Flow in init
      */
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
-        loadAllAnalyses()
+        // Show loading state immediately for visual feedback
+        _uiState.value = ReportsUiState.Loading
     }
 
     /**
