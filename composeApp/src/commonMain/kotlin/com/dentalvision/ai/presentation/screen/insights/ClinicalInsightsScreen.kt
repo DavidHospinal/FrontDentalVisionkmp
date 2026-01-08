@@ -27,6 +27,7 @@ import com.dentalvision.ai.presentation.component.SerpentineAnimation
 import com.dentalvision.ai.presentation.theme.DentalColors
 import com.dentalvision.ai.presentation.viewmodel.ClinicalInsightsUiState
 import com.dentalvision.ai.presentation.viewmodel.ClinicalInsightsViewModel
+import com.dentalvision.ai.presentation.navigation.LocalDoctorName
 import org.koin.compose.koinInject
 
 @Composable
@@ -39,9 +40,11 @@ fun ClinicalInsightsDialog(
     viewModel: ClinicalInsightsViewModel = koinInject()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val doctorName = LocalDoctorName.current
 
     LaunchedEffect(Unit) {
         viewModel.generateInsight(
+            doctorName = doctorName,
             patientName = patientName,
             cavityCount = cavityCount,
             healthyCount = healthyCount,

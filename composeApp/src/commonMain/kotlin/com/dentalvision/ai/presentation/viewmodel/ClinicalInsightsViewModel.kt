@@ -16,6 +16,7 @@ class ClinicalInsightsViewModel(
     val uiState: StateFlow<ClinicalInsightsUiState> = _uiState.asStateFlow()
 
     fun generateInsight(
+        doctorName: String,
         patientName: String,
         cavityCount: Int,
         healthyCount: Int,
@@ -24,10 +25,10 @@ class ClinicalInsightsViewModel(
         launchWithErrorHandler {
             _uiState.value = ClinicalInsightsUiState.Loading
 
-            Napier.d("CLINICAL INSIGHTS: Generating for patient=$patientName, cavities=$cavityCount, healthy=$healthyCount")
+            Napier.d("CLINICAL INSIGHTS: Generating for doctor=$doctorName, patient=$patientName, cavities=$cavityCount, healthy=$healthyCount")
 
             val request = ClinicalInsightRequest(
-                doctorName = "David",  // TODO: Get from user session
+                doctorName = doctorName,
                 patientName = patientName,
                 cavityCount = cavityCount,
                 healthyCount = healthyCount,

@@ -250,7 +250,9 @@ fun NewAppointmentDialog(
                 // Date field with clickable overlay
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
-                        value = selectedDate?.toString() ?: "Select date",
+                        value = selectedDate?.let { date ->
+                            "${date.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${date.dayOfMonth}, ${date.year}"
+                        } ?: "Select date",
                         onValueChange = {},
                         readOnly = true,
                         enabled = false,
