@@ -234,8 +234,17 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
 
-            // Include required Java modules for Ktor HTTP client
-            modules("java.instrument", "java.net.http", "jdk.unsupported")
+            // Include required Java modules for Ktor HTTP/HTTPS client and SSL
+            modules(
+                "java.instrument",
+                "java.net.http",
+                "jdk.unsupported",
+                "jdk.crypto.ec",
+                "java.logging",
+                "java.xml",
+                "java.sql",
+                "java.naming"
+            )
 
             packageName = "Dental Vision AI"
             packageVersion = "1.0.0"
