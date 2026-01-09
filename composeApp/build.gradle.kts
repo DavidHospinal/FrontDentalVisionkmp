@@ -14,6 +14,9 @@ plugins {
 }
 
 kotlin {
+    // Especificar versión de JDK para todas las compilaciones JVM
+    jvmToolchain(17)
+    
     // Android Target
     androidTarget {
         compilerOptions {
@@ -235,16 +238,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
 
             // Include required Java modules for Ktor HTTP/HTTPS client and SSL
-            modules(
-                "java.instrument",
-                "java.net.http",
-                "jdk.unsupported",
-                "jdk.crypto.ec",
-                "java.logging",
-                "java.xml",
-                "java.sql",
-                "java.naming"
-            )
+            includeAllModules = true
 
             packageName = "Dental Vision AI"
             packageVersion = "1.0.0"
@@ -267,9 +261,6 @@ compose.desktop {
             }
         }
 
-        buildTypes.release.proguard {
-            configurationFiles.from("proguard-desktop.pro")
-        }
     }
 }
 

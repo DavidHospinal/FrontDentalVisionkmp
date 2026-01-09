@@ -9,6 +9,10 @@ plugins {
 
 kotlin {
     jvm()
+    
+    // Forzar uso de JDK 17 para compatibilidad con java.net.http (requerido por Ktor Java Engine)
+    jvmToolchain(17)
+    
     sourceSets {
         val jvmMain by getting  {
             dependencies {
@@ -25,14 +29,23 @@ kotlin {
 
 compose.desktop {
     application {
-        // Asegúrate de que este MainKt exista en tu código (com.dentalvision.ai.MainKt)
-        // Si falla después, revisaremos el package.
         mainClass = "MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "DentalVisionAI" // Le puse un nombre más bonito
+            
+            // SOLUCIÓN CRÍTICA: Incluir TODOS los módulos Java (incluye java.net.http)
+            includeAllModules = true
+            
+            packageName = "DentalVisionAI"
             packageVersion = "1.0.0"
+            description = "Professional Dental AI Analysis System"
+            vendor = "Dental Vision AI"
+            
+            windows {
+                menuGroup = "Dental Vision AI"
+                upgradeUuid = "dental-vision-ai-uuid"
+            }
         }
     }
 }
