@@ -16,11 +16,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dentalvision.ai.domain.model.Patient
@@ -283,6 +287,8 @@ private fun MainContentSection(
     isMobile: Boolean
 ) {
     var patientSearchQuery by remember { mutableStateOf("") }
+    val searchFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // Filter patients based on search query
     val filteredPatients = remember(patients, patientSearchQuery) {
@@ -359,12 +365,26 @@ private fun MainContentSection(
                             patientSearchQuery = ""
                         }
                     ) {
+                        // Request focus on search field when dropdown opens
+                        LaunchedEffect(patientDropdownExpanded) {
+                            if (patientDropdownExpanded) {
+                                searchFocusRequester.requestFocus()
+                            }
+                        }
+
                         // Search field inside dropdown
                         Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
                             OutlinedTextField(
                                 value = patientSearchQuery,
                                 onValueChange = { patientSearchQuery = it },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .focusRequester(searchFocusRequester)
+                                    .onFocusChanged { focusState ->
+                                        if (focusState.isFocused) {
+                                            keyboardController?.show()
+                                        }
+                                    },
                                 placeholder = { Text("Search patient by name, ID...") },
                                 leadingIcon = {
                                     Icon(
