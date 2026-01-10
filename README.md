@@ -21,27 +21,7 @@ This project integrates three key external services to deliver a robust AI-power
 
 ### Architecture Diagram
 
-```
-+-------------------------------------------------------------------+
-|                    Kotlin Multiplatform Frontend                  |
-|              (Android, Desktop, Web - Compose UI)                 |
-+--------------------------------+----------------------------------+
-                                 |
-                                 v
-               +---------------------------------+
-               |    Render (Backend Host)        |
-               |    Flask REST API Server        |
-               |    - Patient Management         |
-               |    - Analysis Orchestration     |
-               |    - SQLite Database            |
-               +--------+----------------+-------+
-                        |                |
-              +---------v------+  +------v-----------+
-              |  HuggingFace   |  |   Gemini API     |
-              |    YOLOv12     |  |   (Google AI)    |
-              |     Model      |  |    Insights      |
-              +----------------+  +------------------+
-```
+![Architecture Diagram](docs/architecture_diagram.png)
 
 ## Setup and Configuration
 
