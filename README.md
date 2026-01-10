@@ -73,7 +73,7 @@ The `Secrets.kt` file is excluded from version control via `.gitignore` to prote
 
 #### Alternative: Pre-compiled Binaries
 
-If you prefer to test the application without configuring API keys, pre-compiled binaries are available in the [Releases](https://github.com/DavidHospinal/dental-vision-ai/releases) section with demo credentials.
+If you prefer to test the application without configuring API keys, pre-compiled binaries are available in the [Releases](https://github.com/DavidHospinal/FrontDentalVisionkmp/releases/tag/v1.0.0) section with demo credentials.
 
 ## Testing Resources and Sample Data
 
@@ -356,3 +356,4 @@ MIT License - Copyright 2025 Dental Vision AI
 - Email: u202021214@upc.edu.pe
 - Email: oscardavid.hospinal@uc.cl
 - GitHub: https://github.com/DavidHospinal
+
