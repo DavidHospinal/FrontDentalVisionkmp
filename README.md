@@ -182,6 +182,24 @@ composeApp/
 
 The application communicates with a Flask backend that interfaces with YOLOv12 model deployed on HuggingFace Spaces for dental image analysis.
 
+## Important: Service Pre-warming (Free Tier)
+
+Since this project utilizes free-tier cloud infrastructure for the contest submission, the backend and AI services may enter a "sleep mode" after periods of inactivity.
+
+**To prevent connection timeouts on your first login, please open these two links in your browser to "wake up" the services:**
+
+1.  **Wake up Backend (Render):**
+    [https://backenddental-vision-ai.onrender.com/](https://backenddental-vision-ai.onrender.com/)
+    * *Action:* Open link and wait ~50 seconds until you see a JSON response.
+
+2.  **Wake up AI Model (Hugging Face):**
+    [https://huggingface.co/spaces/DavidHosp/Dental-vision-kmp-contest](https://huggingface.co/spaces/DavidHosp/Dental-vision-kmp-contest)
+    * *Action:* Open link and wait for the Gradio interface to fully load (if it says "Building", please wait).
+
+*Once both services are active in your browser, the Dental Vision AI application will function smoothly.*
+
+---
+
 ## Installation Manual
 
 ### Prerequisites
