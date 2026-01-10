@@ -4,9 +4,12 @@ Professional dental AI analysis system with YOLOv12 integration for cross-platfo
 
 ## Overview
 
-Dental Vision AI is a multiplatform application for dental image analysis using YOLOv12 deep learning model. The system provides comprehensive patient management, automated dental image analysis, and professional reporting capabilities across Android, iOS, Desktop, and Web platforms.
+Dental Vision AI is a cross-platform application for dental image analysis powered by the YOLOv12 deep learning model. The system provides comprehensive patient management, automated dental image analysis, and professional clinical reporting capabilities across Android, Desktop, and Web platforms.
 
-## External APIs & Architecture
+**Primary Platforms:** Android, Desktop (Windows, macOS, Linux), and Web (Wasm/JS).
+**Experimental Support:** iOS implementation is currently partial and not a primary target for this release.
+
+## External APIs and Architecture
 
 This project integrates three key external services to deliver a robust AI-powered dental analysis solution:
 
@@ -19,43 +22,44 @@ This project integrates three key external services to deliver a robust AI-power
 ### Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Kotlin Multiplatform Frontend                │
-│          (Android, iOS, Desktop, Web - Compose UI)              │
-└──────────────────────┬──────────────────────────────────────────┘
-                       │
-                       ↓
-         ┌─────────────────────────────┐
-         │   Render (Backend Host)     │
-         │   Flask REST API Server     │
-         │   - Patient Management      │
-         │   - Analysis Orchestration  │
-         │   - SQLite Database         │
-         └─────┬───────────────────┬───┘
-               │                   │
-       ┌───────↓─────┐     ┌──────↓────────┐
-       │ HuggingFace │     │  Gemini API   │
-       │  YOLOv12    │     │  (Google AI)  │
-       │   Model     │     │   Insights    │
-       └─────────────┘     └───────────────┘
++-------------------------------------------------------------------+
+|                    Kotlin Multiplatform Frontend                  |
+|              (Android, Desktop, Web - Compose UI)                 |
++--------------------------------+----------------------------------+
+                                 |
+                                 v
+               +---------------------------------+
+               |    Render (Backend Host)        |
+               |    Flask REST API Server        |
+               |    - Patient Management         |
+               |    - Analysis Orchestration     |
+               |    - SQLite Database            |
+               +--------+----------------+-------+
+                        |                |
+              +---------v------+  +------v-----------+
+              |  HuggingFace   |  |   Gemini API     |
+              |    YOLOv12     |  |   (Google AI)    |
+              |     Model      |  |    Insights      |
+              +----------------+  +------------------+
 ```
 
-## Setup & Configuration
+## Setup and Configuration
 
 ### API Key Configuration (MANDATORY)
 
-The application requires a Google Gemini API key for AI-powered clinical insights. **For security and contest compliance, API keys are NOT included in the repository.**
+The application requires a Google Gemini API key for AI-powered clinical insights. For security and contest compliance, API keys are NOT included in the repository.
 
-#### Quick Setup (3 steps):
+#### Quick Setup (3 steps)
 
-1. **Get a Free API Key**
+1. **Obtain a Free API Key**
    - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
    - Sign in with your Google account
    - Click "Create API Key"
    - Copy the generated key
 
 2. **Configure the Application**
-   - Copy `composeApp/Secrets.sample.kt` to `composeApp/src/commonMain/kotlin/com/dentalvision/ai/data/remote/api/Secrets.kt`
+   - Copy `composeApp/Secrets.sample.kt` to:
+     `composeApp/src/commonMain/kotlin/com/dentalvision/ai/data/remote/api/Secrets.kt`
    - Open the new `Secrets.kt` file and replace `INSERT_YOUR_API_KEY_HERE` with your actual API key
    - The file path structure is already correct in the template
 
@@ -65,28 +69,31 @@ The application requires a Google Gemini API key for AI-powered clinical insight
 
 #### Security Note
 
-The `Secrets.kt` file is excluded from version control via `.gitignore` to protect sensitive API keys. **Never commit this file to public repositories.** This configuration method complies with security best practices for software development contests and production deployments.
+The `Secrets.kt` file is excluded from version control via `.gitignore` to protect sensitive API keys. Never commit this file to public repositories. This configuration method complies with security best practices for software development contests and production deployments.
 
 #### Alternative: Pre-compiled Binaries
 
 If you prefer to test the application without configuring API keys, pre-compiled binaries are available in the [Releases](https://github.com/DavidHospinal/dental-vision-ai/releases) section with demo credentials.
 
-## Testing Resources & Sample Data
+## Testing Resources and Sample Data
 
-To facilitate quick testing and demonstration, the repository includes ready-to-use sample data:
+To facilitate quick testing and demonstration, the repository includes ready-to-use sample data.
 
 ### Sample Images Folder
 
-- **Location**: `samples-images/` directory in the project root
-- **Contents**: 5 professionally curated dental images for immediate testing
-- **Usage**: These images are pre-validated to work optimally with the YOLOv12 detection model
+- **Location:** `samples-images/` directory in the project root
+- **Contents:** 5 professionally curated dental images for immediate testing
+- **Usage:** These images are pre-validated to work optimally with the YOLOv12 detection model
+
+### Supported Input Format
+
+The model strictly supports **standard RGB dental photography** (JPG, PNG formats). This includes intraoral photographs and standard dental images captured with conventional cameras or smartphone devices.
 
 ### Testing Flexibility
 
-- You are **NOT limited** to the provided samples
-- Use your own dental images in standard formats (JPG, PNG)
-- Download external dental  datasets for extensive testing
-- The model supports panoramic and periapical radiographs
+- You are not limited to the provided samples
+- Use your own dental photographs in standard formats (JPG, PNG)
+- Download external dental image datasets for extensive testing
 
 ### Quick Test Workflow
 
@@ -95,38 +102,39 @@ To facilitate quick testing and demonstration, the repository includes ready-to-
 3. Select a patient or create a test patient
 4. Upload an image from `samples-images/` or your own source
 5. View real-time detection results with bounding boxes
-6. Generate a professional PDF report with clinical insights
+6. Review the in-app professional clinical report with insights and recommendations
 
 ## Supported Platforms
 
-Current implementation status across all Kotlin Multiplatform targets:
+Current implementation status across Kotlin Multiplatform targets:
 
 | Platform | Status | Details |
 |----------|--------|---------|
 | Android | Fully Functional | API 24+ (Android 7.0+), tested on physical devices and emulators |
 | Desktop (JVM) | Fully Functional | Windows, macOS, Linux support with native window decorations |
 | Web (Wasm/JS) | Fully Functional | Modern browsers with WebAssembly support, fallback to JS |
-| iOS | Work in Progress | Beta implementation, UI functional, backend integration pending |
+| iOS | Partial/Experimental | Beta implementation, UI functional, backend integration pending |
 
 ### Platform-Specific Features
 
-- **Android**: Material You dynamic theming, notification support
-- **Desktop**: Menu bar integration, file picker dialogs
-- **Web**: Progressive Web App (PWA) capabilities, offline mode
-- **iOS**: SwiftUI interop for native components (in development)
+- **Android:** Material You dynamic theming, notification support
+- **Desktop:** Menu bar integration, file picker dialogs
+- **Web:** Progressive Web App (PWA) capabilities, offline mode
 
 ## Architecture
 
 ### Technology Stack
 
-- **UI Framework**: Compose Multiplatform with Material3
-- **Backend Communication**: Ktor Client 2.3.7
-- **Serialization**: Kotlinx Serialization 1.6.2
-- **Dependency Injection**: Koin 3.5.3
-- **State Management**: AndroidX Lifecycle ViewModel + StateFlow
-- **Navigation**: AndroidX Navigation Compose
-- **Logging**: Napier 2.7.1
-- **Image Loading**: Kamel 0.9.1
+| Component | Technology | Version |
+|-----------|------------|---------|
+| UI Framework | Compose Multiplatform with Material3 | 1.7.1 |
+| Backend Communication | Ktor Client | 3.0.0 |
+| Serialization | Kotlinx Serialization | 1.7.3 |
+| Dependency Injection | Koin | 4.0.0 |
+| State Management | AndroidX Lifecycle ViewModel + StateFlow | 2.8.2 |
+| Navigation | AndroidX Navigation Compose | 2.8.0-alpha10 |
+| Logging | Napier | 2.7.1 |
+| Image Loading | Kamel | 1.0.3 |
 
 ### Project Structure
 
@@ -143,7 +151,6 @@ composeApp/
 │   ├── androidMain/         # Android-specific code
 │   ├── iosMain/             # iOS-specific code
 │   ├── jvmMain/             # Desktop-specific code
-│   ├── jsMain/              # Web JavaScript
 │   └── wasmJsMain/          # Web WebAssembly
 ```
 
@@ -162,8 +169,8 @@ composeApp/
 - Confidence scoring per detection
 - Multi-tooth analysis in single image
 
-### Report Generation
-- Professional  report generation
+### Clinical Reporting
+- In-app professional clinical report viewing
 - Analysis summary and findings
 - Detected conditions documentation
 - Treatment recommendations
@@ -171,11 +178,11 @@ composeApp/
 
 ## Backend Integration
 
-Backend API: https://dental-vision-ai-backend.onrender.com
+**Backend API URL:** https://backenddental-vision-ai.onrender.com/
 
 The application communicates with a Flask backend that interfaces with YOLOv12 model deployed on HuggingFace Spaces for dental image analysis.
 
-## Installation Manual - Getting Started
+## Installation Manual
 
 ### Prerequisites
 
@@ -185,7 +192,7 @@ Before building the project, ensure you have the following installed:
 |-------------|---------|-------|
 | JDK | 17 or higher | OpenJDK recommended |
 | Android Studio | Hedgehog (2023.1.1)+ | Required for Android builds |
-| Xcode | 15+ | macOS only, for iOS development |
+| Xcode | 15+ | macOS only, for iOS development (experimental) |
 | Gradle | 8.0+ | Included via wrapper |
 
 ### Build Instructions
@@ -212,15 +219,15 @@ Before building the project, ensure you have the following installed:
 
 **Run Application:**
 ```bash
-./gradlew :composeApp:run
+./gradlew :desktopApp:run
 ```
 
 **Create Distributable Package:**
 ```bash
-./gradlew :composeApp:createDistributable
+./gradlew :desktopApp:createDistributable
 ```
 
-The distributable will be created in `composeApp/build/compose/binaries/main/`
+The distributable will be created in `desktopApp/build/compose/binaries/main/app/`
 
 #### Web Build
 
@@ -243,7 +250,7 @@ Access at: http://localhost:8080
 ./gradlew :composeApp:jsBrowserProductionWebpack
 ```
 
-#### iOS Build
+#### iOS Build (Experimental)
 
 **Build for ARM64 (Physical Devices):**
 ```bash
@@ -266,7 +273,6 @@ Access at: http://localhost:8080
 - [ ] Gemini API key configured in `Secrets.kt`
 - [ ] Internet connection available for backend communication
 - [ ] (Android) Physical device connected or emulator running
-- [ ] (iOS) Xcode project synced and provisioning profile configured
 - [ ] Sample images available in `samples-images/` folder
 
 ### Troubleshooting
@@ -277,7 +283,7 @@ Access at: http://localhost:8080
 
 **Cannot connect to backend**
 - Verify internet connection
-- Check if Render backend is online: https://dental-vision-ai-backend.onrender.com/health
+- Check if Render backend is online at: https://backenddental-vision-ai.onrender.com/
 - Review Ktor client logs in console output
 
 **Web build shows blank screen**
@@ -311,15 +317,15 @@ Run Android instrumented tests:
 
 ### Backend API
 
-Backend URL is configured in build.gradle.kts:
+Backend URL is configured in network layer:
 ```kotlin
-buildConfigField("String", "BACKEND_API_URL", "\"https://dental-vision-ai-backend.onrender.com\"")
+const val BACKEND_API_URL = "https://backenddental-vision-ai.onrender.com/"
 ```
 
 ### Build Variants
 
-- **Debug**: Development build with logging enabled
-- **Release**: Production build with ProGuard optimization
+- **Debug:** Development build with logging enabled
+- **Release:** Production build with optimizations
 
 ## License
 
@@ -327,7 +333,8 @@ MIT License - Copyright 2025 Dental Vision AI
 
 ## Contact
 
-David Hospinal
-Email: u202021214@upc.edu.pe
-GitHub: https://github.com/DavidHospinal
+**David Hospinal**
 
+- Email: u202021214@upc.edu.pe
+- Email: oscardavid.hospinal@uc.cl
+- GitHub: https://github.com/DavidHospinal
