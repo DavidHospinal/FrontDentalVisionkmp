@@ -1,6 +1,7 @@
 package com.dentalvision.ai.presentation.screen.splash
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,9 +23,9 @@ import androidx.compose.ui.unit.sp
 import dentalvisionai.composeapp.generated.resources.Res
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import io.github.alexzhirkevich.compottie.Compottie
-import io.github.alexzhirkevich.compottie.LottieAnimation
 import io.github.alexzhirkevich.compottie.LottieCompositionSpec
 import io.github.alexzhirkevich.compottie.rememberLottieComposition
+import io.github.alexzhirkevich.compottie.rememberLottiePainter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -133,15 +134,27 @@ private fun AnimatedGifLogo() {
     )
 
     var jsonString by remember { mutableStateOf<String?>(null) }
-    
+    var loadingError by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(Unit) {
-        jsonString = withContext(Dispatchers.Default) {
-            try {
-                Res.readBytes("files/BeeClean.json").decodeToString()
-            } catch (e: Exception) {
-                println("Error loading BeeClean.json: ${e.message}")
-                null
+        try {
+            jsonString = withContext(Dispatchers.Default) {
+                try {
+                    val bytes = Res.readBytes("files/BeeClean.json")
+                    val decoded = bytes.decodeToString()
+                    println("SPLASH WASM: Successfully loaded BeeClean.json (${bytes.size} bytes)")
+                    decoded
+                } catch (e: Exception) {
+                    loadingError = "Resource load error: ${e.message}"
+                    println("SPLASH WASM: Failed to load resource - ${e.message}")
+                    e.printStackTrace()
+                    null
+                }
             }
+        } catch (e: Exception) {
+            loadingError = "Coroutine error: ${e.message}"
+            println("SPLASH WASM: Coroutine exception - ${e.message}")
+            e.printStackTrace()
         }
     }
 
@@ -154,31 +167,54 @@ private fun AnimatedGifLogo() {
             ),
         contentAlignment = Alignment.Center
     ) {
-        if (jsonString != null) {
-            // Only create composition after JSON is loaded
-            val composition by rememberLottieComposition { 
-                LottieCompositionSpec.JsonString(jsonString!!) 
+        when {
+            loadingError != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            color = Color(0xFF60A5FA).copy(alpha = 0.3f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "DV",
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontSize = 80.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Color.White
+                    )
+                }
             }
-            
-            if (composition != null) {
-                LottieAnimation(
-                    composition = composition,
-                    iterations = Compottie.IterateForever,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                // Lottie is parsing
+            jsonString != null -> {
+                val composition by rememberLottieComposition {
+                    LottieCompositionSpec.JsonString(jsonString!!)
+                }
+
+                if (composition != null) {
+                    Image(
+                        painter = rememberLottiePainter(
+                            composition = composition,
+                            iterations = Compottie.IterateForever
+                        ),
+                        contentDescription = "DentalVision AI Logo",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
+            else -> {
                 CircularProgressIndicator(
                     color = Color.White,
                     modifier = Modifier.size(48.dp)
                 )
             }
-        } else {
-            // JSON loading
-            CircularProgressIndicator(
-                color = Color.White,
-                modifier = Modifier.size(48.dp)
-            )
         }
     }
 }
