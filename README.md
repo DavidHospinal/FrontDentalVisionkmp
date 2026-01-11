@@ -38,6 +38,11 @@ Dental Vision AI is a cross-platform application for dental image analysis power
 > **Original submission:** The video link submitted via the contest form was `https://youtu.be/P7qHrPUVlpY`, which was **deleted by YouTube** due to these false positives. The Google Drive link below is the replacement for that submission.
 
 ### 1. Contest Demo (8 min) - REQUIRED
+
+[![Contest Demo Video](docs/contest_demo_thumbnail.png)](https://drive.google.com/file/d/13Vs4TdL2_g8XZ7pXJgVU4lNwg0sXSkse/view?usp=sharing)
+
+**Platforms:** Android, Desktop, Web
+
 **[▶️ Watch Contest Demo on Google Drive](https://drive.google.com/file/d/13Vs4TdL2_g8XZ7pXJgVU4lNwg0sXSkse/view?usp=sharing)**
 *Demonstrates Android, Desktop, and Web implementations.*
 
