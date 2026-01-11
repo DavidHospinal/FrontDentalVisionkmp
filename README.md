@@ -127,35 +127,35 @@ This project integrates three key external services to deliver a robust AI-power
 
 ## Setup and Configuration
 
-### API Key Configuration (MANDATORY)
+### Zero Configuration Setup (Ready to Run)
 
-The application requires a Google Gemini API key for AI-powered clinical insights. For security and contest compliance, API keys are NOT included in the repository.
+This project is pre-configured for immediate evaluation with all necessary API keys included. No additional setup is required to build and run the application on any of the three supported platforms.
 
-#### Quick Setup (3 steps)
+#### Included Demo API Key
 
-1. **Obtain a Free API Key**
-   - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
-   - Sign in with your Google account
-   - Click "Create API Key"
-   - Copy the generated key
+The codebase includes a pre-configured demo Gemini API key in `composeApp/src/commonMain/kotlin/com/dentalvision/ai/data/remote/api/Secrets.kt` specifically for Kotlin Multiplatform Contest evaluation purposes. This key is temporary and will be revoked after the contest evaluation period.
 
-2. **Configure the Application**
-   - Copy `composeApp/Secrets.sample.kt` to:
-     `composeApp/src/commonMain/kotlin/com/dentalvision/ai/data/remote/api/Secrets.kt`
-   - Open the new `Secrets.kt` file and replace `INSERT_YOUR_API_KEY_HERE` with your actual API key
-   - The file path structure is already correct in the template
+#### Quick Start for Contest Judges
 
-3. **Build and Run**
-   - The application is now ready to build and run on any platform
-   - See Build Instructions below for platform-specific commands
+1. Clone the repository: `git clone https://github.com/DavidHospinal/FrontDentalVisionkmp.git`
+2. Navigate to the project directory: `cd FrontDentalVisionkmp`
+3. Build for your target platform (see Installation Manual section below)
+4. Run the application - no configuration needed
 
-#### Security Note
+The application will work immediately on Android, Desktop, and Web platforms without any additional setup steps.
 
-The `Secrets.kt` file is excluded from version control via `.gitignore` to protect sensitive API keys. Never commit this file to public repositories. This configuration method complies with security best practices for software development contests and production deployments.
+#### Pre-compiled Binaries
 
-#### Alternative: Pre-compiled Binaries
+For even faster evaluation, pre-compiled binaries are available in the [Releases](https://github.com/DavidHospinal/FrontDentalVisionkmp/releases/tag/v1.0.0) section:
+- Android APK ready to install
+- Desktop installers for Windows, macOS, and Linux
+- Demo credentials: admin / admin123
 
-If you prefer to test the application without configuring API keys, pre-compiled binaries are available in the [Releases](https://github.com/DavidHospinal/FrontDentalVisionkmp/releases/tag/v1.0.0) section with demo credentials.
+#### Security Note for Production Use
+
+IMPORTANT: In production environments, API keys should NEVER be committed to version control. The demo API key is included solely for contest evaluation convenience and intentionally violates standard security best practices for judging purposes.
+
+For production deployment after the contest, replace the demo key in `Secrets.kt` with your own API key from [Google AI Studio](https://aistudio.google.com/app/apikey) and ensure the file is listed in `.gitignore`.
 
 ## Testing Resources and Sample Data
 
