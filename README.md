@@ -132,6 +132,23 @@ This project is pre-configured for immediate evaluation with all necessary API k
 
 The codebase includes a pre-configured demo Gemini API key in `composeApp/src/commonMain/kotlin/com/dentalvision/ai/data/remote/api/Secrets.kt` specifically for Kotlin Multiplatform Contest evaluation purposes. This key is temporary and will be revoked after the contest evaluation period.
 
+#### ⚠️ Important Note for Contest Judges - API Key Security
+
+**Potential Issue:** Due to GitHub's automated security scanning, the included Gemini API key may be automatically revoked by Google before your evaluation. This is a known limitation of public repositories with embedded API keys and is beyond the developer's control.
+
+**Impact:** If the API key has been auto-revoked, the **Clinical Insights feature** will return 403 errors. All other features (Patient Management, Dental Image Analysis with YOLOv12, and Reports) work perfectly without any configuration.
+
+**Quick Fix (2 minutes):**
+1. Obtain a free API key at: [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Open file: `composeApp/src/commonMain/kotlin/com/dentalvision/ai/data/remote/api/Secrets.kt`
+3. Replace the `GEMINI_API_KEY` value with your new key
+4. Rebuild: `./gradlew clean` and run again
+
+**Last Key Update:** January 11, 2026, 23:30 UTC
+**Status at Commit:** Active and verified working
+
+This technical limitation does not affect the zero-configuration requirement for the other features, which constitute the majority of the application's functionality.
+
 #### Quick Start for Contest Judges
 
 1. Clone the repository: `git clone https://github.com/DavidHospinal/FrontDentalVisionkmp.git`
