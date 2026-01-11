@@ -78,29 +78,20 @@ The 26-minute deep dive covers:
 
 For rapid evaluation and testing, follow these streamlined steps:
 
-### 1. Pre-compiled Binaries (Fastest Method)
-
-Download ready-to-use executables from [GitHub Releases v1.0.0](https://github.com/DavidHospinal/FrontDentalVisionkmp/releases/tag/v1.0.0):
-
-- **Android:** `DentalVisionAI-v1.0.0.apk`
-- **Desktop:** Platform-specific installers (.msi for Windows, .dmg for macOS, .deb for Linux)
-- **Web:** Access directly at deployment URL (if available)
-
-
-### 2. Wake Up Cloud Services
+### 1. Wake Up Cloud Services
 
 Before first login, activate the free-tier backend services (takes 30-60 seconds):
 
 1. Open [Backend Service](https://backenddental-vision-ai.onrender.com/) - wait for JSON response
 2. Open [AI Model Service](https://huggingface.co/spaces/DavidHosp/Dental-vision-kmp-contest) - wait for Gradio interface
 
-### 3. Test with Sample Data
+### 2. Test with Sample Data
 
 - Sample dental images located in: `samples-images/` folder
 - Use New Analysis feature to upload and analyze images
 - View AI-generated clinical insights powered by Gemini API
 
-### 4. Build from Source (Optional)
+### 3. Build from Source (Optional)
 
 If building from source code:
 
@@ -158,12 +149,7 @@ This technical limitation does not affect the zero-configuration requirement for
 
 The application will work immediately on Android, Desktop, and Web platforms without any additional setup steps.
 
-#### Pre-compiled Binaries
 
-For even faster evaluation, pre-compiled binaries are available in the [Releases](https://github.com/DavidHospinal/FrontDentalVisionkmp/releases/tag/v1.0.0) section:
-- Android APK ready to install
-- Desktop installers for Windows, macOS, and Linux
-- Demo credentials: admin / admin123
 
 #### Security Note for Production Use
 
