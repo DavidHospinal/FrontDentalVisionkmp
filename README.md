@@ -31,35 +31,48 @@ Dental Vision AI is a cross-platform application for dental image analysis power
 
 ## Demo Videos
 
-### Official Contest Submission Video
+<table>
+<tr>
+<td width="50%" align="center">
 
-**Platform:** Android, Desktop, Web
-**Duration:** 8 minutes
-**Location:** `Video-Demo/Demo/DemoFinal.mp4`
+### Contest Demo (8 min)
 
-This comprehensive demo showcases the application running on all three primary platforms:
-- Android: Material You theming, native UI components, touch interactions
-- Desktop: Window management, file dialogs, keyboard shortcuts
-- Web: Progressive Web App capabilities, browser compatibility
+[![Contest Demo Video](https://img.youtube.com/vi/P7qHrPUVlpY/maxresdefault.jpg)](https://www.youtube.com/watch?v=P7qHrPUVlpY)
 
-**Note:** While contest guidelines specify a maximum of 5 minutes for two platforms, this extended 8-minute demo demonstrates functionality across three complete platform implementations to showcase the full scope of Kotlin Multiplatform capabilities.
+**Platforms:** Android, Desktop, Web
 
-### Extended Technical Documentation
+[**Watch Demo**](https://www.youtube.com/watch?v=P7qHrPUVlpY)
 
-**Platform:** YouTube
-**Duration:** 26 minutes
-**Link:** [Watch on YouTube](https://youtu.be/YOUR_VIDEO_ID)
+</td>
+<td width="50%" align="center">
 
-This in-depth presentation covers:
-- System architecture and design patterns
+### Technical Deep Dive (26 min)
+
+[![Technical Documentation Video](https://img.youtube.com/vi/ZGjs8cYaYCI/maxresdefault.jpg)](https://www.youtube.com/watch?v=ZGjs8cYaYCI)
+
+**For:** Judges & Developers
+
+[**Watch Full Presentation**](https://www.youtube.com/watch?v=ZGjs8cYaYCI)
+
+</td>
+</tr>
+</table>
+
+### Contest Demo Highlights
+
+The 8-minute demo showcases all three platform implementations:
+- **Android:** Material You theming, native UI, touch interactions
+- **Desktop:** Window management, file dialogs, keyboard shortcuts
+- **Web:** Progressive Web App, browser compatibility
+
+### Technical Presentation Contents
+
+The 26-minute deep dive covers:
+- System architecture and MVVM design patterns
 - Kotlin Multiplatform implementation details
 - External API integrations (Gemini, HuggingFace, Render)
-- IDE demonstration with live code walkthrough
-- Repository pattern and MVVM architecture
-- Database design and API communication flow
-- Real-time debugging and development workflow
-
-**Target Audience:** Technical judges, developers, and evaluators seeking detailed architectural insights.
+- Live IDE walkthrough with code demonstration
+- Database design and real-time debugging workflow
 
 ## Quick Start for Judges
 
