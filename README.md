@@ -86,9 +86,6 @@ Download ready-to-use executables from [GitHub Releases v1.0.0](https://github.c
 - **Desktop:** Platform-specific installers (.msi for Windows, .dmg for macOS, .deb for Linux)
 - **Web:** Access directly at deployment URL (if available)
 
-**Demo Credentials:**
-- Username: admin
-- Password: admin123
 
 ### 2. Wake Up Cloud Services
 
@@ -475,10 +472,10 @@ Full-Stack Developer specializing in Kotlin Multiplatform, AI/ML Integration, an
 ### Professional Contact
 
 - **University Email:** u202021214@upc.edu.pe
-- **Professional Email:** oscardavid.hospinal@uc.cl
+- **Graduate University Email:** oscardavid.hospinal@uc.cl
 - **GitHub:** https://github.com/DavidHospinal
 - **Portfolio:** https://portfolio-cv-oscardavid-hospinal.vercel.app/
-- **LinkedIn:** [Connect on LinkedIn](https://www.linkedin.com/in/david-hospinal/)
+- **LinkedIn:** [Connect on LinkedIn](https://www.linkedin.com/in/oscardavidhospinal/)
 
 ### About the Developer
 
