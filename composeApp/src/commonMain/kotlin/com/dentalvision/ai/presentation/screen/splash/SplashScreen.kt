@@ -26,8 +26,6 @@ import io.github.alexzhirkevich.compottie.Compottie
 import io.github.alexzhirkevich.compottie.LottieCompositionSpec
 import io.github.alexzhirkevich.compottie.rememberLottieComposition
 import io.github.alexzhirkevich.compottie.rememberLottiePainter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -138,22 +136,15 @@ private fun AnimatedGifLogo() {
 
     LaunchedEffect(Unit) {
         try {
-            jsonString = withContext(Dispatchers.Default) {
-                try {
-                    val bytes = Res.readBytes("files/BeeClean.json")
-                    val decoded = bytes.decodeToString()
-                    println("SPLASH WASM: Successfully loaded BeeClean.json (${bytes.size} bytes)")
-                    decoded
-                } catch (e: Exception) {
-                    loadingError = "Resource load error: ${e.message}"
-                    println("SPLASH WASM: Failed to load resource - ${e.message}")
-                    e.printStackTrace()
-                    null
-                }
-            }
+            // Note: Do NOT use Dispatchers.Default on WASM - it causes runtime crash
+            // LaunchedEffect already runs in an appropriate coroutine context
+            val bytes = Res.readBytes("files/BeeClean.json")
+            val decoded = bytes.decodeToString()
+            println("SPLASH WASM: Successfully loaded BeeClean.json (${bytes.size} bytes)")
+            jsonString = decoded
         } catch (e: Exception) {
-            loadingError = "Coroutine error: ${e.message}"
-            println("SPLASH WASM: Coroutine exception - ${e.message}")
+            loadingError = "Resource load error: ${e.message}"
+            println("SPLASH WASM: Failed to load resource - ${e.message}")
             e.printStackTrace()
         }
     }
