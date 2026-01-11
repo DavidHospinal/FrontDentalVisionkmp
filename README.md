@@ -2,12 +2,101 @@
 
 Professional dental AI analysis system with YOLOv12 integration for cross-platform deployment.
 
+**Contest Submission:** Three-Platform Implementation (Android, Desktop, Web)
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Demo Videos](#demo-videos)
+3. [Quick Start for Judges](#quick-start-for-judges)
+4. [External APIs and Architecture](#external-apis-and-architecture)
+5. [Setup and Configuration](#setup-and-configuration)
+6. [Testing Resources](#testing-resources-and-sample-data)
+7. [Supported Platforms](#supported-platforms)
+8. [Architecture](#architecture)
+9. [Key Features Highlight](#key-features-highlight)
+10. [Backend Integration](#backend-integration)
+11. [Installation Manual](#installation-manual)
+12. [Development](#development)
+13. [Troubleshooting](#troubleshooting)
+14. [License](#license)
+15. [Author](#author)
+
 ## Overview
 
 Dental Vision AI is a cross-platform application for dental image analysis powered by the YOLOv12 deep learning model. The system provides comprehensive patient management, automated dental image analysis, and professional clinical reporting capabilities across Android, Desktop, and Web platforms.
 
 **Primary Platforms:** Android, Desktop (Windows, macOS, Linux), and Web (Wasm/JS).
 **Experimental Support:** iOS implementation is currently partial and not a primary target for this release.
+
+## Demo Videos
+
+### Official Contest Submission Video
+
+**Platform:** Android, Desktop, Web
+**Duration:** 8 minutes
+**Location:** `Video-Demo/Demo/DemoFinal.mp4`
+
+This comprehensive demo showcases the application running on all three primary platforms:
+- Android: Material You theming, native UI components, touch interactions
+- Desktop: Window management, file dialogs, keyboard shortcuts
+- Web: Progressive Web App capabilities, browser compatibility
+
+**Note:** While contest guidelines specify a maximum of 5 minutes for two platforms, this extended 8-minute demo demonstrates functionality across three complete platform implementations to showcase the full scope of Kotlin Multiplatform capabilities.
+
+### Extended Technical Documentation
+
+**Platform:** YouTube
+**Duration:** 26 minutes
+**Link:** [Watch on YouTube](https://youtu.be/YOUR_VIDEO_ID)
+
+This in-depth presentation covers:
+- System architecture and design patterns
+- Kotlin Multiplatform implementation details
+- External API integrations (Gemini, HuggingFace, Render)
+- IDE demonstration with live code walkthrough
+- Repository pattern and MVVM architecture
+- Database design and API communication flow
+- Real-time debugging and development workflow
+
+**Target Audience:** Technical judges, developers, and evaluators seeking detailed architectural insights.
+
+## Quick Start for Judges
+
+For rapid evaluation and testing, follow these streamlined steps:
+
+### 1. Pre-compiled Binaries (Fastest Method)
+
+Download ready-to-use executables from [GitHub Releases v1.0.0](https://github.com/DavidHospinal/FrontDentalVisionkmp/releases/tag/v1.0.0):
+
+- **Android:** `DentalVisionAI-v1.0.0.apk`
+- **Desktop:** Platform-specific installers (.msi for Windows, .dmg for macOS, .deb for Linux)
+- **Web:** Access directly at deployment URL (if available)
+
+**Demo Credentials:**
+- Username: admin
+- Password: admin123
+
+### 2. Wake Up Cloud Services
+
+Before first login, activate the free-tier backend services (takes 30-60 seconds):
+
+1. Open [Backend Service](https://backenddental-vision-ai.onrender.com/) - wait for JSON response
+2. Open [AI Model Service](https://huggingface.co/spaces/DavidHosp/Dental-vision-kmp-contest) - wait for Gradio interface
+
+### 3. Test with Sample Data
+
+- Sample dental images located in: `samples-images/` folder
+- Use New Analysis feature to upload and analyze images
+- View AI-generated clinical insights powered by Gemini API
+
+### 4. Build from Source (Optional)
+
+If building from source code:
+
+1. Clone repository: `git clone https://github.com/DavidHospinal/FrontDentalVisionkmp.git`
+2. Configure Gemini API key (see Setup section below)
+3. Build for your platform (see Installation Manual section)
 
 ## External APIs and Architecture
 
@@ -134,27 +223,62 @@ composeApp/
 │   └── wasmJsMain/          # Web WebAssembly
 ```
 
-## Features
+## Key Features Highlight
 
-### Patient Management
-- Complete CRUD operations for patient records
-- Patient search and filtering
-- Medical history tracking
-- FDI tooth numbering system support
+This application demonstrates advanced Kotlin Multiplatform capabilities with production-grade features:
 
-### AI-Powered Analysis
-- Real-time dental image analysis
-- YOLOv12 object detection integration
-- Tooth detection with bounding boxes
-- Confidence scoring per detection
-- Multi-tooth analysis in single image
+### Core Functionality
 
-### Clinical Reporting
-- In-app professional clinical report viewing
-- Analysis summary and findings
-- Detected conditions documentation
-- Treatment recommendations
-- Patient information integration
+**1. Patient Management System**
+- Full CRUD operations with reactive UI updates
+- Real-time search with 300ms debounce optimization
+- SQLite database persistence via backend API
+- FDI dental notation system implementation
+- Multi-field patient records (ID, name, DOB, contact info)
+
+**2. AI-Powered Dental Analysis**
+- YOLOv12 deep learning model integration
+- Real-time image processing with bounding box visualization
+- Tooth detection with confidence scoring
+- Support for multi-tooth analysis in single radiograph
+- Cross-platform image picker (Android, Desktop, Web)
+
+**3. Clinical Insights with Gemini AI**
+- Natural language clinical recommendations
+- Risk assessment (Low/Moderate/High)
+- Personalized treatment plans
+- Evidence-based preventive care suggestions
+- Real-time AI streaming responses
+
+**4. Professional Reporting**
+- In-app clinical report viewer
+- Analysis summaries with detected findings
+- Treatment recommendation documentation
+- Patient demographics integration
+- Export capabilities for sharing
+
+### Technical Excellence
+
+**Cross-Platform UI/UX**
+- 95% code sharing across Android, Desktop, and Web
+- Material Design 3 theming with dynamic colors
+- Responsive layouts adapting to screen sizes
+- Platform-specific optimizations (file pickers, notifications)
+- Smooth animations and transitions
+
+**State Management**
+- MVVM architecture with StateFlow
+- Unidirectional data flow
+- Reactive UI updates
+- Error handling with loading states
+- Offline-first architecture patterns
+
+**Networking**
+- Ktor Client 3.0 for HTTP communication
+- JWT authentication with token management
+- Automatic retry logic for failed requests
+- Request/response logging for debugging
+- CORS and WebAssembly compatibility
 
 ## Backend Integration
 
@@ -329,11 +453,37 @@ const val BACKEND_API_URL = "https://backenddental-vision-ai.onrender.com/"
 
 MIT License - Copyright 2025 Dental Vision AI
 
-## Contact
+## Author
 
-**David Hospinal**
+**Oscar David Hospinal Roman**
 
-- Email: u202021214@upc.edu.pe
-- Email: oscardavid.hospinal@uc.cl
-- GitHub: https://github.com/DavidHospinal
+Full-Stack Developer specializing in Kotlin Multiplatform, AI/ML Integration, and Cross-Platform Solutions
+
+### Professional Contact
+
+- **University Email:** u202021214@upc.edu.pe
+- **Professional Email:** oscardavid.hospinal@uc.cl
+- **GitHub:** https://github.com/DavidHospinal
+- **Portfolio:** https://portfolio-cv-oscardavid-hospinal.vercel.app/
+- **LinkedIn:** [Connect on LinkedIn](https://www.linkedin.com/in/david-hospinal/)
+
+### About the Developer
+
+Undergraduate student at Pontifical Catholic University of Chile with expertise in:
+- Kotlin Multiplatform Mobile and Desktop development
+- AI/ML model integration and deployment
+- Cross-platform UI/UX design with Jetpack Compose
+- Cloud infrastructure and backend architecture
+- Medical informatics and healthcare applications
+
+For technical questions about this project or collaboration inquiries, please reach out via email or visit my portfolio for additional contact options.
+
+## Acknowledgments
+
+Special thanks to:
+- Google AI Studio for Gemini API access
+- HuggingFace for ML model hosting infrastructure
+- Render for backend deployment services
+- JetBrains for Kotlin Multiplatform tooling
+- The Compose Multiplatform open-source community
 
